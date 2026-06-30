@@ -52,7 +52,6 @@
     .brand-section{font-size:11px;font-weight:500;letter-spacing:3px;color:var(--gray-400);
       text-transform:uppercase;padding:3px 9px;border:1px solid rgba(255,255,255,.12);border-radius:999px}
     .top-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
-    .huser{font-size:12px;color:var(--gray-600);margin-right:4px}
     .hbtn{height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.12);
       background:rgba(255,255,255,.06);cursor:pointer;font-size:12px;color:var(--gray-400);
       font-family:var(--font-b);transition:.15s;white-space:nowrap}
@@ -61,6 +60,13 @@
       border:1px solid rgba(255,255,255,.12);border-radius:12px;
       background:rgba(255,255,255,.04);color:var(--gray-400);cursor:pointer;transition:.15s}
     .btn-icon:hover{color:#fff;background:rgba(255,255,255,.11);transform:translateY(-1px)}
+    .sesion-chip{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 12px;
+      background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:20px}
+    .sesion-nombre{font-size:12px;font-weight:600;color:#e8e8e2;white-space:nowrap;letter-spacing:.2px}
+    .sesion-logout{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.15);color:#888;cursor:pointer;display:flex;
+      align-items:center;justify-content:center;transition:.15s}
+    .sesion-logout:hover{background:#dc2626;border-color:#dc2626;color:#fff}
 
     .wrap{max-width:1300px;margin:0 auto;padding:20px 20px 80px}
     .err-box{background:var(--risk-s);border:1px solid #fca5a5;color:#991b1b;
@@ -283,9 +289,14 @@
       <span class="brand-section">ANÁLISIS</span>
     </div>
     <div class="top-actions">
-      <span class="huser" id="hUser"></span>
       <button class="hbtn" id="btnReset" style="display:none">↩ Cambiar archivo</button>
-      <button class="btn-icon" id="btnSalir" title="Volver al hub">
+      <div class="sesion-chip">
+        <span class="sesion-nombre" id="hUser">👤</span>
+        <button class="sesion-logout" id="btnSalir" title="Cerrar sesión">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+      <button class="btn-icon" id="btnHub" title="Volver al hub" onclick="location.href='https://croma-app.com.ar/'">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       </button>
     </div>
@@ -301,13 +312,13 @@
       <div class="mode-cards">
         <button class="mode-card mc-gen" data-mode="gen">
           <div class="mc-icon">📊</div>
-          <div class="mc-name">Ventas generales</div>
+          <div class="mc-name">Venta general</div>
           <div class="mc-desc">Análisis por marca, rubro y sucursal. Sin desglose de talle ni color.</div>
           <div class="mc-go"><span>→</span> Seleccionar</div>
         </button>
         <button class="mode-card mc-tyc" data-mode="tyc">
           <div class="mc-icon">🎨</div>
-          <div class="mc-name">Stock talle y color</div>
+          <div class="mc-name">Venta por Talle y Color</div>
           <div class="mc-desc">Análisis de curva de talles, colores, quiebre por sucursal y oportunidades por SKU.</div>
           <div class="mc-go"><span>→</span> Seleccionar</div>
         </button>
@@ -448,13 +459,13 @@ function getUser() {
   document.getElementById('authCheck').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   const u = user.usuario || '';
-  document.getElementById('hUser').textContent = u ? u.charAt(0).toUpperCase() + u.slice(1) : '';
+  document.getElementById('hUser').textContent = '👤 ' + (u ? u.charAt(0).toUpperCase() + u.slice(1) : 'Usuario');
   setup();
 })();
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 function setup() {
-  document.getElementById('btnSalir').addEventListener('click', () => { location.href = HUB_URL; });
+  document.getElementById('btnSalir').addEventListener('click', () => { location.href = HUB_URL + '?logout=1'; });
   document.getElementById('btnReset').addEventListener('click', resetApp);
   document.getElementById('btnBack').addEventListener('click', resetApp);
 
