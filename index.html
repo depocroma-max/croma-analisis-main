@@ -439,8 +439,8 @@ function getUser() {
     document.getElementById('authFallback').style.display = 'block';
     return;
   }
-  document.getElementById('authCheck').hidden = true;
-  document.getElementById('app').hidden = false;
+  document.getElementById('authCheck').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
   document.getElementById('hUser').textContent = user.usuario || '';
   setup();
 })();
