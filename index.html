@@ -110,6 +110,15 @@
     #uploadZone .up-desc{font-size:13px;color:var(--gray-400);max-width:460px;margin:0 auto 6px}
     #uploadZone .up-hint{font-size:11px;color:var(--gray-400);margin-top:14px;line-height:1.7}
     #uploadZone .up-hint b{color:var(--black)}
+    .saved-card{display:flex;align-items:center;gap:16px;background:var(--white);
+      border:2px solid var(--gray-200);border-radius:16px;padding:18px 22px;margin-bottom:16px;
+      box-shadow:0 2px 12px rgba(0,0,0,.06)}
+    .saved-card-icon{font-size:28px;flex:none}
+    .saved-card-info{flex:1;min-width:0}
+    .saved-card-name{font-weight:600;font-size:14px;color:var(--black);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .saved-card-date{font-size:11px;color:var(--gray-400);margin-top:2px}
+    .saved-card-actions{display:flex;gap:8px;flex:none}
     .up-back{font:inherit;font-size:12px;color:var(--gray-400);background:none;border:none;
       cursor:pointer;margin-top:16px;text-decoration:underline}
     .up-back:hover{color:var(--black)}
@@ -325,6 +334,22 @@
       </div>
     </div>
 
+    <!-- Saved file card -->
+    <div id="savedFileCard" hidden>
+      <div class="saved-card">
+        <div class="saved-card-icon">📂</div>
+        <div class="saved-card-info">
+          <div class="saved-card-name" id="savedFileName">—</div>
+          <div class="saved-card-date" id="savedFileDate"></div>
+        </div>
+        <div class="saved-card-actions">
+          <button class="btn-primary" id="btnUseSaved">Usar este</button>
+          <button class="hbtn" id="btnUploadNew">Subir nuevo</button>
+        </div>
+      </div>
+      <button class="up-back" id="btnBackFromSaved">← Cambiar tipo de análisis</button>
+    </div>
+
     <!-- Upload zone -->
     <div id="uploadZone" hidden tabindex="0" role="button">
       <div class="up-icon gen" id="upIcon">📊</div>
@@ -468,6 +493,16 @@ function setup() {
   document.getElementById('btnSalir').addEventListener('click', () => { location.href = HUB_URL + '?logout=1'; });
   document.getElementById('btnReset').addEventListener('click', resetApp);
   document.getElementById('btnBack').addEventListener('click', resetApp);
+  document.getElementById('btnBackFromSaved').addEventListener('click', resetApp);
+  document.getElementById('btnUploadNew').addEventListener('click', () => {
+    document.getElementById('savedFileCard').hidden = true;
+    document.getElementById('uploadZone').hidden = false;
+  });
+  document.getElementById('btnUseSaved').addEventListener('click', async () => {
+    const saved = await dbGet(MODE).catch(() => null);
+    if (!saved) { document.getElementById('savedFileCard').hidden = true; document.getElementById('uploadZone').hidden = false; return; }
+    readFile(new File([saved.buffer], saved.name));
+  });
 
   document.querySelectorAll('.mode-card').forEach(btn => {
     btn.addEventListener('click', () => selectMode(btn.dataset.mode));
@@ -505,12 +540,9 @@ function setup() {
   });
 }
 
-function selectMode(mode) {
-  MODE = mode;
-  document.getElementById('modeSelector').hidden = true;
-  const dz = document.getElementById('uploadZone');
-  dz.hidden = false;
+function applyModeUI(mode) {
   const isGen = mode === 'gen';
+  const dz = document.getElementById('uploadZone');
   dz.className = isGen ? '' : 'tyc-mode';
   document.getElementById('upIcon').className = isGen ? 'up-icon gen' : 'up-icon tyc';
   document.getElementById('upIcon').textContent = isGen ? '📊' : '🎨';
@@ -523,6 +555,23 @@ function selectMode(mode) {
     : 'Columnas esperadas: <b>COD · T · C · NOMBE COLOR · PRODUCTO · MARCA · RUBRO · SUBRUBRO · ULTIMO INGRESO · PRECIO · COSTO · VENTA TOT · STOCK TOT · VENTA PASEO…ROCA</b>';
 }
 
+async function selectMode(mode) {
+  MODE = mode;
+  document.getElementById('modeSelector').hidden = true;
+  applyModeUI(mode);
+  const saved = await dbGet(mode).catch(() => null);
+  if (saved) {
+    const d = new Date(saved.date);
+    const fmt = d.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' })
+              + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('savedFileName').textContent = saved.name;
+    document.getElementById('savedFileDate').textContent = 'Guardado el ' + fmt;
+    document.getElementById('savedFileCard').hidden = false;
+  } else {
+    document.getElementById('uploadZone').hidden = false;
+  }
+}
+
 function showErr(msg) { document.getElementById('errBox').innerHTML = msg ? `<div class="err-box">${esc(msg)}</div>` : ''; }
 
 function resetApp() {
@@ -530,11 +579,38 @@ function resetApp() {
   SORT={view:null,col:null,dir:-1};
   document.getElementById('dash').hidden=true;
   document.getElementById('uploadZone').hidden=true;
+  document.getElementById('savedFileCard').hidden=true;
   document.getElementById('modeSelector').hidden=false;
-  document.getElementById('btnReset').hidden=true;
+  document.getElementById('btnReset').style.display='none';
   document.getElementById('fileInput').value='';
   document.getElementById('fcSubrubro').hidden=true;
   showErr('');
+}
+
+// ── IndexedDB helpers ─────────────────────────────────────────────────────────
+function dbOpen() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('croma-analisis', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('files');
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+async function dbSave(mode, name, buffer) {
+  const db = await dbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('files', 'readwrite');
+    tx.objectStore('files').put({ name, buffer, date: new Date().toISOString() }, mode);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  });
+}
+async function dbGet(mode) {
+  const db = await dbOpen();
+  return new Promise((res, rej) => {
+    const req = db.transaction('files').objectStore('files').get(mode);
+    req.onsuccess = () => res(req.result || null);
+    req.onerror = () => rej(req.error);
+  });
 }
 
 // ── File reading ──────────────────────────────────────────────────────────────
@@ -604,9 +680,11 @@ function readFile(file) {
       OPP_SUB = 'parado';
       SORT = { view:null, col:null, dir:-1 };
       document.getElementById('uploadZone').hidden = true;
+      document.getElementById('savedFileCard').hidden = true;
       document.getElementById('dash').hidden = false;
-      document.getElementById('btnReset').hidden = false;
+      document.getElementById('btnReset').style.display = '';
       render();
+      dbSave(MODE, file.name, e.target.result).catch(() => {});
     } catch(err) { showErr('No pude leer el archivo: ' + err.message); }
   };
   reader.readAsArrayBuffer(file);
