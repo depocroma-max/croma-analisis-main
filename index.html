@@ -262,8 +262,12 @@
 <body>
 
 <div id="authCheck">
-  <div class="spinner"></div>
-  <p>Verificando acceso…</p>
+  <div class="spinner" id="authSpinner"></div>
+  <p id="authMsg">Verificando acceso…</p>
+  <p id="authFallback" style="display:none;font-size:13px;color:#a0a09a;margin-top:8px">
+    Accedé desde el hub de Croma:
+    <a href="https://depocroma-max.github.io/Croma-app/" style="color:#fff;font-weight:600">Ir al hub →</a>
+  </p>
 </div>
 
 <div id="app" hidden>
@@ -429,7 +433,15 @@ function getUser() {
     if (token) { sessionStorage.setItem('croma_token', token); history.replaceState(null,'',location.pathname); }
   }
   const user = getUser();
-  if (!user || user.rol !== 'admin') { location.href = HUB_URL; return; }
+  if (!user || user.rol !== 'admin') {
+    setTimeout(() => {
+      document.getElementById('authSpinner').style.display = 'none';
+      document.getElementById('authMsg').textContent = 'Sin acceso o sesión expirada.';
+      document.getElementById('authFallback').style.display = 'block';
+    }, 2000);
+    location.href = HUB_URL;
+    return;
+  }
   document.getElementById('authCheck').hidden = true;
   document.getElementById('app').hidden = false;
   document.getElementById('hUser').textContent = user.usuario || '';
