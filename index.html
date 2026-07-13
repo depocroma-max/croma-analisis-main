@@ -4,16 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Croma · Análisis</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src https://stock-api.croma-app.com.ar;">
   <meta name="referrer" content="no-referrer">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="croma-ds.css?v=20260714-1">
   <style>
+    /* --black/--white/--gray-*/--accent ya vienen de croma-ds.css (valores idénticos,
+       una sola fuente de verdad). Acá solo lo que croma-ds.css no define: colores
+       semánticos propios de Análisis (mismos valores que --success/--danger/--warning
+       de la DS, con otro nombre porque ya se usan así en todo el archivo) y los
+       colores de sucursal existentes (se mantienen tal cual, no los de croma-ds.css —
+       ver BRIEF/decisión 2026-07-13). */
     :root {
-      --black:#0d0d0d; --white:#fff;
-      --gray-50:#f7f7f5; --gray-100:#efefec; --gray-200:#ddddd8;
-      --gray-400:#a0a09a; --gray-600:#666660;
-      --accent:#e8251a;
+      --accent-s:#fde8e6;
       --sold:#16a34a; --sold-s:#dcfce7;
       --risk:#dc2626; --risk-s:#fee2e2;
       --amber:#d97706; --amber-s:#fef3c7;
@@ -25,9 +29,13 @@
       --suc-10:#9B2563; --suc-10-s:#FCE7F3;
       --suc-12:#534AB7; --suc-12-s:#EEEDFE;
       --suc-14:#3B6D11; --suc-14-s:#EAF3DE;
-      --font-d:'Bebas Neue',sans-serif;
-      --font-b:'DM Sans',sans-serif;
-      --r:14px; --sh:0 1px 3px rgba(0,0,0,.08),0 4px 16px -4px rgba(0,0,0,.08);
+      --font-d: var(--font-display);
+      --font-b: var(--font-body);
+      --r: var(--radius-lg);
+      --sh:0 1px 3px rgba(0,0,0,.08),0 4px 16px -4px rgba(0,0,0,.08);
+    }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px;
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html{-webkit-text-size-adjust:100%}
@@ -43,8 +51,8 @@
 
     .topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:1.25rem;
       padding:0 2.25rem;height:64px;
-      background:rgba(13,13,13,.85);backdrop-filter:blur(14px);
-      box-shadow:0 6px 24px rgba(0,0,0,.20);border-bottom:1px solid rgba(255,255,255,.07)}
+      background:rgba(13,13,13,.96);backdrop-filter:blur(14px);
+      box-shadow:0 6px 24px rgba(0,0,0,.20)}
     .brand{display:flex;align-items:center;gap:8px;min-width:max-content}
     .brand-tridente{height:26px;width:auto;display:block}
     .brand-logo{font-family:var(--font-d);font-size:26px;letter-spacing:3px;line-height:1;color:#fff}
@@ -59,7 +67,7 @@
     .btn-icon{width:38px;height:38px;display:flex;align-items:center;justify-content:center;
       border:1px solid rgba(255,255,255,.12);border-radius:12px;
       background:rgba(255,255,255,.04);color:var(--gray-400);cursor:pointer;transition:.15s}
-    .btn-icon:hover{color:#fff;background:rgba(255,255,255,.11);transform:translateY(-1px)}
+    .btn-icon:hover{color:#fff;border-color:#555;background:rgba(255,255,255,.11);transform:translateY(-1px)}
     .sesion-chip{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 12px;
       background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:20px}
     .sesion-nombre{font-size:12px;font-weight:600;color:#e8e8e2;white-space:nowrap;letter-spacing:.2px}
@@ -77,25 +85,29 @@
     .mode-sel h2{font-family:var(--font-d);font-size:22px;letter-spacing:1.5px;
       margin-bottom:6px;color:var(--black)}
     .mode-sel p{font-size:13px;color:var(--gray-400);margin-bottom:20px}
-    .mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:680px}
-    .mode-card{background:var(--white);border:2px solid var(--gray-200);border-radius:20px;
+    .mode-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:1020px}
+    .mode-card{background:var(--white);border:none;border-radius:var(--radius-xl);
       padding:28px 24px 22px;cursor:pointer;text-align:left;font:inherit;color:inherit;
-      transition:.18s;box-shadow:var(--sh);position:relative;overflow:hidden}
+      transition:.18s;box-shadow:0 4px 20px rgba(0,0,0,.07);position:relative;overflow:hidden}
     .mode-card::before{content:'';position:absolute;top:-24px;right:-24px;width:90px;height:90px;
       border-radius:50%;opacity:.35}
     .mode-card.mc-gen::before{background:radial-gradient(circle,#c4b5fd,transparent 70%)}
     .mode-card.mc-tyc::before{background:radial-gradient(circle,#99f6e4,transparent 70%)}
-    .mode-card:hover{border-color:var(--black);box-shadow:0 8px 32px rgba(0,0,0,.12);transform:translateY(-2px)}
-    .mc-icon{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;
-      font-size:24px;margin-bottom:14px}
-    .mc-gen .mc-icon{background:var(--violet-s)}
-    .mc-tyc .mc-icon{background:var(--teal-s)}
+    .mode-card.mc-rt::before{background:radial-gradient(circle,#f9a8a0,transparent 70%)}
+    .mode-card:hover{box-shadow:0 10px 36px rgba(0,0,0,.13);transform:translateY(-3px)}
+    .mc-icon{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;
+      margin-bottom:14px}
+    .mc-icon svg{width:28px;height:28px}
+    .mc-gen .mc-icon{background:var(--violet-s);color:var(--violet)}
+    .mc-tyc .mc-icon{background:var(--teal-s);color:var(--teal)}
+    .mc-rt .mc-icon{background:var(--accent-s);color:var(--accent)}
     .mc-name{font-weight:700;font-size:16px;margin-bottom:4px}
     .mc-desc{font-size:13px;color:var(--gray-400);line-height:1.55;margin-bottom:16px}
     .mc-go{font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:6px}
     .mc-go span{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:14px}
     .mc-gen .mc-go span{background:var(--violet-s);color:var(--violet)}
     .mc-tyc .mc-go span{background:var(--teal-s);color:var(--teal)}
+    .mc-rt .mc-go span{background:var(--accent-s);color:var(--accent)}
 
     /* Upload zone */
     #uploadZone{background:var(--white);border:2px dashed var(--gray-200);border-radius:24px;
@@ -154,6 +166,7 @@
       padding:2px 8px;border-radius:99px}
     .mode-badge.gen{background:var(--violet-s);color:var(--violet)}
     .mode-badge.tyc{background:var(--teal-s);color:var(--teal)}
+    .mode-badge.rt{background:var(--accent-s);color:var(--accent)}
     .btn-primary{font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--black);
       border:none;border-radius:9px;padding:8px 14px;cursor:pointer;transition:.15s;
       display:inline-flex;align-items:center;gap:6px}
@@ -175,7 +188,7 @@
 
     /* Tabs */
     .tabs{display:flex;gap:3px;background:var(--white);border:1px solid var(--gray-100);
-      border-radius:12px;padding:4px;margin:14px 0;overflow-x:auto;scrollbar-width:none}
+      border-radius:12px;padding:4px;margin:14px 0;overflow-x:auto;scrollbar-width:none;max-width:100%}
     .tabs::-webkit-scrollbar{display:none}
     .tab{font:inherit;font-size:13px;font-weight:600;color:var(--gray-400);background:none;
       border:none;border-radius:8px;padding:7px 14px;cursor:pointer;white-space:nowrap;transition:.13s}
@@ -267,6 +280,45 @@
 
     .footnote{font-size:11px;color:var(--gray-400);margin-top:12px;line-height:1.7}
 
+    /* Tiempo real — badges de ubicación: sucursal comercial, centro 0000 (DEPO) y
+       depósito 90/93 son tres cosas distintas, nunca se mezclan visualmente */
+    .sb.s00{color:var(--gray-600);background:var(--gray-100)}
+    .sb.dep90{color:var(--amber);background:var(--amber-s)}
+    .sb.dep93{color:var(--risk);background:var(--risk-s)}
+
+    .rt-state{padding:40px 20px;text-align:center;color:var(--gray-400);font-size:13px}
+    .rt-state .spinner{border:2px solid var(--gray-200);border-top-color:var(--black);margin:0 auto 12px}
+    .rt-state .btn-sm{margin-top:12px}
+    .rt-note{font-size:11.5px;color:var(--gray-400);padding:10px 16px;border-top:1px solid var(--gray-100);line-height:1.6}
+
+    .rt-search{max-width:480px;margin-bottom:14px}
+    .rt-search input{font:inherit;font-size:14px;width:100%;border:1px solid var(--gray-200);
+      border-radius:10px;padding:10px 14px;background:var(--white)}
+    .rt-search input:focus{outline:2px solid var(--accent);outline-offset:1px}
+    .rt-results{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+    .rt-result-item{display:flex;flex-direction:column;gap:2px;text-align:left;width:100%;
+      background:var(--white);border:1px solid var(--gray-100);border-radius:12px;
+      padding:10px 14px;cursor:pointer;font:inherit;transition:.13s}
+    .rt-result-item:hover{border-color:var(--black);box-shadow:var(--sh)}
+    .rt-result-cod{font-size:11px;font-weight:700;color:var(--gray-600)}
+    .rt-result-desc{font-size:14px;color:var(--black)}
+    .rt-result-meta{font-size:12px;color:var(--gray-400)}
+
+    .rt-detalle-header{display:flex;align-items:baseline;justify-content:space-between;
+      flex-wrap:wrap;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--gray-100)}
+    .rt-detalle-titulo{font-size:16px;font-weight:700}
+    .rt-detalle-total{font-size:13px;color:var(--gray-600)}
+    .rt-detalle-total b{color:var(--black);font-size:16px}
+    .rt-fila{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:10px 14px;
+      border-radius:10px;background:var(--white);border:1px solid var(--gray-100);margin-bottom:6px}
+    .rt-fila-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:140px}
+    .rt-fila-nombre{font-weight:600;font-size:14px}
+    .rt-fila-variante{font-size:12px;color:var(--gray-400)}
+    .mini-bar span.rt-bar-fill{background:var(--accent)}
+    .rt-fila-cantidad{font-size:16px;font-weight:700;margin-left:auto}
+    .rt-fila-sinstock{opacity:.55}
+    .rt-fila-sinstock .rt-fila-cantidad{color:var(--gray-400);font-weight:500}
+
     @media(max-width:640px){
       .wrap{padding:14px 14px 60px}
       .kpi.hero{grid-column:span 2}
@@ -274,6 +326,11 @@
       .fbar{gap:8px}
       .fbar-end{margin-left:0;width:100%}
       .dash-grid{grid-template-columns:1fr}
+      .topbar{padding:0 .85rem;gap:.6rem}
+      .brand{min-width:0}
+      .brand-divider,.brand-section{display:none}
+      .hbtn-label{display:none}
+      .top-actions{gap:6px}
     }
     @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   </style>
@@ -298,9 +355,9 @@
       <span class="brand-section">ANÁLISIS</span>
     </div>
     <div class="top-actions">
-      <button class="hbtn" id="btnReset" style="display:none">↩ Cambiar archivo</button>
+      <button class="hbtn" id="btnReset" style="display:none"><svg class="icon-16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg> <span class="hbtn-label">Cambiar archivo</span></button>
       <div class="sesion-chip">
-        <span class="sesion-nombre" id="hUser">👤</span>
+        <span class="sesion-nombre" id="hUser"><svg class="icon-16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
         <button class="sesion-logout" id="btnSalir" title="Cerrar sesión">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         </button>
@@ -320,15 +377,21 @@
       <p>Elegí el tipo de Excel que vas a subir.</p>
       <div class="mode-cards">
         <button class="mode-card mc-gen" data-mode="gen">
-          <div class="mc-icon">📊</div>
+          <div class="mc-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>
           <div class="mc-name">Venta general</div>
           <div class="mc-desc">Análisis por marca, rubro y sucursal. Sin desglose de talle ni color.</div>
           <div class="mc-go"><span>→</span> Seleccionar</div>
         </button>
         <button class="mode-card mc-tyc" data-mode="tyc">
-          <div class="mc-icon">🎨</div>
+          <div class="mc-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 .55.45 1 1 1h10a1 1 0 0 0 1-1V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg></div>
           <div class="mc-name">Venta por Talle y Color</div>
           <div class="mc-desc">Análisis de curva de talles, colores, quiebre por sucursal y oportunidades por SKU.</div>
+          <div class="mc-go"><span>→</span> Seleccionar</div>
+        </button>
+        <button class="mode-card mc-rt" data-mode="rt">
+          <div class="mc-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg></div>
+          <div class="mc-name">Tiempo real</div>
+          <div class="mc-desc">Stock real desde Sysneo — sin subir Excel. Sucursales, stock bajo, búsqueda por producto.</div>
           <div class="mc-go"><span>→</span> Seleccionar</div>
         </button>
       </div>
@@ -337,7 +400,7 @@
     <!-- Saved file card -->
     <div id="savedFileCard" hidden>
       <div class="saved-card">
-        <div class="saved-card-icon">📂</div>
+        <div class="saved-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></div>
         <div class="saved-card-info">
           <div class="saved-card-name" id="savedFileName">—</div>
           <div class="saved-card-date" id="savedFileDate"></div>
@@ -352,7 +415,7 @@
 
     <!-- Upload zone -->
     <div id="uploadZone" hidden tabindex="0" role="button">
-      <div class="up-icon gen" id="upIcon">📊</div>
+      <div class="up-icon gen" id="upIcon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>
       <h2 id="upTitle">SUBÍ TU EXCEL</h2>
       <p class="up-desc" id="upDesc">El archivo se procesa en tu navegador — no se sube a ningún servidor.</p>
       <p class="up-hint" id="upHint"></p>
@@ -400,14 +463,39 @@
       <div id="panelHost"></div>
       <p class="footnote" id="foot"></p>
     </div>
+
+    <!-- Tiempo real (independiente de #dash — no usa Excel/IndexedDB/getFiltered) -->
+    <div id="rtApp" hidden>
+      <div class="fbar" id="rtBar">
+        <span class="mode-badge rt">Tiempo real</span>
+        <span class="fname" id="rtUltimaActualizacion"></span>
+        <div class="fbar-end">
+          <button class="btn-sm" id="rtBtnActualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Actualizar</button>
+          <button class="up-back" id="rtBtnVolver">← Cambiar tipo de análisis</button>
+        </div>
+      </div>
+      <div class="tabs" id="rtTabs" role="tablist">
+        <button class="tab active" data-view="dashboard">Dashboard</button>
+        <button class="tab" data-view="ubicaciones">Stock por ubicación</button>
+        <button class="tab" data-view="stock-bajo">Stock bajo</button>
+        <button class="tab" data-view="concentrado">Stock concentrado</button>
+        <button class="tab" data-view="movimientos">Últimos movimientos</button>
+        <button class="tab" data-view="buscador">Buscador</button>
+      </div>
+      <div id="rtPanelHost"></div>
+    </div>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="croma-icons.js?v=20260714-1"></script>
 <script>
 'use strict';
 
 const HUB_URL = 'https://croma-app.com.ar/';
+// croma-api — stock real desde Sysneo (solo lectura). Requiere que el origen de esta app
+// esté sumado a ORIGENES_PERMITIDOS en croma-api/index.js (ya aplicado).
+const STOCK_API_URL = 'https://stock-api.croma-app.com.ar';
 
 // Sucursales - general mode (by number code)
 const SGEN = [
@@ -453,10 +541,30 @@ const fmtD   = d => {
 };
 const daysDiff = (d, ref) => ref && d ? Math.round((ref.getTime() - d.getTime()) / 864e5) : 0;
 
-let MODE = null; // 'gen' | 'tyc'
+let MODE = null; // 'gen' | 'tyc' | 'rt'
 let RAW = [], COLS = {}, REF_DATE = null;
 let VIEW = '', OPP_SUB = 'parado';
 let SORT = { view:null, col:null, dir:-1 };
+
+// ── Tiempo real (croma-api) — estado propio, no comparte nada con RAW/COLS/VIEW ──
+let RT_STOCK = null;       // array crudo de /stock (una vez por sesión de modo)
+let RT_SUCURSALES = null;  // array crudo de /sucursales
+let RT_CENTRO_INFO = null; // Map centro -> { nombre, cls, activa, puntoVenta }
+let RT_VIEW = 'dashboard';
+let RT_LOADED = false;
+let RT_LOADING = false;
+let RT_BUSCAR_ULTIMA = null; // { tipo:'buscar', q } | { tipo:'detalle', codigo } — para "Reintentar"
+let RT_BUSCAR_ABORT = null;
+let RT_BUSCAR_SEQ = 0;
+let RT_BUSCAR_DEBOUNCE = null;
+let RT_MOV_ABORT = null;
+let RT_MOV_SEQ = 0;
+
+// Mismos colores/clases de sucursal que ya usa el resto de la app (SGEN), mapeados por
+// centro de croma-api. Depósito 90/93 NO están acá — son tipo:"deposito", no sucursales.
+const RT_CENTRO_CLS = {
+  '0001':'s01', '0005':'s05', '0009':'s09', '0010':'s10', '0012':'s12', '0014':'s14',
+};
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 function getToken() { return sessionStorage.getItem('croma_token') || localStorage.getItem('croma_token'); }
@@ -484,7 +592,7 @@ function getUser() {
   document.getElementById('authCheck').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   const u = user.usuario || '';
-  document.getElementById('hUser').textContent = '👤 ' + (u ? u.charAt(0).toUpperCase() + u.slice(1) : 'Usuario');
+  document.getElementById('hUser').innerHTML = icon('user','icon-16') + ' ' + esc(u ? u.charAt(0).toUpperCase() + u.slice(1) : 'Usuario');
   setup();
 })();
 
@@ -506,6 +614,16 @@ function setup() {
 
   document.querySelectorAll('.mode-card').forEach(btn => {
     btn.addEventListener('click', () => selectMode(btn.dataset.mode));
+  });
+
+  document.getElementById('rtBtnVolver').addEventListener('click', resetApp);
+  document.getElementById('rtBtnActualizar').addEventListener('click', () => cargarDatosRT(true));
+  document.getElementById('rtTabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab'); if (!btn) return;
+    document.querySelectorAll('#rtTabs .tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    RT_VIEW = btn.dataset.view;
+    renderRTView();
   });
 
   const dz = document.getElementById('uploadZone');
@@ -545,7 +663,7 @@ function applyModeUI(mode) {
   const dz = document.getElementById('uploadZone');
   dz.className = isGen ? '' : 'tyc-mode';
   document.getElementById('upIcon').className = isGen ? 'up-icon gen' : 'up-icon tyc';
-  document.getElementById('upIcon').textContent = isGen ? '📊' : '🎨';
+  document.getElementById('upIcon').innerHTML = icon(isGen ? 'barChart3' : 'shirt', '');
   document.getElementById('upTitle').textContent = isGen ? 'SUBÍ TU EXCEL DE VENTAS' : 'SUBÍ TU EXCEL DE STOCK TYC';
   document.getElementById('upDesc').textContent = isGen
     ? 'Ventas generales por sucursal (.xlsx). Se procesa en tu navegador.'
@@ -558,6 +676,14 @@ function applyModeUI(mode) {
 async function selectMode(mode) {
   MODE = mode;
   document.getElementById('modeSelector').hidden = true;
+
+  if (mode === 'rt') {
+    document.getElementById('btnReset').style.display = 'inline-flex';
+    document.getElementById('rtApp').hidden = false;
+    iniciarModoRT();
+    return;
+  }
+
   applyModeUI(mode);
   const saved = await dbGet(mode).catch(() => null);
   if (saved) {
@@ -585,9 +711,601 @@ function resetApp() {
   document.getElementById('fileInput').value='';
   document.getElementById('fcSubrubro').hidden=true;
   showErr('');
+
+  // Tiempo real
+  document.getElementById('rtApp').hidden = true;
+  if (RT_BUSCAR_ABORT) { RT_BUSCAR_ABORT.abort(); RT_BUSCAR_ABORT = null; }
+  if (RT_MOV_ABORT) { RT_MOV_ABORT.abort(); RT_MOV_ABORT = null; }
+  RT_STOCK = null; RT_SUCURSALES = null; RT_CENTRO_INFO = null;
+  RT_VIEW = 'dashboard'; RT_LOADED = false; RT_LOADING = false;
+  RT_BUSCAR_ULTIMA = null; RT_BUSCAR_SEQ = 0;
+  document.querySelectorAll('#rtTabs .tab').forEach((t,i) => t.classList.toggle('active', i===0));
 }
 
 // ── IndexedDB helpers ─────────────────────────────────────────────────────────
+// ── Tiempo real (croma-api) ─────────────────────────────────────────────────
+// Construcción de DOM sin innerHTML sobre datos de la API. opts.html queda
+// reservado solo para fragmentos estáticos (nunca usado con datos de croma-api).
+function rtEl(tag, opts) {
+  const e = document.createElement(tag);
+  if (opts) {
+    if (opts.className != null) e.className = opts.className;
+    if (opts.text != null) e.textContent = opts.text;
+    if (opts.html != null) e.innerHTML = opts.html;
+    if (opts.attrs) Object.keys(opts.attrs).forEach(k => e.setAttribute(k, opts.attrs[k]));
+  }
+  return e;
+}
+
+function rtEstado(container, tipo, mensaje, onRetry) {
+  if (!container) return;
+  container.replaceChildren();
+  if (tipo === 'ninguno') return;
+  const box = rtEl('div', { className:'rt-state' });
+  if (tipo === 'loading') {
+    box.appendChild(rtEl('div', { className:'spinner' }));
+    box.appendChild(rtEl('p', { text: mensaje || 'Cargando...' }));
+  } else if (tipo === 'error') {
+    box.appendChild(rtEl('p', { text: mensaje || 'Error de conexión.' }));
+    if (onRetry) {
+      const btn = rtEl('button', { className:'btn-sm', text:'Reintentar' });
+      btn.type = 'button';
+      btn.addEventListener('click', onRetry);
+      box.appendChild(btn);
+    }
+  } else if (tipo === 'vacio') {
+    box.appendChild(rtEl('p', { text: mensaje || 'Sin datos.' }));
+  }
+  container.appendChild(box);
+}
+
+function rtNombreCentro(centro) {
+  const info = RT_CENTRO_INFO && RT_CENTRO_INFO.get(centro);
+  return info ? info.nombre : centro;
+}
+
+function rtBadgeUbicacion(centro) {
+  const cls = centro === '0000' ? 's00' : (RT_CENTRO_CLS[centro] || 's00');
+  return rtEl('span', { className:'sb ' + cls, text: rtNombreCentro(centro) });
+}
+
+// Clasificación corregida: centro (tipo:"sucursal", incluye centro "0000"/DEPO) y
+// depósito (tipo:"deposito", código numérico 90/93) son DOS tablas distintas de Sysneo
+// que nunca se combinan. Solo deposito:90 es "Depósito Central (DEPO)"; centro "0000"
+// muestra su nombre real de /sucursales, nunca se renombra como depósito 90.
+function rtClasificarDetalle(f) {
+  if (f.tipo === 'deposito') {
+    if (Number(f.deposito) === 90) return { esDeposito:true, nombre:'Depósito Central (DEPO)', cls:'dep90' };
+    if (Number(f.deposito) === 93) return { esDeposito:true, nombre:'Fallados', cls:'dep93' };
+    return { esDeposito:true, nombre: f.nombre || ('Depósito ' + f.deposito), cls:'dep90' };
+  }
+  const cls = f.centro === '0000' ? 's00' : (RT_CENTRO_CLS[f.centro] || 's00');
+  return { esDeposito:false, nombre: rtNombreCentro(f.centro), cls };
+}
+
+function iniciarModoRT() {
+  if (!RT_LOADED && !RT_LOADING) cargarDatosRT(false);
+  else renderRTView();
+}
+
+async function cargarDatosRT(forzar) {
+  if (RT_LOADING) return;
+  if (RT_LOADED && !forzar) { renderRTView(); return; }
+  RT_LOADING = true;
+  const host = document.getElementById('rtPanelHost');
+  rtEstado(host, 'loading', 'Cargando stock desde Sysneo...');
+  try {
+    const [stockResp, sucResp] = await Promise.all([
+      fetch(STOCK_API_URL + '/stock'),
+      fetch(STOCK_API_URL + '/sucursales'),
+    ]);
+    if (!stockResp.ok) throw new Error('HTTP ' + stockResp.status + ' en /stock');
+    if (!sucResp.ok) throw new Error('HTTP ' + sucResp.status + ' en /sucursales');
+    const stockData = await stockResp.json();
+    const sucData = await sucResp.json();
+    if (!stockData.ok) throw new Error(stockData.error || 'Error de la API en /stock');
+    if (!sucData.ok) throw new Error(sucData.error || 'Error de la API en /sucursales');
+
+    RT_SUCURSALES = sucData.data || [];
+    RT_CENTRO_INFO = new Map();
+    RT_SUCURSALES.forEach(s => {
+      RT_CENTRO_INFO.set(s.centro, {
+        nombre: s.nombre, nombreSysneo: s.nombre_sysneo,
+        activa: s.activa, puntoVenta: s.punto_venta,
+      });
+    });
+    RT_STOCK = stockData.data || [];
+    RT_LOADED = true;
+    document.getElementById('rtUltimaActualizacion').textContent =
+      'Actualizado ' + new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+    renderRTView();
+  } catch (err) {
+    RT_LOADED = false;
+    rtEstado(host, 'error', 'No se pudo cargar el stock desde croma-api. ' + err.message, () => cargarDatosRT(forzar));
+  } finally {
+    RT_LOADING = false;
+  }
+}
+
+function renderRTView() {
+  const host = document.getElementById('rtPanelHost');
+  if (!host) return;
+  if (!RT_LOADED) { rtEstado(host, 'loading', 'Cargando...'); return; }
+  host.replaceChildren();
+  if (RT_VIEW === 'dashboard') renderRTDashboard(host);
+  else if (RT_VIEW === 'ubicaciones') renderRTUbicaciones(host);
+  else if (RT_VIEW === 'stock-bajo') renderRTStockBajo(host);
+  else if (RT_VIEW === 'concentrado') renderRTConcentrado(host);
+  else if (RT_VIEW === 'movimientos') renderRTMovimientos(host);
+  else if (RT_VIEW === 'buscador') renderRTBuscador(host);
+}
+
+function rtCalcularAgregados() {
+  let stockTotal = 0, stockSucursales = 0;
+  const productosConStock = new Set();
+  const porCentro = new Map();
+  RT_STOCK.forEach(r => {
+    stockTotal += r.cantidad_stock;
+    if (r.cantidad_stock > 0) productosConStock.add(r.codigo_producto);
+    porCentro.set(r.centro, (porCentro.get(r.centro) || 0) + r.cantidad_stock);
+  });
+  porCentro.forEach((v, centro) => {
+    const info = RT_CENTRO_INFO.get(centro);
+    if (info && info.activa && info.puntoVenta) stockSucursales += v;
+  });
+  return { stockTotal, stockSucursales, productosConStock: productosConStock.size, porCentro };
+}
+
+function rtStockBajoLista() {
+  return RT_STOCK.filter(r => r.cantidad_stock >= 1 && r.cantidad_stock <= 2)
+    .sort((a, b) => a.cantidad_stock - b.cantidad_stock || a.codigo_producto.localeCompare(b.codigo_producto));
+}
+
+function rtConcentradoLista() {
+  const porProducto = new Map();
+  RT_STOCK.forEach(r => {
+    if (r.cantidad_stock > 0) {
+      if (!porProducto.has(r.codigo_producto)) porProducto.set(r.codigo_producto, []);
+      porProducto.get(r.codigo_producto).push(r);
+    }
+  });
+  const out = [];
+  porProducto.forEach(filas => { if (filas.length === 1) out.push(filas[0]); });
+  return out.sort((a, b) => b.cantidad_stock - a.cantidad_stock);
+}
+
+function rtAbrirDetalleDesdeTabla(codigo) {
+  RT_VIEW = 'buscador';
+  document.querySelectorAll('#rtTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.view === 'buscador'));
+  renderRTView();
+  rtVerDetalle(codigo);
+}
+
+function rtTablaUbicacionCantidad(host, titulo, notaTexto, filas, totalReal, limite) {
+  const panel = rtEl('div', { className:'panel' });
+  const ph = rtEl('div', { className:'ph' });
+  ph.appendChild(rtEl('h3', { text: titulo }));
+  ph.appendChild(rtEl('span', { className:'pnote', text: totalReal + ' registros' }));
+  panel.appendChild(ph);
+
+  const mostrar = filas.slice(0, limite);
+  if (mostrar.length === 0) {
+    panel.appendChild(rtEl('div', { className:'empty', text:'Sin registros.' }));
+  } else {
+    const wrap = rtEl('div', { className:'scroll' });
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    ['Código', 'Ubicación', 'Cantidad'].forEach(t => trh.appendChild(rtEl('th', { className:'ns', text:t })));
+    thead.appendChild(trh);
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    mostrar.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', () => rtAbrirDetalleDesdeTabla(r.codigo_producto));
+      const tdCod = document.createElement('td');
+      tdCod.appendChild(rtEl('span', { className:'cod', text: r.codigo_producto }));
+      tr.appendChild(tdCod);
+      const tdUbi = document.createElement('td');
+      tdUbi.appendChild(rtBadgeUbicacion(r.centro));
+      tr.appendChild(tdUbi);
+      tr.appendChild(rtEl('td', { className:'nr', text: nf.format(r.cantidad_stock) }));
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    panel.appendChild(wrap);
+    if (totalReal > limite) {
+      panel.appendChild(rtEl('div', { className:'rt-note', text: 'Mostrando ' + limite + ' de ' + totalReal + ' registros. Usá el buscador para un producto puntual.' }));
+    }
+  }
+  panel.appendChild(rtEl('div', { className:'rt-note', text: notaTexto }));
+  host.appendChild(panel);
+}
+
+function renderRTStockBajo(host) {
+  const todas = rtStockBajoLista();
+  rtTablaUbicacionCantidad(
+    host, 'Stock bajo por producto y ubicación',
+    'Calculado a nivel producto y centro — sin desglose masivo de talle/color, sin depósito 90/93 (esa tabla no informa esos valores en bloque). Hacé click en un producto para ver el detalle real, incluyendo depósito 90 y depósito 93.',
+    todas, todas.length, 200
+  );
+}
+
+function renderRTConcentrado(host) {
+  const todas = rtConcentradoLista();
+  rtTablaUbicacionCantidad(
+    host, 'Stock concentrado en centros y sucursales',
+    'Productos que, dentro de lo que informa /stock, solo tienen stock en una ubicación — no es necesariamente la única ubicación de toda la empresa: podría haber stock adicional en Depósito Central (90) o Fallados (93) que esta tabla no ve. Es información de posición de stock, no de rotación.',
+    todas, todas.length, 200
+  );
+}
+
+function renderRTUbicaciones(host) {
+  const ag = rtCalcularAgregados();
+  const panel = rtEl('div', { className:'panel' });
+  const ph = rtEl('div', { className:'ph' });
+  ph.appendChild(rtEl('h3', { text:'Stock por ubicación' }));
+  panel.appendChild(ph);
+
+  const filas = [...ag.porCentro.entries()].map(([centro, stock]) => ({ centro, stock, info: RT_CENTRO_INFO.get(centro) }));
+  filas.sort((a, b) => {
+    const aComercial = a.info && a.info.puntoVenta;
+    const bComercial = b.info && b.info.puntoVenta;
+    if (aComercial !== bComercial) return aComercial ? -1 : 1;
+    return (a.info ? a.info.nombre : a.centro).localeCompare(b.info ? b.info.nombre : b.centro);
+  });
+
+  const wrap = rtEl('div', { className:'scroll' });
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const trh = document.createElement('tr');
+  ['Ubicación', 'Tipo', 'Stock'].forEach(t => trh.appendChild(rtEl('th', { className:'ns', text:t })));
+  thead.appendChild(trh);
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  filas.forEach(({ centro, stock, info }) => {
+    const tr = document.createElement('tr');
+    const tdNom = document.createElement('td');
+    tdNom.appendChild(rtBadgeUbicacion(centro));
+    tr.appendChild(tdNom);
+    const tdTipo = document.createElement('td');
+    const esComercial = info && info.puntoVenta;
+    tdTipo.appendChild(rtEl('span', { className:'tag', text: esComercial ? 'Sucursal comercial' : 'No comercial' }));
+    tr.appendChild(tdTipo);
+    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(stock) }));
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  panel.appendChild(wrap);
+  panel.appendChild(rtEl('div', { className:'rt-note', text:'No incluye Depósito Central 90 ni Fallados 93. Esas ubicaciones están disponibles en la consulta individual por producto (pestaña Buscador).' }));
+  host.appendChild(panel);
+}
+
+function renderRTDashboard(host) {
+  const ag = rtCalcularAgregados();
+
+  function kpi(label, value, sub, hero) {
+    const d = rtEl('div', { className:'kpi' + (hero ? ' hero' : '') });
+    d.appendChild(rtEl('div', { className:'kl', text:label }));
+    d.appendChild(rtEl('div', { className:'kv', text:value }));
+    if (sub) d.appendChild(rtEl('div', { className:'ks', text:sub }));
+    return d;
+  }
+
+  const kpis = rtEl('div', { className:'kpis' });
+  kpis.appendChild(kpi('Stock en centros y sucursales', nf.format(ag.stockTotal), 'No incluye Depósito Central 90 ni Fallados 93', true));
+  kpis.appendChild(kpi('Stock en sucursales comerciales', nf.format(ag.stockSucursales)));
+  kpis.appendChild(kpi('Productos con stock', nf.format(ag.productosConStock)));
+  kpis.appendChild(kpi('Registros con stock bajo (1-2u)', nf.format(rtStockBajoLista().length)));
+  host.appendChild(kpis);
+
+  host.appendChild(rtEl('p', { className:'footnote', text:'Depósito Central (90) y Fallados (93) no están incluidos en estos números — no hay un endpoint que traiga el total agregado de esas ubicaciones todavía. Se pueden consultar por producto individual en la pestaña Buscador.' }));
+
+  const panel = rtEl('div', { className:'panel' });
+  const ph = rtEl('div', { className:'ph' });
+  ph.appendChild(rtEl('h3', { text:'Stock por sucursal comercial' }));
+  panel.appendChild(ph);
+  const pad = rtEl('div');
+  pad.style.padding = '14px 18px';
+  const comerciales = [...ag.porCentro.entries()]
+    .filter(([c]) => { const info = RT_CENTRO_INFO.get(c); return info && info.puntoVenta; })
+    .sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...comerciales.map(([, v]) => v));
+  comerciales.forEach(([centro, v]) => {
+    const row = rtEl('div', { className:'mini-row' });
+    row.appendChild(rtEl('div', { className:'mini-label', text: rtNombreCentro(centro) }));
+    const bar = rtEl('div', { className:'mini-bar' });
+    const span = rtEl('span', { className:'rt-bar-fill' });
+    span.style.width = Math.round(v / max * 100) + '%';
+    bar.appendChild(span);
+    row.appendChild(bar);
+    row.appendChild(rtEl('div', { className:'mini-val', text: nf.format(v) }));
+    pad.appendChild(row);
+  });
+  panel.appendChild(pad);
+  host.appendChild(panel);
+}
+
+function rtDedupProductos(filas) {
+  const vistos = new Set(); const out = [];
+  filas.forEach(f => {
+    const cod = (f.codigo_producto || '').trim();
+    if (!cod || vistos.has(cod)) return;
+    vistos.add(cod); out.push(f);
+  });
+  return out;
+}
+
+function renderRTBuscador(host) {
+  const wrap = rtEl('div');
+  const searchBar = rtEl('div', { className:'rt-search' });
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = 'rtBuscarInput';
+  input.placeholder = 'Buscar producto por código o nombre...';
+  input.autocomplete = 'off';
+  input.addEventListener('input', rtOnBuscarInput);
+  searchBar.appendChild(input);
+  wrap.appendChild(searchBar);
+
+  wrap.appendChild(rtEl('div', { className:'rt-results', attrs:{ id:'rtResultados' } }));
+  wrap.appendChild(rtEl('div', { attrs:{ id:'rtDetalle' } }));
+  wrap.appendChild(rtEl('div', { attrs:{ id:'rtBuscarEstado' } }));
+  host.appendChild(wrap);
+
+  if (RT_BUSCAR_ULTIMA && RT_BUSCAR_ULTIMA.tipo === 'buscar') input.value = RT_BUSCAR_ULTIMA.q;
+  if (!RT_BUSCAR_ULTIMA) {
+    rtEstado(document.getElementById('rtBuscarEstado'), 'vacio', 'Buscá un producto por código o nombre para ver su stock.');
+  } else if (RT_BUSCAR_ULTIMA.tipo === 'detalle') {
+    rtVerDetalle(RT_BUSCAR_ULTIMA.codigo);
+  } else if (RT_BUSCAR_ULTIMA.tipo === 'buscar') {
+    rtBuscar(RT_BUSCAR_ULTIMA.q);
+  }
+}
+
+function rtOnBuscarInput(e) {
+  const texto = e.target.value.trim();
+  clearTimeout(RT_BUSCAR_DEBOUNCE);
+  if (texto.length < 2) {
+    if (RT_BUSCAR_ABORT) { RT_BUSCAR_ABORT.abort(); RT_BUSCAR_ABORT = null; }
+    RT_BUSCAR_ULTIMA = null;
+    document.getElementById('rtResultados').replaceChildren();
+    document.getElementById('rtDetalle').replaceChildren();
+    rtEstado(document.getElementById('rtBuscarEstado'), 'vacio', 'Buscá un producto por código o nombre para ver su stock.');
+    return;
+  }
+  RT_BUSCAR_DEBOUNCE = setTimeout(() => rtBuscar(texto), 350);
+}
+
+async function rtBuscar(texto) {
+  RT_BUSCAR_ULTIMA = { tipo:'buscar', q: texto };
+  if (RT_BUSCAR_ABORT) RT_BUSCAR_ABORT.abort();
+  const miSeq = ++RT_BUSCAR_SEQ;
+  const controller = new AbortController();
+  RT_BUSCAR_ABORT = controller;
+  document.getElementById('rtDetalle').replaceChildren();
+  rtEstado(document.getElementById('rtBuscarEstado'), 'loading', 'Buscando...');
+  try {
+    const url = STOCK_API_URL + '/productos?q=' + encodeURIComponent(texto);
+    const resp = await fetch(url, { signal: controller.signal });
+    if (miSeq !== RT_BUSCAR_SEQ) return;
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (miSeq !== RT_BUSCAR_SEQ) return;
+    if (!data.ok) throw new Error(data.error || 'Error de la API');
+    const productos = rtDedupProductos(data.data || []);
+    if (productos.length === 0) {
+      document.getElementById('rtResultados').replaceChildren();
+      rtEstado(document.getElementById('rtBuscarEstado'), 'vacio', 'No se encontraron productos para «' + texto + '».');
+      return;
+    }
+    rtEstado(document.getElementById('rtBuscarEstado'), 'ninguno');
+    rtRenderResultados(productos);
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    if (miSeq !== RT_BUSCAR_SEQ) return;
+    document.getElementById('rtResultados').replaceChildren();
+    rtEstado(document.getElementById('rtBuscarEstado'), 'error', 'No se pudo conectar con la API de stock. ' + err.message, () => rtBuscar(texto));
+  }
+}
+
+function rtRenderResultados(productos) {
+  const cont = document.getElementById('rtResultados');
+  cont.replaceChildren();
+  productos.forEach(p => {
+    const item = rtEl('button', { className:'rt-result-item' });
+    item.type = 'button';
+    item.appendChild(rtEl('span', { className:'rt-result-cod', text: p.codigo_producto }));
+    item.appendChild(rtEl('span', { className:'rt-result-desc', text: p.descripcion || '(sin descripción)' }));
+    const meta = [p.marca, p.rubro].filter(Boolean).join(' · ');
+    if (meta) item.appendChild(rtEl('span', { className:'rt-result-meta', text: meta }));
+    item.addEventListener('click', () => rtVerDetalle(p.codigo_producto));
+    cont.appendChild(item);
+  });
+}
+
+async function rtVerDetalle(codigo) {
+  RT_BUSCAR_ULTIMA = { tipo:'detalle', codigo: codigo };
+  if (RT_BUSCAR_ABORT) RT_BUSCAR_ABORT.abort();
+  const miSeq = ++RT_BUSCAR_SEQ;
+  const controller = new AbortController();
+  RT_BUSCAR_ABORT = controller;
+  document.getElementById('rtResultados').replaceChildren();
+  rtEstado(document.getElementById('rtBuscarEstado'), 'loading', 'Cargando detalle...');
+  try {
+    const url = STOCK_API_URL + '/stock/producto/' + encodeURIComponent(codigo);
+    const resp = await fetch(url, { signal: controller.signal });
+    if (miSeq !== RT_BUSCAR_SEQ) return;
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (miSeq !== RT_BUSCAR_SEQ) return;
+    if (!data.ok) throw new Error(data.error || 'Error de la API');
+    rtEstado(document.getElementById('rtBuscarEstado'), 'ninguno');
+    rtRenderDetalle(codigo, data.data || []);
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    if (miSeq !== RT_BUSCAR_SEQ) return;
+    document.getElementById('rtDetalle').replaceChildren();
+    rtEstado(document.getElementById('rtBuscarEstado'), 'error', 'No se pudo obtener el stock de este producto. ' + err.message, () => rtVerDetalle(codigo));
+  }
+}
+
+function rtRenderDetalle(codigo, filas) {
+  const cont = document.getElementById('rtDetalle');
+  cont.replaceChildren();
+  const total = filas.reduce((acc, f) => acc + (Number(f.cantidad_stock) || 0), 0);
+
+  const header = rtEl('div', { className:'rt-detalle-header' });
+  header.appendChild(rtEl('span', { className:'rt-detalle-titulo', text:'Producto ' + codigo }));
+  const totalEl = rtEl('span', { className:'rt-detalle-total' });
+  totalEl.appendChild(document.createTextNode('Stock total: '));
+  totalEl.appendChild(rtEl('b', { text: String(total) }));
+  header.appendChild(totalEl);
+  cont.appendChild(header);
+
+  if (filas.length === 0) {
+    cont.appendChild(rtEl('p', { className:'rt-result-meta', text:'Sin filas de stock para este producto.' }));
+    return;
+  }
+
+  filas.forEach(f => {
+    const clas = rtClasificarDetalle(f);
+    const sinStock = !(Number(f.cantidad_stock) > 0);
+    const fila = rtEl('div', { className:'rt-fila' + (sinStock ? ' rt-fila-sinstock' : '') });
+    fila.appendChild(rtEl('span', { className:'sb ' + clas.cls, text: clas.esDeposito ? 'DEPÓSITO' : 'SUCURSAL' }));
+    const info = rtEl('div', { className:'rt-fila-info' });
+    info.appendChild(rtEl('span', { className:'rt-fila-nombre', text: clas.nombre }));
+    const variante = [];
+    if (f.talle) variante.push('Talle ' + f.talle);
+    if (f.color) variante.push('Color ' + f.color);
+    if (variante.length) info.appendChild(rtEl('span', { className:'rt-fila-variante', text: variante.join(' · ') }));
+    fila.appendChild(info);
+    fila.appendChild(rtEl('span', { className:'rt-fila-cantidad', text: String(f.cantidad_stock != null ? f.cantidad_stock : '—') }));
+    cont.appendChild(fila);
+  });
+}
+
+function renderRTMovimientos(host) {
+  const wrap = rtEl('div');
+  const bar = rtEl('div', { className:'fbar' });
+
+  const fcSuc = rtEl('div', { className:'fc fc-sel' });
+  fcSuc.appendChild(rtEl('label', { text:'Sucursal' }));
+  const selSuc = document.createElement('select');
+  selSuc.id = 'rtMovSuc';
+  selSuc.appendChild(rtEl('option', { text:'Todas', attrs:{ value:'' } }));
+  (RT_SUCURSALES || []).filter(s => s.activa).forEach(s => {
+    selSuc.appendChild(rtEl('option', { text: s.nombre, attrs:{ value: s.centro } }));
+  });
+  fcSuc.appendChild(selSuc);
+  bar.appendChild(fcSuc);
+
+  const fcDias = rtEl('div', { className:'fc fc-sel' });
+  fcDias.appendChild(rtEl('label', { text:'Días' }));
+  const selDias = document.createElement('select');
+  selDias.id = 'rtMovDias';
+  [1, 7, 15, 30].forEach(d => selDias.appendChild(rtEl('option', { text: d + ' días', attrs:{ value:String(d) } })));
+  selDias.value = '7';
+  fcDias.appendChild(selDias);
+  bar.appendChild(fcDias);
+
+  const fcCod = rtEl('div', { className:'fc fc-search' });
+  fcCod.appendChild(rtEl('label', { text:'Código' }));
+  const inCod = document.createElement('input');
+  inCod.type = 'text'; inCod.id = 'rtMovCod'; inCod.placeholder = 'Opcional';
+  fcCod.appendChild(inCod);
+  bar.appendChild(fcCod);
+
+  wrap.appendChild(bar);
+  wrap.appendChild(rtEl('div', { attrs:{ id:'rtMovPanel' } }));
+  host.appendChild(wrap);
+
+  [selSuc, selDias].forEach(el => el.addEventListener('change', rtCargarMovimientos));
+  inCod.addEventListener('input', () => {
+    clearTimeout(RT_BUSCAR_DEBOUNCE);
+    RT_BUSCAR_DEBOUNCE = setTimeout(rtCargarMovimientos, 350);
+  });
+
+  rtCargarMovimientos();
+}
+
+async function rtCargarMovimientos() {
+  const panel = document.getElementById('rtMovPanel');
+  if (!panel) return;
+  const suc = document.getElementById('rtMovSuc').value;
+  const dias = document.getElementById('rtMovDias').value;
+  const cod = document.getElementById('rtMovCod').value.trim();
+
+  if (RT_MOV_ABORT) RT_MOV_ABORT.abort();
+  const miSeq = ++RT_MOV_SEQ;
+  const controller = new AbortController();
+  RT_MOV_ABORT = controller;
+  rtEstado(panel, 'loading', 'Cargando movimientos...');
+
+  const params = new URLSearchParams();
+  params.set('dias', dias);
+  if (suc) params.set('sucursal', suc);
+  if (cod) params.set('codigo', cod);
+
+  try {
+    const resp = await fetch(STOCK_API_URL + '/movimientos?' + params.toString(), { signal: controller.signal });
+    if (miSeq !== RT_MOV_SEQ) return;
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (miSeq !== RT_MOV_SEQ) return;
+    if (!data.ok) throw new Error(data.error || 'Error de la API');
+    rtRenderMovimientos(panel, data.data || [], data.total || 0);
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    if (miSeq !== RT_MOV_SEQ) return;
+    rtEstado(panel, 'error', 'No se pudieron cargar los movimientos. ' + err.message, rtCargarMovimientos);
+  }
+}
+
+function rtRenderMovimientos(panel, filas, total) {
+  panel.replaceChildren();
+  if (filas.length === 0) {
+    panel.appendChild(rtEl('div', { className:'empty', text:'Sin movimientos en este período.' }));
+    return;
+  }
+  const cont = rtEl('div', { className:'panel' });
+  if (total === 500) {
+    cont.appendChild(rtEl('div', { className:'rt-note', text:'Se alcanzó el límite de 500 movimientos. Aplicá un período, sucursal o código más específico para obtener un resultado completo.' }));
+  }
+  const wrap = rtEl('div', { className:'scroll' });
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const trh = document.createElement('tr');
+  ['Fecha', 'Sucursal', 'Código', 'Talle', 'Color', 'Cantidad', 'Tipo (crudo)'].forEach(t => trh.appendChild(rtEl('th', { className:'ns', text:t })));
+  thead.appendChild(trh);
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  filas.forEach(m => {
+    const tr = document.createElement('tr');
+    const fecha = m.fecha ? new Date(m.fecha) : null;
+    tr.appendChild(rtEl('td', { text: fecha ? fmtD(fecha) : '—' }));
+    const tdSuc = document.createElement('td');
+    tdSuc.appendChild(rtBadgeUbicacion(m.centro));
+    tr.appendChild(tdSuc);
+    tr.appendChild(rtEl('td', { className:'cod', text: m.codigo_producto }));
+    tr.appendChild(rtEl('td', { text: m.talle || '—' }));
+    tr.appendChild(rtEl('td', { text: m.color || '—' }));
+    tr.appendChild(rtEl('td', { className:'nr', text: String(m.cantidad) }));
+    const tdTipo = document.createElement('td');
+    tdTipo.appendChild(rtEl('span', { className:'tag', text: String(m.tipo_comprobante) }));
+    tr.appendChild(tdTipo);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  cont.appendChild(wrap);
+  cont.appendChild(rtEl('div', { className:'rt-note', text:'Movimiento crudo de Sysneo — todavía no se puede confirmar si corresponde a una venta, transferencia o ajuste (el código de "tipo" no tiene descripción disponible en la API). No usar para calcular ventas.' }));
+  panel.appendChild(cont);
+}
+
 function dbOpen() {
   return new Promise((res, rej) => {
     const req = indexedDB.open('croma-analisis', 1);
