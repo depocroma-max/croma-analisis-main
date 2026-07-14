@@ -167,6 +167,29 @@
     .mode-badge.gen{background:var(--violet-s);color:var(--violet)}
     .mode-badge.tyc{background:var(--teal-s);color:var(--teal)}
     .mode-badge.rt{background:var(--accent-s);color:var(--accent)}
+
+    /* Tiempo real — periodo, tablas, paginacion, chips */
+    .rt-periodo-label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--gray-400)}
+    .rt-periodo-input{padding:5px 8px!important;font-size:12.5px!important}
+    .rt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+    .rt-kpi{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r);padding:14px}
+    .rt-kpi .rt-kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400)}
+    .rt-kpi .rt-kpi-valor{font-family:var(--font-d);font-size:26px;margin-top:2px}
+    .rt-table-wrap{overflow-x:auto;background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r)}
+    table.rt-table{width:100%;border-collapse:collapse;font-size:13px}
+    table.rt-table th{text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+      color:var(--gray-400);padding:9px 12px;border-bottom:1px solid var(--gray-100);white-space:nowrap}
+    table.rt-table td{padding:9px 12px;border-bottom:1px solid var(--gray-50);white-space:nowrap}
+    table.rt-table tbody tr.rt-row-click{cursor:pointer}
+    table.rt-table tbody tr.rt-row-click:hover{background:var(--gray-50)}
+    .rt-filtro-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-s);color:var(--accent);
+      font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:99px;margin-bottom:12px}
+    .rt-filtro-chip button{background:none;border:none;cursor:pointer;color:inherit;font-weight:700;padding:0 2px}
+    .rt-pagination{display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:10px 12px;font-size:12.5px;color:var(--gray-400)}
+    .rt-progress{font-size:12.5px;color:var(--gray-400);display:flex;align-items:center;gap:8px;margin:8px 0}
+    .rt-buscador-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    .rt-buscador-row input,.rt-buscador-row select{font:inherit;font-size:13px;border:1px solid var(--gray-200);
+      border-radius:8px;padding:7px 11px;background:var(--gray-50)}
     .btn-primary{font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--black);
       border:none;border-radius:9px;padding:8px 14px;cursor:pointer;transition:.15s;
       display:inline-flex;align-items:center;gap:6px}
@@ -468,6 +491,8 @@
     <div id="rtApp" hidden>
       <div class="fbar" id="rtBar">
         <span class="mode-badge rt">Tiempo real</span>
+        <label class="rt-periodo-label">Desde <input type="date" id="rtDesde" class="form-control rt-periodo-input"></label>
+        <label class="rt-periodo-label">Hasta <input type="date" id="rtHasta" class="form-control rt-periodo-input"></label>
         <span class="fname" id="rtUltimaActualizacion"></span>
         <div class="fbar-end">
           <button class="btn-sm" id="rtBtnActualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Actualizar</button>
@@ -476,11 +501,13 @@
       </div>
       <div class="tabs" id="rtTabs" role="tablist">
         <button class="tab active" data-view="dashboard">Dashboard</button>
-        <button class="tab" data-view="ubicaciones">Stock por ubicación</button>
-        <button class="tab" data-view="stock-bajo">Stock bajo</button>
-        <button class="tab" data-view="concentrado">Stock concentrado</button>
-        <button class="tab" data-view="movimientos">Últimos movimientos</button>
-        <button class="tab" data-view="buscador">Buscador</button>
+        <button class="tab" data-view="marcas">Marcas</button>
+        <button class="tab" data-view="rubros">Rubros</button>
+        <button class="tab" data-view="subrubros">Subrubros</button>
+        <button class="tab" data-view="sucursales">Sucursales</button>
+        <button class="tab" data-view="productos">Productos</button>
+        <button class="tab" data-view="talles-colores">Talles y colores</button>
+        <button class="tab" data-view="oportunidades">Oportunidades</button>
       </div>
       <div id="rtPanelHost"></div>
     </div>
@@ -546,25 +573,8 @@ let RAW = [], COLS = {}, REF_DATE = null;
 let VIEW = '', OPP_SUB = 'parado';
 let SORT = { view:null, col:null, dir:-1 };
 
-// ── Tiempo real (croma-api) — estado propio, no comparte nada con RAW/COLS/VIEW ──
-let RT_STOCK = null;       // array crudo de /stock (una vez por sesión de modo)
-let RT_SUCURSALES = null;  // array crudo de /sucursales
-let RT_CENTRO_INFO = null; // Map centro -> { nombre, cls, activa, puntoVenta }
-let RT_VIEW = 'dashboard';
-let RT_LOADED = false;
-let RT_LOADING = false;
-let RT_BUSCAR_ULTIMA = null; // { tipo:'buscar', q } | { tipo:'detalle', codigo } — para "Reintentar"
-let RT_BUSCAR_ABORT = null;
-let RT_BUSCAR_SEQ = 0;
-let RT_BUSCAR_DEBOUNCE = null;
-let RT_MOV_ABORT = null;
-let RT_MOV_SEQ = 0;
-
-// Mismos colores/clases de sucursal que ya usa el resto de la app (SGEN), mapeados por
-// centro de croma-api. Depósito 90/93 NO están acá — son tipo:"deposito", no sucursales.
-const RT_CENTRO_CLS = {
-  '0001':'s01', '0005':'s05', '0009':'s09', '0010':'s10', '0012':'s12', '0014':'s14',
-};
+// El estado del modo Tiempo real (RT_*) se declara junto con sus funciones,
+// mas abajo en este mismo archivo (bloque "Tiempo real (croma-api)").
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 function getToken() { return sessionStorage.getItem('croma_token') || localStorage.getItem('croma_token'); }
@@ -617,14 +627,13 @@ function setup() {
   });
 
   document.getElementById('rtBtnVolver').addEventListener('click', resetApp);
-  document.getElementById('rtBtnActualizar').addEventListener('click', () => cargarDatosRT(true));
+  document.getElementById('rtBtnActualizar').addEventListener('click', () => { RT_DETALLE = null; RT_COMPLETO = null; rtCargarResumen(); if (RT_FILTRO) rtCargarPaginaDetalle(); });
   document.getElementById('rtTabs').addEventListener('click', e => {
     const btn = e.target.closest('.tab'); if (!btn) return;
-    document.querySelectorAll('#rtTabs .tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    RT_VIEW = btn.dataset.view;
-    renderRTView();
+    rtCambiarVista(btn.dataset.view);
   });
+  document.getElementById('rtDesde').addEventListener('change', rtCambiarPeriodo);
+  document.getElementById('rtHasta').addEventListener('change', rtCambiarPeriodo);
 
   const dz = document.getElementById('uploadZone');
   const fi = document.getElementById('fileInput');
@@ -714,11 +723,12 @@ function resetApp() {
 
   // Tiempo real
   document.getElementById('rtApp').hidden = true;
-  if (RT_BUSCAR_ABORT) { RT_BUSCAR_ABORT.abort(); RT_BUSCAR_ABORT = null; }
-  if (RT_MOV_ABORT) { RT_MOV_ABORT.abort(); RT_MOV_ABORT = null; }
-  RT_STOCK = null; RT_SUCURSALES = null; RT_CENTRO_INFO = null;
-  RT_VIEW = 'dashboard'; RT_LOADED = false; RT_LOADING = false;
-  RT_BUSCAR_ULTIMA = null; RT_BUSCAR_SEQ = 0;
+  if (RT_RESUMEN_ABORT) { RT_RESUMEN_ABORT.abort(); RT_RESUMEN_ABORT = null; }
+  if (RT_DETALLE_ABORT) { RT_DETALLE_ABORT.abort(); RT_DETALLE_ABORT = null; }
+  if (RT_COMPLETO_ABORT) { RT_COMPLETO_ABORT.abort(); RT_COMPLETO_ABORT = null; }
+  RT_RESUMEN = null; RT_RESUMEN_LOADING = false; RT_RESUMEN_ERROR = null;
+  RT_FILTRO = null; RT_DETALLE = null; RT_DETALLE_OFFSET = 0; RT_COMPLETO = null;
+  RT_VIEW = 'dashboard';
   document.querySelectorAll('#rtTabs .tab').forEach((t,i) => t.classList.toggle('active', i===0));
 }
 
@@ -726,6 +736,30 @@ function resetApp() {
 // ── Tiempo real (croma-api) ─────────────────────────────────────────────────
 // Construcción de DOM sin innerHTML sobre datos de la API. opts.html queda
 // reservado solo para fragmentos estáticos (nunca usado con datos de croma-api).
+// Fuentes: /analisis/resumen (dashboard, marcas, rubros, subrubros, sucursales —
+// agregados en el servidor, nunca se baja el detalle completo) y /analisis/stock-ventas
+// (productos, talles y colores, oportunidades — exige filtro, pagina de a 100/500).
+const RT_CENTROS = ['0001','0005','0009','0010','0012','0014'];
+const RT_CENTRO_NOMBRE = {
+  '0001':'01 Paseo', '0005':'05 Wave', '0009':'09 Cipo San Martín',
+  '0010':'10 Perito Moreno', '0012':'12 Centenario', '0014':'14 Roca',
+};
+const RT_CENTRO_CLS = { '0001':'s01', '0005':'s05', '0009':'s09', '0010':'s10', '0012':'s12', '0014':'s14' };
+const RT_LIMITE_PAGINA = 100;
+const RT_LIMITE_PAGINAS_COMPLETO = 20; // tope de seguridad: 20 * 500 = 10.000 filas
+
+let RT_DESDE = null, RT_HASTA = null;
+let RT_VIEW = 'dashboard';
+let RT_RESUMEN = null, RT_RESUMEN_LOADING = false, RT_RESUMEN_ERROR = null, RT_RESUMEN_ABORT = null;
+let RT_FILTRO = null; // { marca } | { rubro } | { rubro, subrubro } | { codigo } | null
+let RT_DETALLE = null; // ultima respuesta paginada de /stock-ventas para RT_FILTRO
+let RT_DETALLE_OFFSET = 0;
+let RT_DETALLE_LOADING = false, RT_DETALLE_ERROR = null;
+let RT_DETALLE_ABORT = null, RT_DETALLE_SEQ = 0;
+let RT_COMPLETO = null; // { filtroKey, filas, capado }
+let RT_COMPLETO_LOADING = false, RT_COMPLETO_ERROR = null, RT_COMPLETO_PROGRESO = 0;
+let RT_COMPLETO_ABORT = null, RT_COMPLETO_SEQ = 0;
+
 function rtEl(tag, opts) {
   const e = document.createElement(tag);
   if (opts) {
@@ -759,551 +793,521 @@ function rtEstado(container, tipo, mensaje, onRetry) {
   container.appendChild(box);
 }
 
-function rtNombreCentro(centro) {
-  const info = RT_CENTRO_INFO && RT_CENTRO_INFO.get(centro);
-  return info ? info.nombre : centro;
+function rtFmtFecha(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
 }
 
-function rtBadgeUbicacion(centro) {
-  const cls = centro === '0000' ? 's00' : (RT_CENTRO_CLS[centro] || 's00');
-  return rtEl('span', { className:'sb ' + cls, text: rtNombreCentro(centro) });
+function rtPeriodoDefecto() {
+  const hoy = new Date();
+  const hace90 = new Date(hoy.getTime() - 90 * 864e5);
+  const fmt = d => d.toISOString().slice(0, 10);
+  return { desde: fmt(hace90), hasta: fmt(hoy) };
 }
 
-// Clasificación corregida: centro (tipo:"sucursal", incluye centro "0000"/DEPO) y
-// depósito (tipo:"deposito", código numérico 90/93) son DOS tablas distintas de Sysneo
-// que nunca se combinan. Solo deposito:90 es "Depósito Central (DEPO)"; centro "0000"
-// muestra su nombre real de /sucursales, nunca se renombra como depósito 90.
-function rtClasificarDetalle(f) {
-  if (f.tipo === 'deposito') {
-    if (Number(f.deposito) === 90) return { esDeposito:true, nombre:'Depósito Central (DEPO)', cls:'dep90' };
-    if (Number(f.deposito) === 93) return { esDeposito:true, nombre:'Fallados', cls:'dep93' };
-    return { esDeposito:true, nombre: f.nombre || ('Depósito ' + f.deposito), cls:'dep90' };
-  }
-  const cls = f.centro === '0000' ? 's00' : (RT_CENTRO_CLS[f.centro] || 's00');
-  return { esDeposito:false, nombre: rtNombreCentro(f.centro), cls };
-}
-
+// ── Arranque y período (recordado durante la sesión) ────────────────────────
 function iniciarModoRT() {
-  if (!RT_LOADED && !RT_LOADING) cargarDatosRT(false);
-  else renderRTView();
+  const guardado = sessionStorage.getItem('rt_periodo');
+  let periodo = null;
+  if (guardado) { try { periodo = JSON.parse(guardado); } catch (e) {} }
+  if (!periodo || !periodo.desde || !periodo.hasta) periodo = rtPeriodoDefecto();
+  RT_DESDE = periodo.desde; RT_HASTA = periodo.hasta;
+  document.getElementById('rtDesde').value = RT_DESDE;
+  document.getElementById('rtHasta').value = RT_HASTA;
+  rtCargarResumen();
 }
 
-async function cargarDatosRT(forzar) {
-  if (RT_LOADING) return;
-  if (RT_LOADED && !forzar) { renderRTView(); return; }
-  RT_LOADING = true;
-  const host = document.getElementById('rtPanelHost');
-  rtEstado(host, 'loading', 'Cargando stock desde Sysneo...');
-  try {
-    const [stockResp, sucResp] = await Promise.all([
-      fetch(STOCK_API_URL + '/stock'),
-      fetch(STOCK_API_URL + '/sucursales'),
-    ]);
-    if (!stockResp.ok) throw new Error('HTTP ' + stockResp.status + ' en /stock');
-    if (!sucResp.ok) throw new Error('HTTP ' + sucResp.status + ' en /sucursales');
-    const stockData = await stockResp.json();
-    const sucData = await sucResp.json();
-    if (!stockData.ok) throw new Error(stockData.error || 'Error de la API en /stock');
-    if (!sucData.ok) throw new Error(sucData.error || 'Error de la API en /sucursales');
+function rtGuardarPeriodo() {
+  sessionStorage.setItem('rt_periodo', JSON.stringify({ desde: RT_DESDE, hasta: RT_HASTA }));
+}
 
-    RT_SUCURSALES = sucData.data || [];
-    RT_CENTRO_INFO = new Map();
-    RT_SUCURSALES.forEach(s => {
-      RT_CENTRO_INFO.set(s.centro, {
-        nombre: s.nombre, nombreSysneo: s.nombre_sysneo,
-        activa: s.activa, puntoVenta: s.punto_venta,
-      });
-    });
-    RT_STOCK = stockData.data || [];
-    RT_LOADED = true;
+function rtCambiarPeriodo() {
+  const desde = document.getElementById('rtDesde').value;
+  const hasta = document.getElementById('rtHasta').value;
+  if (!desde || !hasta) return;
+  if (desde === RT_DESDE && hasta === RT_HASTA) return;
+  RT_DESDE = desde; RT_HASTA = hasta;
+  rtGuardarPeriodo();
+  RT_DETALLE = null; RT_COMPLETO = null;
+  if (RT_COMPLETO_ABORT) { RT_COMPLETO_ABORT.abort(); RT_COMPLETO_ABORT = null; }
+  if (RT_DETALLE_ABORT) { RT_DETALLE_ABORT.abort(); RT_DETALLE_ABORT = null; }
+  rtCargarResumen();
+}
+
+async function rtCargarResumen() {
+  if (RT_RESUMEN_ABORT) RT_RESUMEN_ABORT.abort();
+  const controller = new AbortController();
+  RT_RESUMEN_ABORT = controller;
+  RT_RESUMEN_LOADING = true; RT_RESUMEN_ERROR = null; RT_RESUMEN = null;
+  rtRenderVistaActual();
+  try {
+    const url = STOCK_API_URL + '/analisis/resumen?desde=' + encodeURIComponent(RT_DESDE) + '&hasta=' + encodeURIComponent(RT_HASTA);
+    const resp = await fetch(url, { signal: controller.signal });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    RT_RESUMEN = data;
     document.getElementById('rtUltimaActualizacion').textContent =
       'Actualizado ' + new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
-    renderRTView();
   } catch (err) {
-    RT_LOADED = false;
-    rtEstado(host, 'error', 'No se pudo cargar el stock desde croma-api. ' + err.message, () => cargarDatosRT(forzar));
+    if (err.name === 'AbortError') return;
+    RT_RESUMEN_ERROR = err.message;
   } finally {
-    RT_LOADING = false;
+    RT_RESUMEN_LOADING = false;
+    rtRenderVistaActual();
   }
 }
 
-function renderRTView() {
+// ── Navegación ───────────────────────────────────────────────────────────────
+function rtCambiarVista(view) {
+  RT_VIEW = view;
+  document.querySelectorAll('#rtTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  rtRenderVistaActual();
+}
+
+function rtAplicarFiltroYVer(filtro) {
+  RT_FILTRO = filtro;
+  RT_DETALLE = null; RT_DETALLE_OFFSET = 0; RT_COMPLETO = null;
+  rtCambiarVista('productos');
+  rtCargarPaginaDetalle();
+}
+
+function rtQuitarFiltro() {
+  RT_FILTRO = null;
+  RT_DETALLE = null; RT_DETALLE_OFFSET = 0; RT_COMPLETO = null;
+  rtRenderVistaActual();
+}
+
+function rtFiltroKey() {
+  if (!RT_FILTRO) return null;
+  return JSON.stringify(RT_FILTRO);
+}
+
+function rtFiltroTexto() {
+  if (!RT_FILTRO) return '';
+  if (RT_FILTRO.codigo) return 'Código: ' + RT_FILTRO.codigo;
+  if (RT_FILTRO.rubro && RT_FILTRO.subrubro) return 'Rubro: ' + RT_FILTRO.rubro + ' · Subrubro: ' + RT_FILTRO.subrubro;
+  if (RT_FILTRO.rubro) return 'Rubro: ' + RT_FILTRO.rubro;
+  if (RT_FILTRO.marca) return 'Marca: ' + RT_FILTRO.marca;
+  return '';
+}
+
+function rtRenderVistaActual() {
   const host = document.getElementById('rtPanelHost');
   if (!host) return;
-  if (!RT_LOADED) { rtEstado(host, 'loading', 'Cargando...'); return; }
   host.replaceChildren();
   if (RT_VIEW === 'dashboard') renderRTDashboard(host);
-  else if (RT_VIEW === 'ubicaciones') renderRTUbicaciones(host);
-  else if (RT_VIEW === 'stock-bajo') renderRTStockBajo(host);
-  else if (RT_VIEW === 'concentrado') renderRTConcentrado(host);
-  else if (RT_VIEW === 'movimientos') renderRTMovimientos(host);
-  else if (RT_VIEW === 'buscador') renderRTBuscador(host);
+  else if (RT_VIEW === 'marcas') renderRTGrupo(host, 'marca', 'por_marca', 'Marca');
+  else if (RT_VIEW === 'rubros') renderRTGrupo(host, 'rubro', 'por_rubro', 'Rubro');
+  else if (RT_VIEW === 'subrubros') renderRTSubrubros(host);
+  else if (RT_VIEW === 'sucursales') renderRTSucursales(host);
+  else if (RT_VIEW === 'productos') renderRTProductos(host);
+  else if (RT_VIEW === 'talles-colores') renderRTTallesColores(host);
+  else if (RT_VIEW === 'oportunidades') renderRTOportunidades(host);
 }
 
-function rtCalcularAgregados() {
-  let stockTotal = 0, stockSucursales = 0;
-  const productosConStock = new Set();
-  const porCentro = new Map();
-  RT_STOCK.forEach(r => {
-    stockTotal += r.cantidad_stock;
-    if (r.cantidad_stock > 0) productosConStock.add(r.codigo_producto);
-    porCentro.set(r.centro, (porCentro.get(r.centro) || 0) + r.cantidad_stock);
-  });
-  porCentro.forEach((v, centro) => {
-    const info = RT_CENTRO_INFO.get(centro);
-    if (info && info.activa && info.puntoVenta) stockSucursales += v;
-  });
-  return { stockTotal, stockSucursales, productosConStock: productosConStock.size, porCentro };
-}
-
-function rtStockBajoLista() {
-  return RT_STOCK.filter(r => r.cantidad_stock >= 1 && r.cantidad_stock <= 2)
-    .sort((a, b) => a.cantidad_stock - b.cantidad_stock || a.codigo_producto.localeCompare(b.codigo_producto));
-}
-
-function rtConcentradoLista() {
-  const porProducto = new Map();
-  RT_STOCK.forEach(r => {
-    if (r.cantidad_stock > 0) {
-      if (!porProducto.has(r.codigo_producto)) porProducto.set(r.codigo_producto, []);
-      porProducto.get(r.codigo_producto).push(r);
-    }
-  });
-  const out = [];
-  porProducto.forEach(filas => { if (filas.length === 1) out.push(filas[0]); });
-  return out.sort((a, b) => b.cantidad_stock - a.cantidad_stock);
-}
-
-function rtAbrirDetalleDesdeTabla(codigo) {
-  RT_VIEW = 'buscador';
-  document.querySelectorAll('#rtTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.view === 'buscador'));
-  renderRTView();
-  rtVerDetalle(codigo);
-}
-
-function rtTablaUbicacionCantidad(host, titulo, notaTexto, filas, totalReal, limite) {
-  const panel = rtEl('div', { className:'panel' });
-  const ph = rtEl('div', { className:'ph' });
-  ph.appendChild(rtEl('h3', { text: titulo }));
-  ph.appendChild(rtEl('span', { className:'pnote', text: totalReal + ' registros' }));
-  panel.appendChild(ph);
-
-  const mostrar = filas.slice(0, limite);
-  if (mostrar.length === 0) {
-    panel.appendChild(rtEl('div', { className:'empty', text:'Sin registros.' }));
-  } else {
-    const wrap = rtEl('div', { className:'scroll' });
-    const table = document.createElement('table');
-    const thead = document.createElement('thead');
-    const trh = document.createElement('tr');
-    ['Código', 'Ubicación', 'Cantidad'].forEach(t => trh.appendChild(rtEl('th', { className:'ns', text:t })));
-    thead.appendChild(trh);
-    table.appendChild(thead);
-    const tbody = document.createElement('tbody');
-    mostrar.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.style.cursor = 'pointer';
-      tr.addEventListener('click', () => rtAbrirDetalleDesdeTabla(r.codigo_producto));
-      const tdCod = document.createElement('td');
-      tdCod.appendChild(rtEl('span', { className:'cod', text: r.codigo_producto }));
-      tr.appendChild(tdCod);
-      const tdUbi = document.createElement('td');
-      tdUbi.appendChild(rtBadgeUbicacion(r.centro));
-      tr.appendChild(tdUbi);
-      tr.appendChild(rtEl('td', { className:'nr', text: nf.format(r.cantidad_stock) }));
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    wrap.appendChild(table);
-    panel.appendChild(wrap);
-    if (totalReal > limite) {
-      panel.appendChild(rtEl('div', { className:'rt-note', text: 'Mostrando ' + limite + ' de ' + totalReal + ' registros. Usá el buscador para un producto puntual.' }));
-    }
-  }
-  panel.appendChild(rtEl('div', { className:'rt-note', text: notaTexto }));
-  host.appendChild(panel);
-}
-
-function renderRTStockBajo(host) {
-  const todas = rtStockBajoLista();
-  rtTablaUbicacionCantidad(
-    host, 'Stock bajo por producto y ubicación',
-    'Calculado a nivel producto y centro — sin desglose masivo de talle/color, sin depósito 90/93 (esa tabla no informa esos valores en bloque). Hacé click en un producto para ver el detalle real, incluyendo depósito 90 y depósito 93.',
-    todas, todas.length, 200
-  );
-}
-
-function renderRTConcentrado(host) {
-  const todas = rtConcentradoLista();
-  rtTablaUbicacionCantidad(
-    host, 'Stock concentrado en centros y sucursales',
-    'Productos que, dentro de lo que informa /stock, solo tienen stock en una ubicación — no es necesariamente la única ubicación de toda la empresa: podría haber stock adicional en Depósito Central (90) o Fallados (93) que esta tabla no ve. Es información de posición de stock, no de rotación.',
-    todas, todas.length, 200
-  );
-}
-
-function renderRTUbicaciones(host) {
-  const ag = rtCalcularAgregados();
-  const panel = rtEl('div', { className:'panel' });
-  const ph = rtEl('div', { className:'ph' });
-  ph.appendChild(rtEl('h3', { text:'Stock por ubicación' }));
-  panel.appendChild(ph);
-
-  const filas = [...ag.porCentro.entries()].map(([centro, stock]) => ({ centro, stock, info: RT_CENTRO_INFO.get(centro) }));
-  filas.sort((a, b) => {
-    const aComercial = a.info && a.info.puntoVenta;
-    const bComercial = b.info && b.info.puntoVenta;
-    if (aComercial !== bComercial) return aComercial ? -1 : 1;
-    return (a.info ? a.info.nombre : a.centro).localeCompare(b.info ? b.info.nombre : b.centro);
-  });
-
-  const wrap = rtEl('div', { className:'scroll' });
-  const table = document.createElement('table');
-  const thead = document.createElement('thead');
-  const trh = document.createElement('tr');
-  ['Ubicación', 'Tipo', 'Stock'].forEach(t => trh.appendChild(rtEl('th', { className:'ns', text:t })));
+// ── Tabla genérica ───────────────────────────────────────────────────────────
+function rtTabla(headers, filas, renderFila, opts) {
+  const wrap = rtEl('div', { className:'rt-table-wrap' });
+  const table = rtEl('table', { className:'rt-table' });
+  const thead = rtEl('thead');
+  const trh = rtEl('tr');
+  headers.forEach(h => trh.appendChild(rtEl('th', { text:h })));
   thead.appendChild(trh);
   table.appendChild(thead);
-  const tbody = document.createElement('tbody');
-  filas.forEach(({ centro, stock, info }) => {
-    const tr = document.createElement('tr');
-    const tdNom = document.createElement('td');
-    tdNom.appendChild(rtBadgeUbicacion(centro));
-    tr.appendChild(tdNom);
-    const tdTipo = document.createElement('td');
-    const esComercial = info && info.puntoVenta;
-    tdTipo.appendChild(rtEl('span', { className:'tag', text: esComercial ? 'Sucursal comercial' : 'No comercial' }));
-    tr.appendChild(tdTipo);
-    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(stock) }));
-    tbody.appendChild(tr);
-  });
+  const tbody = rtEl('tbody');
+  filas.forEach(f => tbody.appendChild(renderFila(f)));
   table.appendChild(tbody);
   wrap.appendChild(table);
-  panel.appendChild(wrap);
-  panel.appendChild(rtEl('div', { className:'rt-note', text:'No incluye Depósito Central 90 ni Fallados 93. Esas ubicaciones están disponibles en la consulta individual por producto (pestaña Buscador).' }));
-  host.appendChild(panel);
+  return wrap;
 }
 
+function rtFiltroChip(host) {
+  if (!RT_FILTRO) return;
+  const chip = rtEl('div', { className:'rt-filtro-chip' });
+  chip.appendChild(rtEl('span', { text: rtFiltroTexto() }));
+  const btn = rtEl('button', { text:'✕ quitar' });
+  btn.type = 'button';
+  btn.addEventListener('click', rtQuitarFiltro);
+  chip.appendChild(btn);
+  host.appendChild(chip);
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 function renderRTDashboard(host) {
-  const ag = rtCalcularAgregados();
+  if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando resumen del período...');
+  if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar el resumen. ' + RT_RESUMEN_ERROR, rtCargarResumen);
+  if (!RT_RESUMEN) return rtEstado(host, 'vacio', 'Sin datos.');
+  const t = RT_RESUMEN.totales;
 
-  function kpi(label, value, sub, hero) {
-    const d = rtEl('div', { className:'kpi' + (hero ? ' hero' : '') });
-    d.appendChild(rtEl('div', { className:'kl', text:label }));
-    d.appendChild(rtEl('div', { className:'kv', text:value }));
-    if (sub) d.appendChild(rtEl('div', { className:'ks', text:sub }));
-    return d;
-  }
+  host.appendChild(rtEl('div', { className:'alert alert-info', text: RT_RESUMEN.nota }));
 
-  const kpis = rtEl('div', { className:'kpis' });
-  kpis.appendChild(kpi('Stock en centros y sucursales', nf.format(ag.stockTotal), 'No incluye Depósito Central 90 ni Fallados 93', true));
-  kpis.appendChild(kpi('Stock en sucursales comerciales', nf.format(ag.stockSucursales)));
-  kpis.appendChild(kpi('Productos con stock', nf.format(ag.productosConStock)));
-  kpis.appendChild(kpi('Registros con stock bajo (1-2u)', nf.format(rtStockBajoLista().length)));
+  const kpis = rtEl('div', { className:'rt-kpis' });
+  const kpiDefs = [
+    ['Ventas del período', nf.format(t.Ventas_total)],
+    ['Stock total', nf.format(t.Stock_total)],
+    ['Depósito Central (90 + 93)', nf.format(t.Stock_ctro_0000)],
+    ['Productos base', nf.format(t.productos_base)],
+    ['Variantes con actividad', nf.format(t.variantes)],
+    ['Variantes con stock', nf.format(t.variantes_con_stock)],
+    ['Variantes sin ventas', nf.format(t.variantes_sin_ventas)],
+  ];
+  kpiDefs.forEach(([label, valor]) => {
+    const card = rtEl('div', { className:'rt-kpi' });
+    card.appendChild(rtEl('div', { className:'rt-kpi-label', text:label }));
+    card.appendChild(rtEl('div', { className:'rt-kpi-valor', text:valor }));
+    kpis.appendChild(card);
+  });
   host.appendChild(kpis);
 
-  host.appendChild(rtEl('p', { className:'footnote', text:'Depósito Central (90) y Fallados (93) no están incluidos en estos números — no hay un endpoint que traiga el total agregado de esas ubicaciones todavía. Se pueden consultar por producto individual en la pestaña Buscador.' }));
-
-  const panel = rtEl('div', { className:'panel' });
-  const ph = rtEl('div', { className:'ph' });
-  ph.appendChild(rtEl('h3', { text:'Stock por sucursal comercial' }));
-  panel.appendChild(ph);
-  const pad = rtEl('div');
-  pad.style.padding = '14px 18px';
-  const comerciales = [...ag.porCentro.entries()]
-    .filter(([c]) => { const info = RT_CENTRO_INFO.get(c); return info && info.puntoVenta; })
-    .sort((a, b) => b[1] - a[1]);
-  const max = Math.max(1, ...comerciales.map(([, v]) => v));
-  comerciales.forEach(([centro, v]) => {
-    const row = rtEl('div', { className:'mini-row' });
-    row.appendChild(rtEl('div', { className:'mini-label', text: rtNombreCentro(centro) }));
-    const bar = rtEl('div', { className:'mini-bar' });
-    const span = rtEl('span', { className:'rt-bar-fill' });
-    span.style.width = Math.round(v / max * 100) + '%';
-    bar.appendChild(span);
-    row.appendChild(bar);
-    row.appendChild(rtEl('div', { className:'mini-val', text: nf.format(v) }));
-    pad.appendChild(row);
-  });
-  panel.appendChild(pad);
-  host.appendChild(panel);
-}
-
-function rtDedupProductos(filas) {
-  const vistos = new Set(); const out = [];
-  filas.forEach(f => {
-    const cod = (f.codigo_producto || '').trim();
-    if (!cod || vistos.has(cod)) return;
-    vistos.add(cod); out.push(f);
-  });
-  return out;
-}
-
-function renderRTBuscador(host) {
-  const wrap = rtEl('div');
-  const searchBar = rtEl('div', { className:'rt-search' });
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.id = 'rtBuscarInput';
-  input.placeholder = 'Buscar producto por código o nombre...';
-  input.autocomplete = 'off';
-  input.addEventListener('input', rtOnBuscarInput);
-  searchBar.appendChild(input);
-  wrap.appendChild(searchBar);
-
-  wrap.appendChild(rtEl('div', { className:'rt-results', attrs:{ id:'rtResultados' } }));
-  wrap.appendChild(rtEl('div', { attrs:{ id:'rtDetalle' } }));
-  wrap.appendChild(rtEl('div', { attrs:{ id:'rtBuscarEstado' } }));
-  host.appendChild(wrap);
-
-  if (RT_BUSCAR_ULTIMA && RT_BUSCAR_ULTIMA.tipo === 'buscar') input.value = RT_BUSCAR_ULTIMA.q;
-  if (!RT_BUSCAR_ULTIMA) {
-    rtEstado(document.getElementById('rtBuscarEstado'), 'vacio', 'Buscá un producto por código o nombre para ver su stock.');
-  } else if (RT_BUSCAR_ULTIMA.tipo === 'detalle') {
-    rtVerDetalle(RT_BUSCAR_ULTIMA.codigo);
-  } else if (RT_BUSCAR_ULTIMA.tipo === 'buscar') {
-    rtBuscar(RT_BUSCAR_ULTIMA.q);
-  }
-}
-
-function rtOnBuscarInput(e) {
-  const texto = e.target.value.trim();
-  clearTimeout(RT_BUSCAR_DEBOUNCE);
-  if (texto.length < 2) {
-    if (RT_BUSCAR_ABORT) { RT_BUSCAR_ABORT.abort(); RT_BUSCAR_ABORT = null; }
-    RT_BUSCAR_ULTIMA = null;
-    document.getElementById('rtResultados').replaceChildren();
-    document.getElementById('rtDetalle').replaceChildren();
-    rtEstado(document.getElementById('rtBuscarEstado'), 'vacio', 'Buscá un producto por código o nombre para ver su stock.');
-    return;
-  }
-  RT_BUSCAR_DEBOUNCE = setTimeout(() => rtBuscar(texto), 350);
-}
-
-async function rtBuscar(texto) {
-  RT_BUSCAR_ULTIMA = { tipo:'buscar', q: texto };
-  if (RT_BUSCAR_ABORT) RT_BUSCAR_ABORT.abort();
-  const miSeq = ++RT_BUSCAR_SEQ;
-  const controller = new AbortController();
-  RT_BUSCAR_ABORT = controller;
-  document.getElementById('rtDetalle').replaceChildren();
-  rtEstado(document.getElementById('rtBuscarEstado'), 'loading', 'Buscando...');
-  try {
-    const url = STOCK_API_URL + '/productos?q=' + encodeURIComponent(texto);
-    const resp = await fetch(url, { signal: controller.signal });
-    if (miSeq !== RT_BUSCAR_SEQ) return;
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    if (miSeq !== RT_BUSCAR_SEQ) return;
-    if (!data.ok) throw new Error(data.error || 'Error de la API');
-    const productos = rtDedupProductos(data.data || []);
-    if (productos.length === 0) {
-      document.getElementById('rtResultados').replaceChildren();
-      rtEstado(document.getElementById('rtBuscarEstado'), 'vacio', 'No se encontraron productos para «' + texto + '».');
-      return;
+  host.appendChild(rtEl('h3', { text:'Ventas y stock por sucursal', className:'rt-subtitulo' }));
+  host.appendChild(rtTabla(
+    ['Sucursal', 'Ventas', 'Stock'],
+    RT_CENTROS,
+    (centro) => {
+      const s = RT_RESUMEN.por_sucursal[centro] || { ventas:0, stock:0 };
+      const tr = rtEl('tr');
+      tr.appendChild(rtEl('td', { text: RT_CENTRO_NOMBRE[centro] }));
+      tr.appendChild(rtEl('td', { text: nf.format(s.ventas) }));
+      tr.appendChild(rtEl('td', { text: nf.format(s.stock) }));
+      return tr;
     }
-    rtEstado(document.getElementById('rtBuscarEstado'), 'ninguno');
-    rtRenderResultados(productos);
-  } catch (err) {
-    if (err.name === 'AbortError') return;
-    if (miSeq !== RT_BUSCAR_SEQ) return;
-    document.getElementById('rtResultados').replaceChildren();
-    rtEstado(document.getElementById('rtBuscarEstado'), 'error', 'No se pudo conectar con la API de stock. ' + err.message, () => rtBuscar(texto));
-  }
+  ));
 }
 
-function rtRenderResultados(productos) {
-  const cont = document.getElementById('rtResultados');
-  cont.replaceChildren();
-  productos.forEach(p => {
-    const item = rtEl('button', { className:'rt-result-item' });
-    item.type = 'button';
-    item.appendChild(rtEl('span', { className:'rt-result-cod', text: p.codigo_producto }));
-    item.appendChild(rtEl('span', { className:'rt-result-desc', text: p.descripcion || '(sin descripción)' }));
-    const meta = [p.marca, p.rubro].filter(Boolean).join(' · ');
-    if (meta) item.appendChild(rtEl('span', { className:'rt-result-meta', text: meta }));
-    item.addEventListener('click', () => rtVerDetalle(p.codigo_producto));
-    cont.appendChild(item);
+// ── Marcas / Rubros (agrupados desde /resumen, click aplica filtro) ─────────
+function renderRTGrupo(host, campo, listKey, etiqueta) {
+  if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando...');
+  if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar. ' + RT_RESUMEN_ERROR, rtCargarResumen);
+  if (!RT_RESUMEN) return rtEstado(host, 'vacio', 'Sin datos.');
+  const lista = RT_RESUMEN[listKey] || [];
+  if (!lista.length) return rtEstado(host, 'vacio', 'Sin resultados en el período.');
+
+  host.appendChild(rtTabla(
+    [etiqueta, 'Ventas', 'Stock', 'Variantes'],
+    lista,
+    (f) => {
+      const tr = rtEl('tr', { className:'rt-row-click' });
+      tr.appendChild(rtEl('td', { text: f[campo] }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.ventas_total) }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.stock_total) }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.variantes) }));
+      tr.addEventListener('click', () => rtAplicarFiltroYVer({ [campo]: f[campo] }));
+      return tr;
+    }
+  ));
+}
+
+function renderRTSubrubros(host) {
+  if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando...');
+  if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar. ' + RT_RESUMEN_ERROR, rtCargarResumen);
+  if (!RT_RESUMEN) return rtEstado(host, 'vacio', 'Sin datos.');
+  const lista = RT_RESUMEN.por_subrubro || [];
+  if (!lista.length) return rtEstado(host, 'vacio', 'Sin resultados en el período.');
+
+  host.appendChild(rtTabla(
+    ['Rubro', 'Subrubro', 'Ventas', 'Stock', 'Variantes'],
+    lista,
+    (f) => {
+      const tr = rtEl('tr', { className:'rt-row-click' });
+      tr.appendChild(rtEl('td', { text: f.rubro }));
+      tr.appendChild(rtEl('td', { text: f.subrubro }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.ventas_total) }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.stock_total) }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.variantes) }));
+      tr.addEventListener('click', () => rtAplicarFiltroYVer({ rubro: f.rubro, subrubro: f.subrubro }));
+      return tr;
+    }
+  ));
+}
+
+function renderRTSucursales(host) {
+  if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando...');
+  if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar. ' + RT_RESUMEN_ERROR, rtCargarResumen);
+  if (!RT_RESUMEN) return rtEstado(host, 'vacio', 'Sin datos.');
+  host.appendChild(rtTabla(
+    ['Sucursal', 'Ventas', 'Stock'],
+    RT_CENTROS,
+    (centro) => {
+      const s = RT_RESUMEN.por_sucursal[centro] || { ventas:0, stock:0 };
+      const tr = rtEl('tr');
+      const badge = rtEl('span', { className:'sb ' + RT_CENTRO_CLS[centro], text: RT_CENTRO_NOMBRE[centro] });
+      const tdNombre = rtEl('td'); tdNombre.appendChild(badge);
+      tr.appendChild(tdNombre);
+      tr.appendChild(rtEl('td', { text: nf.format(s.ventas) }));
+      tr.appendChild(rtEl('td', { text: nf.format(s.stock) }));
+      return tr;
+    }
+  ));
+  host.appendChild(rtEl('div', { className:'rt-note', text: 'Depósito Central (90 + 93): ' + nf.format(RT_RESUMEN.totales.Stock_ctro_0000) + ' unidades — no se reparte por sucursal.' }));
+}
+
+// ── Productos (detalle paginado, exige filtro) ───────────────────────────────
+function rtFormularioFiltro(host, onBuscar) {
+  const row = rtEl('div', { className:'rt-buscador-row' });
+  const inCodigo = rtEl('input', { attrs:{ type:'text', placeholder:'Código exacto' } });
+  const inMarca = rtEl('input', { attrs:{ type:'text', placeholder:'Marca' } });
+  const inRubro = rtEl('input', { attrs:{ type:'text', placeholder:'Rubro' } });
+  const inSubrubro = rtEl('input', { attrs:{ type:'text', placeholder:'Subrubro' } });
+  const btn = rtEl('button', { className:'btn-sm', text:'Buscar' });
+  btn.type = 'button';
+  btn.addEventListener('click', () => {
+    const codigo = inCodigo.value.trim(), marca = inMarca.value.trim(), rubro = inRubro.value.trim(), subrubro = inSubrubro.value.trim();
+    if (!codigo && !marca && !rubro && !subrubro) return;
+    const filtro = {};
+    if (codigo) filtro.codigo = codigo;
+    if (marca) filtro.marca = marca;
+    if (rubro) filtro.rubro = rubro;
+    if (subrubro) filtro.subrubro = subrubro;
+    onBuscar(filtro);
   });
+  [inCodigo, inMarca, inRubro, inSubrubro].forEach(inp => row.appendChild(inp));
+  row.appendChild(btn);
+  host.appendChild(row);
+  host.appendChild(rtEl('p', { className:'rt-note', text:'Se requiere al menos un filtro: código, marca, rubro o subrubro.' }));
 }
 
-async function rtVerDetalle(codigo) {
-  RT_BUSCAR_ULTIMA = { tipo:'detalle', codigo: codigo };
-  if (RT_BUSCAR_ABORT) RT_BUSCAR_ABORT.abort();
-  const miSeq = ++RT_BUSCAR_SEQ;
+async function rtCargarPaginaDetalle() {
+  if (!RT_FILTRO) return;
+  if (RT_DETALLE_ABORT) RT_DETALLE_ABORT.abort();
   const controller = new AbortController();
-  RT_BUSCAR_ABORT = controller;
-  document.getElementById('rtResultados').replaceChildren();
-  rtEstado(document.getElementById('rtBuscarEstado'), 'loading', 'Cargando detalle...');
+  RT_DETALLE_ABORT = controller;
+  const seq = ++RT_DETALLE_SEQ;
+  RT_DETALLE_LOADING = true; RT_DETALLE_ERROR = null;
+  rtRenderVistaActual();
   try {
-    const url = STOCK_API_URL + '/stock/producto/' + encodeURIComponent(codigo);
-    const resp = await fetch(url, { signal: controller.signal });
-    if (miSeq !== RT_BUSCAR_SEQ) return;
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const params = new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, limit: String(RT_LIMITE_PAGINA), offset: String(RT_DETALLE_OFFSET) });
+    Object.keys(RT_FILTRO).forEach(k => params.set(k, RT_FILTRO[k]));
+    const resp = await fetch(STOCK_API_URL + '/analisis/stock-ventas?' + params.toString(), { signal: controller.signal });
     const data = await resp.json();
-    if (miSeq !== RT_BUSCAR_SEQ) return;
-    if (!data.ok) throw new Error(data.error || 'Error de la API');
-    rtEstado(document.getElementById('rtBuscarEstado'), 'ninguno');
-    rtRenderDetalle(codigo, data.data || []);
+    if (seq !== RT_DETALLE_SEQ) return; // respuesta vieja, se descarta
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    RT_DETALLE = data;
   } catch (err) {
     if (err.name === 'AbortError') return;
-    if (miSeq !== RT_BUSCAR_SEQ) return;
-    document.getElementById('rtDetalle').replaceChildren();
-    rtEstado(document.getElementById('rtBuscarEstado'), 'error', 'No se pudo obtener el stock de este producto. ' + err.message, () => rtVerDetalle(codigo));
+    if (seq !== RT_DETALLE_SEQ) return;
+    RT_DETALLE_ERROR = err.message;
+  } finally {
+    if (seq === RT_DETALLE_SEQ) { RT_DETALLE_LOADING = false; rtRenderVistaActual(); }
   }
 }
 
-function rtRenderDetalle(codigo, filas) {
-  const cont = document.getElementById('rtDetalle');
-  cont.replaceChildren();
-  const total = filas.reduce((acc, f) => acc + (Number(f.cantidad_stock) || 0), 0);
+function rtPaginaDetalle(delta) {
+  if (!RT_DETALLE) return;
+  const nuevoOffset = RT_DETALLE_OFFSET + delta * RT_LIMITE_PAGINA;
+  if (nuevoOffset < 0 || nuevoOffset >= RT_DETALLE.paginacion.total) return;
+  RT_DETALLE_OFFSET = nuevoOffset;
+  rtCargarPaginaDetalle();
+}
 
-  const header = rtEl('div', { className:'rt-detalle-header' });
-  header.appendChild(rtEl('span', { className:'rt-detalle-titulo', text:'Producto ' + codigo }));
-  const totalEl = rtEl('span', { className:'rt-detalle-total' });
-  totalEl.appendChild(document.createTextNode('Stock total: '));
-  totalEl.appendChild(rtEl('b', { text: String(total) }));
-  header.appendChild(totalEl);
-  cont.appendChild(header);
+function rtFilaProductoDetalle(f) {
+  const tr = rtEl('tr');
+  [
+    f.Codigo_producto, f.Nombre_producto, f.Nombre_marca, f.Codigo_talle,
+    f.Codigo_color + (f.Nombre_color ? (' · ' + f.Nombre_color) : ''),
+    f.Nombre_rubro, f.Nombre_subrubro,
+    money(f.Precio || 0), f.Precio_costo != null ? money(f.Precio_costo) : '—',
+    nf.format(f.Ventas_total), nf.format(f.Stock_total), nf.format(f.Stock_ctro_0000),
+    rtFmtFecha(f.Ultimo_ingreso),
+  ].forEach(v => tr.appendChild(rtEl('td', { text: String(v) })));
+  return tr;
+}
 
-  if (filas.length === 0) {
-    cont.appendChild(rtEl('p', { className:'rt-result-meta', text:'Sin filas de stock para este producto.' }));
+function renderRTProductos(host) {
+  host.appendChild(rtEl('h3', { text:'Productos', className:'rt-subtitulo' }));
+  if (!RT_FILTRO) {
+    rtFormularioFiltro(host, (filtro) => { RT_FILTRO = filtro; RT_DETALLE_OFFSET = 0; rtCargarPaginaDetalle(); });
     return;
   }
+  rtFiltroChip(host);
+  if (RT_DETALLE_LOADING) return rtEstado(host, 'loading', 'Cargando productos...');
+  if (RT_DETALLE_ERROR) return rtEstado(host, 'error', 'No se pudo cargar el detalle. ' + RT_DETALLE_ERROR, rtCargarPaginaDetalle);
+  if (!RT_DETALLE) return rtEstado(host, 'loading', 'Cargando...');
+  if (!RT_DETALLE.data.length) return rtEstado(host, 'vacio', 'Sin productos para este filtro y período.');
 
+  host.appendChild(rtTabla(
+    ['Código', 'Producto', 'Marca', 'Talle', 'Color', 'Rubro', 'Subrubro', 'Precio', 'Costo', 'Ventas', 'Stock', 'Depósito Central (90 + 93)', 'Último ingreso'],
+    RT_DETALLE.data, rtFilaProductoDetalle
+  ));
+
+  const p = RT_DETALLE.paginacion;
+  const desde = p.total === 0 ? 0 : p.offset + 1;
+  const hasta = p.offset + p.devueltos;
+  const pag = rtEl('div', { className:'rt-pagination' });
+  pag.appendChild(rtEl('span', { text: 'Mostrando ' + desde + '–' + hasta + ' de ' + nf.format(p.total) }));
+  const btnAnt = rtEl('button', { className:'btn-sm', text:'← Anterior' });
+  btnAnt.type = 'button'; btnAnt.disabled = p.offset === 0;
+  btnAnt.addEventListener('click', () => rtPaginaDetalle(-1));
+  const btnSig = rtEl('button', { className:'btn-sm', text:'Siguiente →' });
+  btnSig.type = 'button'; btnSig.disabled = (p.offset + p.devueltos) >= p.total;
+  btnSig.addEventListener('click', () => rtPaginaDetalle(1));
+  pag.appendChild(btnAnt); pag.appendChild(btnSig);
+  host.appendChild(pag);
+}
+
+// ── Carga controlada de TODAS las páginas del filtro (talles/colores, oportunidades) ──
+async function rtCargarCompleto() {
+  if (!RT_FILTRO) return;
+  const key = rtFiltroKey();
+  if (RT_COMPLETO && RT_COMPLETO.filtroKey === key) return; // ya en cache
+  if (RT_COMPLETO_LOADING) return; // ya hay una carga en curso (evita reentrancia)
+
+  if (RT_COMPLETO_ABORT) RT_COMPLETO_ABORT.abort();
+  const controller = new AbortController();
+  RT_COMPLETO_ABORT = controller;
+  const seq = ++RT_COMPLETO_SEQ;
+  RT_COMPLETO_LOADING = true; RT_COMPLETO_ERROR = null; RT_COMPLETO_PROGRESO = 0;
+  rtRenderVistaActual();
+
+  const filas = [];
+  let offset = 0, total = null, capado = false;
+  try {
+    for (let pagina = 0; pagina < RT_LIMITE_PAGINAS_COMPLETO; pagina++) {
+      const params = new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, limit: '500', offset: String(offset) });
+      Object.keys(RT_FILTRO).forEach(k => params.set(k, RT_FILTRO[k]));
+      const resp = await fetch(STOCK_API_URL + '/analisis/stock-ventas?' + params.toString(), { signal: controller.signal });
+      const data = await resp.json();
+      if (seq !== RT_COMPLETO_SEQ) return; // el filtro cambio, se descarta
+      if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+      filas.push(...data.data);
+      total = data.paginacion.total;
+      RT_COMPLETO_PROGRESO = filas.length;
+      rtRenderVistaActual();
+      offset += data.paginacion.devueltos;
+      if (offset >= total || data.paginacion.devueltos === 0) break;
+      if (pagina === RT_LIMITE_PAGINAS_COMPLETO - 1 && offset < total) capado = true;
+    }
+    if (seq !== RT_COMPLETO_SEQ) return;
+    RT_COMPLETO = { filtroKey: key, filas, capado, total };
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    if (seq !== RT_COMPLETO_SEQ) return;
+    RT_COMPLETO_ERROR = err.message;
+  } finally {
+    if (seq === RT_COMPLETO_SEQ) { RT_COMPLETO_LOADING = false; rtRenderVistaActual(); }
+  }
+}
+
+function rtPanelSinFiltro(host, vista) {
+  host.appendChild(rtEl('h3', { text: vista, className:'rt-subtitulo' }));
+  rtEstado(host, 'vacio', 'Aplicá un filtro desde Marcas, Rubros, Subrubros o Productos para ver ' + vista.toLowerCase() + '.');
+}
+
+// ── Talles y colores ─────────────────────────────────────────────────────────
+function renderRTTallesColores(host) {
+  host.appendChild(rtEl('h3', { text:'Talles y colores', className:'rt-subtitulo' }));
+  if (!RT_FILTRO) return rtPanelSinFiltro(host, 'Talles y colores');
+  rtFiltroChip(host);
+
+  const key = rtFiltroKey();
+  if (!RT_COMPLETO_LOADING && (!RT_COMPLETO || RT_COMPLETO.filtroKey !== key)) { rtCargarCompleto(); }
+  if (RT_COMPLETO_LOADING || !RT_COMPLETO || RT_COMPLETO.filtroKey !== key) {
+    const box = rtEl('div', { className:'rt-progress' });
+    box.appendChild(rtEl('div', { className:'spinner' }));
+    box.appendChild(rtEl('span', { text: 'Cargando curva completa... ' + nf.format(RT_COMPLETO_PROGRESO) + ' filas' }));
+    host.appendChild(box);
+    return;
+  }
+  if (RT_COMPLETO_ERROR) return rtEstado(host, 'error', 'No se pudo cargar la curva completa. ' + RT_COMPLETO_ERROR, rtCargarCompleto);
+  const filas = RT_COMPLETO.filas;
+  if (!filas.length) return rtEstado(host, 'vacio', 'Sin datos para este filtro y período.');
+  if (RT_COMPLETO.capado) host.appendChild(rtEl('div', { className:'alert alert-warning', text:'El filtro tiene más de ' + nf.format(RT_LIMITE_PAGINAS_COMPLETO * 500) + ' variantes — se muestra un subconjunto. Acotá el filtro (marca/rubro/subrubro más específico) para ver el total.' }));
+
+  const porTalle = new Map(), porColor = new Map();
   filas.forEach(f => {
-    const clas = rtClasificarDetalle(f);
-    const sinStock = !(Number(f.cantidad_stock) > 0);
-    const fila = rtEl('div', { className:'rt-fila' + (sinStock ? ' rt-fila-sinstock' : '') });
-    fila.appendChild(rtEl('span', { className:'sb ' + clas.cls, text: clas.esDeposito ? 'DEPÓSITO' : 'SUCURSAL' }));
-    const info = rtEl('div', { className:'rt-fila-info' });
-    info.appendChild(rtEl('span', { className:'rt-fila-nombre', text: clas.nombre }));
-    const variante = [];
-    if (f.talle) variante.push('Talle ' + f.talle);
-    if (f.color) variante.push('Color ' + f.color);
-    if (variante.length) info.appendChild(rtEl('span', { className:'rt-fila-variante', text: variante.join(' · ') }));
-    fila.appendChild(info);
-    fila.appendChild(rtEl('span', { className:'rt-fila-cantidad', text: String(f.cantidad_stock != null ? f.cantidad_stock : '—') }));
-    cont.appendChild(fila);
-  });
-}
-
-function renderRTMovimientos(host) {
-  const wrap = rtEl('div');
-  const bar = rtEl('div', { className:'fbar' });
-
-  const fcSuc = rtEl('div', { className:'fc fc-sel' });
-  fcSuc.appendChild(rtEl('label', { text:'Sucursal' }));
-  const selSuc = document.createElement('select');
-  selSuc.id = 'rtMovSuc';
-  selSuc.appendChild(rtEl('option', { text:'Todas', attrs:{ value:'' } }));
-  (RT_SUCURSALES || []).filter(s => s.activa).forEach(s => {
-    selSuc.appendChild(rtEl('option', { text: s.nombre, attrs:{ value: s.centro } }));
-  });
-  fcSuc.appendChild(selSuc);
-  bar.appendChild(fcSuc);
-
-  const fcDias = rtEl('div', { className:'fc fc-sel' });
-  fcDias.appendChild(rtEl('label', { text:'Días' }));
-  const selDias = document.createElement('select');
-  selDias.id = 'rtMovDias';
-  [1, 7, 15, 30].forEach(d => selDias.appendChild(rtEl('option', { text: d + ' días', attrs:{ value:String(d) } })));
-  selDias.value = '7';
-  fcDias.appendChild(selDias);
-  bar.appendChild(fcDias);
-
-  const fcCod = rtEl('div', { className:'fc fc-search' });
-  fcCod.appendChild(rtEl('label', { text:'Código' }));
-  const inCod = document.createElement('input');
-  inCod.type = 'text'; inCod.id = 'rtMovCod'; inCod.placeholder = 'Opcional';
-  fcCod.appendChild(inCod);
-  bar.appendChild(fcCod);
-
-  wrap.appendChild(bar);
-  wrap.appendChild(rtEl('div', { attrs:{ id:'rtMovPanel' } }));
-  host.appendChild(wrap);
-
-  [selSuc, selDias].forEach(el => el.addEventListener('change', rtCargarMovimientos));
-  inCod.addEventListener('input', () => {
-    clearTimeout(RT_BUSCAR_DEBOUNCE);
-    RT_BUSCAR_DEBOUNCE = setTimeout(rtCargarMovimientos, 350);
+    const t = porTalle.get(f.Codigo_talle) || { ventas:0, stock:0 };
+    t.ventas += f.Ventas_total; t.stock += f.Stock_total;
+    porTalle.set(f.Codigo_talle, t);
+    const cKey = f.Codigo_color + '|' + (f.Nombre_color || '');
+    const c = porColor.get(cKey) || { nombre: f.Nombre_color || f.Codigo_color, ventas:0, stock:0 };
+    c.ventas += f.Ventas_total; c.stock += f.Stock_total;
+    porColor.set(cKey, c);
   });
 
-  rtCargarMovimientos();
+  host.appendChild(rtEl('h4', { text:'Por talle', className:'rt-subtitulo' }));
+  host.appendChild(rtTabla(
+    ['Talle', 'Ventas', 'Stock'],
+    Array.from(porTalle.entries()).sort((a,b) => sizeSort(a[0], b[0])),
+    ([talle, v]) => {
+      const tr = rtEl('tr');
+      tr.appendChild(rtEl('td', { text: talle }));
+      tr.appendChild(rtEl('td', { text: nf.format(v.ventas) }));
+      tr.appendChild(rtEl('td', { text: nf.format(v.stock) }));
+      return tr;
+    }
+  ));
+
+  host.appendChild(rtEl('h4', { text:'Por color', className:'rt-subtitulo' }));
+  host.appendChild(rtTabla(
+    ['Color', 'Ventas', 'Stock'],
+    Array.from(porColor.values()).sort((a,b) => b.ventas - a.ventas),
+    (v) => {
+      const tr = rtEl('tr');
+      tr.appendChild(rtEl('td', { text: v.nombre }));
+      tr.appendChild(rtEl('td', { text: nf.format(v.ventas) }));
+      tr.appendChild(rtEl('td', { text: nf.format(v.stock) }));
+      return tr;
+    }
+  ));
 }
 
-async function rtCargarMovimientos() {
-  const panel = document.getElementById('rtMovPanel');
-  if (!panel) return;
-  const suc = document.getElementById('rtMovSuc').value;
-  const dias = document.getElementById('rtMovDias').value;
-  const cod = document.getElementById('rtMovCod').value.trim();
+// ── Oportunidades ─────────────────────────────────────────────────────────────
+function renderRTOportunidades(host) {
+  host.appendChild(rtEl('h3', { text:'Oportunidades', className:'rt-subtitulo' }));
+  if (!RT_FILTRO) return rtPanelSinFiltro(host, 'Oportunidades');
+  rtFiltroChip(host);
 
-  if (RT_MOV_ABORT) RT_MOV_ABORT.abort();
-  const miSeq = ++RT_MOV_SEQ;
-  const controller = new AbortController();
-  RT_MOV_ABORT = controller;
-  rtEstado(panel, 'loading', 'Cargando movimientos...');
-
-  const params = new URLSearchParams();
-  params.set('dias', dias);
-  if (suc) params.set('sucursal', suc);
-  if (cod) params.set('codigo', cod);
-
-  try {
-    const resp = await fetch(STOCK_API_URL + '/movimientos?' + params.toString(), { signal: controller.signal });
-    if (miSeq !== RT_MOV_SEQ) return;
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    if (miSeq !== RT_MOV_SEQ) return;
-    if (!data.ok) throw new Error(data.error || 'Error de la API');
-    rtRenderMovimientos(panel, data.data || [], data.total || 0);
-  } catch (err) {
-    if (err.name === 'AbortError') return;
-    if (miSeq !== RT_MOV_SEQ) return;
-    rtEstado(panel, 'error', 'No se pudieron cargar los movimientos. ' + err.message, rtCargarMovimientos);
-  }
-}
-
-function rtRenderMovimientos(panel, filas, total) {
-  panel.replaceChildren();
-  if (filas.length === 0) {
-    panel.appendChild(rtEl('div', { className:'empty', text:'Sin movimientos en este período.' }));
+  const key = rtFiltroKey();
+  if (!RT_COMPLETO_LOADING && (!RT_COMPLETO || RT_COMPLETO.filtroKey !== key)) { rtCargarCompleto(); }
+  if (RT_COMPLETO_LOADING || !RT_COMPLETO || RT_COMPLETO.filtroKey !== key) {
+    const box = rtEl('div', { className:'rt-progress' });
+    box.appendChild(rtEl('div', { className:'spinner' }));
+    box.appendChild(rtEl('span', { text: 'Analizando ' + nf.format(RT_COMPLETO_PROGRESO) + ' filas...' }));
+    host.appendChild(box);
     return;
   }
-  const cont = rtEl('div', { className:'panel' });
-  if (total === 500) {
-    cont.appendChild(rtEl('div', { className:'rt-note', text:'Se alcanzó el límite de 500 movimientos. Aplicá un período, sucursal o código más específico para obtener un resultado completo.' }));
+  if (RT_COMPLETO_ERROR) return rtEstado(host, 'error', 'No se pudo analizar el filtro. ' + RT_COMPLETO_ERROR, rtCargarCompleto);
+  const filas = RT_COMPLETO.filas;
+  if (!filas.length) return rtEstado(host, 'vacio', 'Sin datos para este filtro y período.');
+  if (RT_COMPLETO.capado) host.appendChild(rtEl('div', { className:'alert alert-warning', text:'El filtro tiene más de ' + nf.format(RT_LIMITE_PAGINAS_COMPLETO * 500) + ' variantes — se analiza un subconjunto. Acotá el filtro para un resultado completo.' }));
+
+  const stockBajo = filas.filter(f => f.Stock_total >= 1 && f.Stock_total <= 2).sort((a,b) => a.Stock_total - b.Stock_total);
+  const sinVentasConStock = filas.filter(f => f.Ventas_total === 0 && f.Stock_total > 0).sort((a,b) => b.Stock_total - a.Stock_total);
+
+  host.appendChild(rtEl('h4', { text:'Stock bajo (1–2 unidades) — ' + nf.format(stockBajo.length), className:'rt-subtitulo' }));
+  if (stockBajo.length) {
+    host.appendChild(rtTabla(
+      ['Código', 'Producto', 'Talle', 'Color', 'Stock', 'Ventas'],
+      stockBajo.slice(0, 200),
+      (f) => {
+        const tr = rtEl('tr');
+        [f.Codigo_producto, f.Nombre_producto, f.Codigo_talle, f.Nombre_color || f.Codigo_color, nf.format(f.Stock_total), nf.format(f.Ventas_total)]
+          .forEach(v => tr.appendChild(rtEl('td', { text: String(v) })));
+        return tr;
+      }
+    ));
+    if (stockBajo.length > 200) host.appendChild(rtEl('p', { className:'rt-note', text:'Mostrando las primeras 200 de ' + nf.format(stockBajo.length) + '.' }));
+  } else {
+    host.appendChild(rtEl('p', { className:'rt-note', text:'Sin variantes con stock bajo en este filtro.' }));
   }
-  const wrap = rtEl('div', { className:'scroll' });
-  const table = document.createElement('table');
-  const thead = document.createElement('thead');
-  const trh = document.createElement('tr');
-  ['Fecha', 'Sucursal', 'Código', 'Talle', 'Color', 'Cantidad', 'Tipo (crudo)'].forEach(t => trh.appendChild(rtEl('th', { className:'ns', text:t })));
-  thead.appendChild(trh);
-  table.appendChild(thead);
-  const tbody = document.createElement('tbody');
-  filas.forEach(m => {
-    const tr = document.createElement('tr');
-    const fecha = m.fecha ? new Date(m.fecha) : null;
-    tr.appendChild(rtEl('td', { text: fecha ? fmtD(fecha) : '—' }));
-    const tdSuc = document.createElement('td');
-    tdSuc.appendChild(rtBadgeUbicacion(m.centro));
-    tr.appendChild(tdSuc);
-    tr.appendChild(rtEl('td', { className:'cod', text: m.codigo_producto }));
-    tr.appendChild(rtEl('td', { text: m.talle || '—' }));
-    tr.appendChild(rtEl('td', { text: m.color || '—' }));
-    tr.appendChild(rtEl('td', { className:'nr', text: String(m.cantidad) }));
-    const tdTipo = document.createElement('td');
-    tdTipo.appendChild(rtEl('span', { className:'tag', text: String(m.tipo_comprobante) }));
-    tr.appendChild(tdTipo);
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  wrap.appendChild(table);
-  cont.appendChild(wrap);
-  cont.appendChild(rtEl('div', { className:'rt-note', text:'Movimiento crudo de Sysneo — todavía no se puede confirmar si corresponde a una venta, transferencia o ajuste (el código de "tipo" no tiene descripción disponible en la API). No usar para calcular ventas.' }));
-  panel.appendChild(cont);
+
+  host.appendChild(rtEl('h4', { text:'Con stock, sin ventas en el período — ' + nf.format(sinVentasConStock.length), className:'rt-subtitulo' }));
+  if (sinVentasConStock.length) {
+    host.appendChild(rtTabla(
+      ['Código', 'Producto', 'Talle', 'Color', 'Stock'],
+      sinVentasConStock.slice(0, 200),
+      (f) => {
+        const tr = rtEl('tr');
+        [f.Codigo_producto, f.Nombre_producto, f.Codigo_talle, f.Nombre_color || f.Codigo_color, nf.format(f.Stock_total)]
+          .forEach(v => tr.appendChild(rtEl('td', { text: String(v) })));
+        return tr;
+      }
+    ));
+    if (sinVentasConStock.length > 200) host.appendChild(rtEl('p', { className:'rt-note', text:'Mostrando las primeras 200 de ' + nf.format(sinVentasConStock.length) + '.' }));
+  } else {
+    host.appendChild(rtEl('p', { className:'rt-note', text:'Sin variantes con stock y cero ventas en este filtro.' }));
+  }
 }
 
 function dbOpen() {
