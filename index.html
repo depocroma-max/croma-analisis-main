@@ -1470,7 +1470,7 @@ function renderRTOportunidades(host) {
   // Tabla (desktop) -- reutiliza rtTabla()
   const tablaWrap = rtEl('div', { className:'rt-oportunidades-tabla' });
   tablaWrap.appendChild(rtTabla(
-    ['Estado', 'Código', 'Producto', 'Marca', 'Ventas', 'Stock sucursales', 'Depósito 90+93', 'Cobertura (días)', 'Motivo'],
+    ['Estado', 'Código', 'Producto', 'Marca', 'Ventas', 'Stock sucursales', 'Depósito 90', 'Cobertura (días)', 'Motivo'],
     datos,
     (f) => {
       const tr = rtEl('tr', { className:'rt-row-click' });
@@ -1506,7 +1506,7 @@ function renderRTOportunidades(host) {
     if (f.estados_secundarios.length) card.appendChild(rtBadgesSecundarios(f.estados_secundarios));
     card.appendChild(rtEl('div', { className:'rt-opp-card-titulo', text: f.Codigo_producto + ' · ' + f.Nombre_producto }));
     card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: f.Nombre_marca }));
-    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(f.Stock_ctro_0000) + ' depósito)' }));
+    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(f.Stock_ctro_0000) + ' depósito 90)' }));
     if (f.motivo) card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: f.motivo }));
     if (f.diagnostico_rotacion) {
       const ps = f.diagnostico_rotacion.par_sugerido;
