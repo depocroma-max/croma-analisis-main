@@ -190,6 +190,22 @@
     .rt-buscador-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
     .rt-buscador-row input,.rt-buscador-row select{font:inherit;font-size:13px;border:1px solid var(--gray-200);
       border-radius:8px;padding:7px 11px;background:var(--gray-50)}
+
+    /* Oportunidades — tarjetas de resumen clickeables, tabla desktop / tarjetas mobile */
+    .rt-kpi-click{transition:box-shadow .15s,border-color .15s}
+    .rt-kpi-click:hover{box-shadow:var(--shadow-md,0 4px 16px rgba(0,0,0,.10))}
+    .rt-kpi-activo{border:2px solid var(--croma-red,var(--accent));box-shadow:0 0 0 2px rgba(232,37,26,.12)}
+    .rt-oportunidades-cards{display:none}
+    .rt-opp-card{margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
+    .rt-opp-card-titulo{font-weight:700;font-size:14px}
+    .rt-opp-card-linea{font-size:13px;color:var(--gray-600)}
+    .rt-opp-card-motivo{font-size:12.5px;color:var(--gray-500);line-height:1.4}
+    .rt-badges-secundarios{display:inline-flex;gap:4px;flex-wrap:wrap;margin-left:6px}
+    .rt-badge-discreto{opacity:.65;font-size:10.5px;padding:2px 7px}
+    @media (max-width:640px){
+      .rt-oportunidades-tabla{display:none}
+      .rt-oportunidades-cards{display:block}
+    }
     .btn-primary{font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--black);
       border:none;border-radius:9px;padding:8px 14px;cursor:pointer;transition:.15s;
       display:inline-flex;align-items:center;gap:6px}
@@ -726,8 +742,11 @@ function resetApp() {
   if (RT_RESUMEN_ABORT) { RT_RESUMEN_ABORT.abort(); RT_RESUMEN_ABORT = null; }
   if (RT_DETALLE_ABORT) { RT_DETALLE_ABORT.abort(); RT_DETALLE_ABORT = null; }
   if (RT_COMPLETO_ABORT) { RT_COMPLETO_ABORT.abort(); RT_COMPLETO_ABORT = null; }
+  if (RT_OPORTUNIDADES_ABORT) { RT_OPORTUNIDADES_ABORT.abort(); RT_OPORTUNIDADES_ABORT = null; }
   RT_RESUMEN = null; RT_RESUMEN_LOADING = false; RT_RESUMEN_ERROR = null;
   RT_FILTRO = null; RT_DETALLE = null; RT_DETALLE_OFFSET = 0; RT_COMPLETO = null;
+  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_PRIORIDAD = null;
+  RT_OPORTUNIDADES_CONFIANZA = null; RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
   RT_VIEW = 'dashboard';
   document.querySelectorAll('#rtTabs .tab').forEach((t,i) => t.classList.toggle('active', i===0));
 }
@@ -759,6 +778,23 @@ let RT_DETALLE_ABORT = null, RT_DETALLE_SEQ = 0;
 let RT_COMPLETO = null; // { filtroKey, filas, capado }
 let RT_COMPLETO_LOADING = false, RT_COMPLETO_ERROR = null, RT_COMPLETO_PROGRESO = 0;
 let RT_COMPLETO_ABORT = null, RT_COMPLETO_SEQ = 0;
+
+// Oportunidades -- endpoint propio (agregado a nivel producto, no variante), no usa
+// RT_COMPLETO/rtCargarCompleto (eso sigue siendo solo para Talles y colores).
+let RT_OPORTUNIDADES = null; // respuesta completa de /analisis/oportunidades
+let RT_OPORTUNIDADES_LOADING = false, RT_OPORTUNIDADES_ERROR = null;
+let RT_OPORTUNIDADES_ABORT = null, RT_OPORTUNIDADES_SEQ = 0;
+let RT_OPORTUNIDADES_ESTADO = null; // filtro de pestaña por estado_principal O secundario
+let RT_OPORTUNIDADES_PRIORIDAD = null;
+let RT_OPORTUNIDADES_CONFIANZA = null; // 'alta' | 'manual' | null (todos) -- solo afecta posible_rotacion
+let RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
+let RT_OPORTUNIDADES_OFFSET = 0;
+const RT_OPORTUNIDADES_LIMITE = 50;
+const RT_ESTADO_CLS = {
+  reposicion_urgente: 'badge-danger', revisar_deposito: 'badge-danger', posible_rotacion: 'badge-danger',
+  reposicion_proxima: 'badge-warning', venta_destacada: 'badge-warning', bien_vendido: 'badge-warning',
+  seguimiento: 'badge-neutral', posible_descuento: 'badge-neutral', stock_parado: 'badge-neutral',
+};
 
 function rtEl(tag, opts) {
   const e = document.createElement(tag);
@@ -830,9 +866,10 @@ function rtCambiarPeriodo() {
   if (desde === RT_DESDE && hasta === RT_HASTA) return;
   RT_DESDE = desde; RT_HASTA = hasta;
   rtGuardarPeriodo();
-  RT_DETALLE = null; RT_COMPLETO = null;
+  RT_DETALLE = null; RT_COMPLETO = null; RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0;
   if (RT_COMPLETO_ABORT) { RT_COMPLETO_ABORT.abort(); RT_COMPLETO_ABORT = null; }
   if (RT_DETALLE_ABORT) { RT_DETALLE_ABORT.abort(); RT_DETALLE_ABORT = null; }
+  if (RT_OPORTUNIDADES_ABORT) { RT_OPORTUNIDADES_ABORT.abort(); RT_OPORTUNIDADES_ABORT = null; }
   rtCargarResumen();
 }
 
@@ -869,6 +906,8 @@ function rtCambiarVista(view) {
 function rtAplicarFiltroYVer(filtro) {
   RT_FILTRO = filtro;
   RT_DETALLE = null; RT_DETALLE_OFFSET = 0; RT_COMPLETO = null;
+  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_PRIORIDAD = null;
+  RT_OPORTUNIDADES_CONFIANZA = null; RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
   rtCambiarVista('productos');
   rtCargarPaginaDetalle();
 }
@@ -876,6 +915,7 @@ function rtAplicarFiltroYVer(filtro) {
 function rtQuitarFiltro() {
   RT_FILTRO = null;
   RT_DETALLE = null; RT_DETALLE_OFFSET = 0; RT_COMPLETO = null;
+  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0;
   rtRenderVistaActual();
 }
 
@@ -1253,61 +1293,242 @@ function renderRTTallesColores(host) {
 }
 
 // ── Oportunidades ─────────────────────────────────────────────────────────────
+// Motor server-side a nivel producto (no variante) -- /analisis/oportunidades.
+// No depende de RT_COMPLETO/rtCargarCompleto (eso sigue siendo solo de Talles y colores).
+async function rtCargarOportunidades() {
+  if (RT_OPORTUNIDADES_ABORT) RT_OPORTUNIDADES_ABORT.abort();
+  const controller = new AbortController();
+  RT_OPORTUNIDADES_ABORT = controller;
+  const seq = ++RT_OPORTUNIDADES_SEQ;
+  RT_OPORTUNIDADES_LOADING = true; RT_OPORTUNIDADES_ERROR = null;
+  rtRenderVistaActual();
+  try {
+    const params = new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, limit: String(RT_OPORTUNIDADES_LIMITE), offset: String(RT_OPORTUNIDADES_OFFSET) });
+    if (RT_FILTRO) Object.keys(RT_FILTRO).forEach(k => params.set(k, RT_FILTRO[k]));
+    if (RT_OPORTUNIDADES_ESTADO) params.set('estado', RT_OPORTUNIDADES_ESTADO);
+    if (RT_OPORTUNIDADES_PRIORIDAD) params.set('prioridad', RT_OPORTUNIDADES_PRIORIDAD);
+    if (RT_OPORTUNIDADES_CONFIANZA) params.set('confianza', RT_OPORTUNIDADES_CONFIANZA);
+    const rot = RT_OPORTUNIDADES_ROTACION;
+    if (rot.origen) params.set('rotacion_origen', rot.origen);
+    if (rot.destino) params.set('rotacion_destino', rot.destino);
+    if (rot.ventasDestinoMin) params.set('rotacion_ventas_destino_min', rot.ventasDestinoMin);
+    if (rot.stockOrigenMin) params.set('rotacion_stock_origen_min', rot.stockOrigenMin);
+    if (rot.coberturaOrigenMin) params.set('rotacion_cobertura_origen_min', rot.coberturaOrigenMin);
+    const resp = await fetch(STOCK_API_URL + '/analisis/oportunidades?' + params.toString(), { signal: controller.signal });
+    const data = await resp.json();
+    if (seq !== RT_OPORTUNIDADES_SEQ) return;
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    RT_OPORTUNIDADES = data;
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    if (seq !== RT_OPORTUNIDADES_SEQ) return;
+    RT_OPORTUNIDADES_ERROR = err.message;
+  } finally {
+    if (seq === RT_OPORTUNIDADES_SEQ) { RT_OPORTUNIDADES_LOADING = false; rtRenderVistaActual(); }
+  }
+}
+
+function rtOportunidadesCambiarEstado(estado) {
+  RT_OPORTUNIDADES_ESTADO = (RT_OPORTUNIDADES_ESTADO === estado) ? null : estado;
+  RT_OPORTUNIDADES_OFFSET = 0;
+  rtCargarOportunidades();
+}
+
+function rtOportunidadesPagina(delta) {
+  if (!RT_OPORTUNIDADES) return;
+  const nuevoOffset = RT_OPORTUNIDADES_OFFSET + delta * RT_OPORTUNIDADES_LIMITE;
+  if (nuevoOffset < 0 || nuevoOffset >= RT_OPORTUNIDADES.paginacion.total) return;
+  RT_OPORTUNIDADES_OFFSET = nuevoOffset;
+  rtCargarOportunidades();
+}
+
+function rtOportunidadesVerDetalle(codigo) {
+  rtAplicarFiltroYVer({ codigo });
+}
+
+function rtBadgeEstado(estadoPrincipal, texto) {
+  const cls = RT_ESTADO_CLS[estadoPrincipal] || 'badge-neutral';
+  return rtEl('span', { className: 'badge ' + cls, text: texto || estadoPrincipal || '—' });
+}
+
+function rtTarjetaResumen(clave, etiqueta, valor, activo, onClick) {
+  const card = rtEl('div', { className: 'rt-kpi rt-kpi-click' + (activo ? ' rt-kpi-activo' : '') });
+  card.appendChild(rtEl('div', { className:'rt-kpi-label', text: etiqueta }));
+  card.appendChild(rtEl('div', { className:'rt-kpi-valor', text: nf.format(valor) }));
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', onClick);
+  return card;
+}
+
+function rtOportunidadesCambiarConfianza(valor) {
+  RT_OPORTUNIDADES_CONFIANZA = (RT_OPORTUNIDADES_CONFIANZA === valor) ? null : valor;
+  RT_OPORTUNIDADES_OFFSET = 0;
+  rtCargarOportunidades();
+}
+
+function rtOportunidadesAplicarRotacion() {
+  RT_OPORTUNIDADES_OFFSET = 0;
+  rtCargarOportunidades();
+}
+
+const RT_TEXTO_ESTADO = {
+  reposicion_urgente: 'Reposición urgente', revisar_deposito: 'Revisar depósito',
+  posible_rotacion: 'Posible rotación', reposicion_proxima: 'Reposición próxima',
+  venta_destacada: 'Venta destacada', bien_vendido: 'Bien vendido',
+  seguimiento: 'Seguimiento', posible_descuento: 'Posible descuento', stock_parado: 'Stock parado',
+};
+
+function rtBadgesSecundarios(estadosSecundarios) {
+  const wrap = rtEl('span', { className:'rt-badges-secundarios' });
+  estadosSecundarios.forEach(e => {
+    wrap.appendChild(rtEl('span', { className:'badge badge-neutral rt-badge-discreto', text: RT_TEXTO_ESTADO[e] || e }));
+  });
+  return wrap;
+}
+
 function renderRTOportunidades(host) {
   host.appendChild(rtEl('h3', { text:'Oportunidades', className:'rt-subtitulo' }));
-  if (!RT_FILTRO) return rtPanelSinFiltro(host, 'Oportunidades');
-  rtFiltroChip(host);
+  if (RT_FILTRO) rtFiltroChip(host);
+  else host.appendChild(rtEl('p', { className:'rt-note', text:'Panorama general del período. Aplicá un filtro desde Marcas, Rubros, Subrubros o Productos para acotar.' }));
 
-  const key = rtFiltroKey();
-  if (!RT_COMPLETO_LOADING && (!RT_COMPLETO || RT_COMPLETO.filtroKey !== key)) { rtCargarCompleto(); }
-  if (RT_COMPLETO_LOADING || !RT_COMPLETO || RT_COMPLETO.filtroKey !== key) {
+  if (!RT_OPORTUNIDADES && !RT_OPORTUNIDADES_LOADING) rtCargarOportunidades();
+  if (RT_OPORTUNIDADES_LOADING && !RT_OPORTUNIDADES) return rtEstado(host, 'loading', 'Calculando oportunidades del período...');
+  if (RT_OPORTUNIDADES_ERROR) return rtEstado(host, 'error', 'No se pudieron calcular las oportunidades. ' + RT_OPORTUNIDADES_ERROR, rtCargarOportunidades);
+  if (!RT_OPORTUNIDADES) return rtEstado(host, 'loading', 'Calculando...');
+
+  const r = RT_OPORTUNIDADES.resumen;
+  const kpis = rtEl('div', { className:'rt-kpis' });
+  Object.keys(RT_TEXTO_ESTADO).forEach(estado => {
+    kpis.appendChild(rtTarjetaResumen(estado, RT_TEXTO_ESTADO[estado], r.por_estado_principal[estado] || 0, RT_OPORTUNIDADES_ESTADO === estado, () => rtOportunidadesCambiarEstado(estado)));
+  });
+  host.appendChild(kpis);
+  host.appendChild(rtEl('p', { className:'rt-note', text: nf.format(r.total_clasificados) + ' de ' + nf.format(r.total_evaluados) + ' productos con alguna oportunidad detectada · reglas v' + RT_OPORTUNIDADES.version_reglas }));
+  if (r.por_regla_cumplida.stock_parado > 0 && r.por_estado_principal.stock_parado === 0) {
+    host.appendChild(rtEl('p', { className:'rt-note', text: nf.format(r.por_regla_cumplida.stock_parado) + ' productos cumplen la regla de stock parado, aunque su estado principal termine siendo otro (casi siempre posible_descuento, que es más específico). Filtrá por "Stock parado" para verlos.' }));
+  }
+
+  // Filtro de prioridad (chips simples, ademas de las tarjetas por estado)
+  const prioRow = rtEl('div', { className:'rt-buscador-row' });
+  ['alta', 'media', 'baja'].forEach(p => {
+    const btn = rtEl('button', { className:'btn-sm' + (RT_OPORTUNIDADES_PRIORIDAD === p ? ' rt-kpi-activo' : ''), text: 'Prioridad ' + p });
+    btn.type = 'button';
+    btn.addEventListener('click', () => { RT_OPORTUNIDADES_PRIORIDAD = (RT_OPORTUNIDADES_PRIORIDAD === p) ? null : p; RT_OPORTUNIDADES_OFFSET = 0; rtCargarOportunidades(); });
+    prioRow.appendChild(btn);
+  });
+  host.appendChild(prioRow);
+
+  // Revision de posible_rotacion: confianza + filtros derivados (§4). Se muestra siempre
+  // que haya casos de rotacion en el resumen -- aplicar cualquiera de estos filtros acota
+  // automaticamente a productos con diagnostico de rotacion (no hace falta elegir el estado a mano).
+  if ((r.por_regla_cumplida.posible_rotacion || 0) > 0) {
+    host.appendChild(rtEl('h4', { text:'Revisar posible rotación', className:'rt-subtitulo' }));
+    const confRow = rtEl('div', { className:'rt-buscador-row' });
+    [['', 'Todos'], ['alta', 'Alta confianza'], ['manual', 'Revisión manual']].forEach(([valor, etiqueta]) => {
+      const btn = rtEl('button', { className:'btn-sm' + (RT_OPORTUNIDADES_CONFIANZA === valor && valor ? ' rt-kpi-activo' : (!valor && !RT_OPORTUNIDADES_CONFIANZA ? ' rt-kpi-activo' : '')), text: etiqueta });
+      btn.type = 'button';
+      btn.addEventListener('click', () => rtOportunidadesCambiarConfianza(valor || null));
+      confRow.appendChild(btn);
+    });
+    host.appendChild(confRow);
+
+    const rotRow = rtEl('div', { className:'rt-buscador-row' });
+    const selOrigen = rtEl('select'); selOrigen.appendChild(rtEl('option', { attrs:{value:''}, text:'Sucursal origen' }));
+    const selDestino = rtEl('select'); selDestino.appendChild(rtEl('option', { attrs:{value:''}, text:'Sucursal destino' }));
+    RT_CENTROS.forEach(c => {
+      selOrigen.appendChild(rtEl('option', { attrs:{value:c}, text: RT_CENTRO_NOMBRE[c] }));
+      selDestino.appendChild(rtEl('option', { attrs:{value:c}, text: RT_CENTRO_NOMBRE[c] }));
+    });
+    selOrigen.value = RT_OPORTUNIDADES_ROTACION.origen; selDestino.value = RT_OPORTUNIDADES_ROTACION.destino;
+    selOrigen.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.origen = selOrigen.value; rtOportunidadesAplicarRotacion(); });
+    selDestino.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.destino = selDestino.value; rtOportunidadesAplicarRotacion(); });
+    rotRow.appendChild(selOrigen); rotRow.appendChild(selDestino);
+
+    const inpVentas = rtEl('input', { attrs:{ type:'number', min:'0', placeholder:'Mín. ventas destino' } });
+    inpVentas.value = RT_OPORTUNIDADES_ROTACION.ventasDestinoMin;
+    inpVentas.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.ventasDestinoMin = inpVentas.value; rtOportunidadesAplicarRotacion(); });
+    const inpStock = rtEl('input', { attrs:{ type:'number', min:'0', placeholder:'Mín. stock origen' } });
+    inpStock.value = RT_OPORTUNIDADES_ROTACION.stockOrigenMin;
+    inpStock.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.stockOrigenMin = inpStock.value; rtOportunidadesAplicarRotacion(); });
+    const inpCobertura = rtEl('input', { attrs:{ type:'number', min:'0', placeholder:'Mín. cobertura origen (días)' } });
+    inpCobertura.value = RT_OPORTUNIDADES_ROTACION.coberturaOrigenMin;
+    inpCobertura.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.coberturaOrigenMin = inpCobertura.value; rtOportunidadesAplicarRotacion(); });
+    rotRow.appendChild(inpVentas); rotRow.appendChild(inpStock); rotRow.appendChild(inpCobertura);
+    host.appendChild(rotRow);
+  }
+
+  if (RT_OPORTUNIDADES_LOADING) {
     const box = rtEl('div', { className:'rt-progress' });
     box.appendChild(rtEl('div', { className:'spinner' }));
-    box.appendChild(rtEl('span', { text: 'Analizando ' + nf.format(RT_COMPLETO_PROGRESO) + ' filas...' }));
+    box.appendChild(rtEl('span', { text:'Actualizando...' }));
     host.appendChild(box);
     return;
   }
-  if (RT_COMPLETO_ERROR) return rtEstado(host, 'error', 'No se pudo analizar el filtro. ' + RT_COMPLETO_ERROR, rtCargarCompleto);
-  const filas = RT_COMPLETO.filas;
-  if (!filas.length) return rtEstado(host, 'vacio', 'Sin datos para este filtro y período.');
-  if (RT_COMPLETO.capado) host.appendChild(rtEl('div', { className:'alert alert-warning', text:'El filtro tiene más de ' + nf.format(RT_LIMITE_PAGINAS_COMPLETO * 500) + ' variantes — se analiza un subconjunto. Acotá el filtro para un resultado completo.' }));
 
-  const stockBajo = filas.filter(f => f.Stock_total >= 1 && f.Stock_total <= 2).sort((a,b) => a.Stock_total - b.Stock_total);
-  const sinVentasConStock = filas.filter(f => f.Ventas_total === 0 && f.Stock_total > 0).sort((a,b) => b.Stock_total - a.Stock_total);
+  const datos = RT_OPORTUNIDADES.data;
+  if (!datos.length) return rtEstado(host, 'vacio', 'Sin oportunidades para este filtro y período.');
 
-  host.appendChild(rtEl('h4', { text:'Stock bajo (1–2 unidades) — ' + nf.format(stockBajo.length), className:'rt-subtitulo' }));
-  if (stockBajo.length) {
-    host.appendChild(rtTabla(
-      ['Código', 'Producto', 'Talle', 'Color', 'Stock', 'Ventas'],
-      stockBajo.slice(0, 200),
-      (f) => {
-        const tr = rtEl('tr');
-        [f.Codigo_producto, f.Nombre_producto, f.Codigo_talle, f.Nombre_color || f.Codigo_color, nf.format(f.Stock_total), nf.format(f.Ventas_total)]
-          .forEach(v => tr.appendChild(rtEl('td', { text: String(v) })));
-        return tr;
+  // Tabla (desktop) -- reutiliza rtTabla()
+  const tablaWrap = rtEl('div', { className:'rt-oportunidades-tabla' });
+  tablaWrap.appendChild(rtTabla(
+    ['Estado', 'Código', 'Producto', 'Marca', 'Ventas', 'Stock sucursales', 'Depósito 90+93', 'Cobertura (días)', 'Motivo'],
+    datos,
+    (f) => {
+      const tr = rtEl('tr', { className:'rt-row-click' });
+      const tdEstado = rtEl('td');
+      tdEstado.appendChild(rtBadgeEstado(f.estado_principal, f.texto_estado));
+      if (f.estados_secundarios.length) tdEstado.appendChild(rtBadgesSecundarios(f.estados_secundarios));
+      tr.appendChild(tdEstado);
+      tr.appendChild(rtEl('td', { text: f.Codigo_producto }));
+      tr.appendChild(rtEl('td', { text: f.Nombre_producto }));
+      tr.appendChild(rtEl('td', { text: f.Nombre_marca }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.Ventas_total) + (f.devoluciones_netas ? ' (con devol.)' : '') }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.Stock_sucursales) }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.Stock_ctro_0000) }));
+      tr.appendChild(rtEl('td', { text: f.cobertura_estado === 'sin_ventas' ? 'sin ventas' : nf1.format(f.cobertura_dias) }));
+      const tdMotivo = rtEl('td', { text: f.motivo || '—' });
+      if (f.diagnostico_rotacion) {
+        const ps = f.diagnostico_rotacion.par_sugerido;
+        tdMotivo.appendChild(rtEl('div', { className:'rt-note', text: 'Origen ' + ps.origen.sucursal + ' (stock ' + ps.origen.stock + ') → Destino ' + ps.destino.sucursal + ' (ventas ' + ps.destino.ventas + ')' + (ps.cantidad_sugerida ? ' · sugerido: ' + ps.cantidad_sugerida + ' un.' : '') }));
       }
-    ));
-    if (stockBajo.length > 200) host.appendChild(rtEl('p', { className:'rt-note', text:'Mostrando las primeras 200 de ' + nf.format(stockBajo.length) + '.' }));
-  } else {
-    host.appendChild(rtEl('p', { className:'rt-note', text:'Sin variantes con stock bajo en este filtro.' }));
-  }
+      tr.appendChild(tdMotivo);
+      tr.addEventListener('click', () => rtOportunidadesVerDetalle(f.Codigo_producto));
+      return tr;
+    }
+  ));
+  host.appendChild(tablaWrap);
 
-  host.appendChild(rtEl('h4', { text:'Con stock, sin ventas en el período — ' + nf.format(sinVentasConStock.length), className:'rt-subtitulo' }));
-  if (sinVentasConStock.length) {
-    host.appendChild(rtTabla(
-      ['Código', 'Producto', 'Talle', 'Color', 'Stock'],
-      sinVentasConStock.slice(0, 200),
-      (f) => {
-        const tr = rtEl('tr');
-        [f.Codigo_producto, f.Nombre_producto, f.Codigo_talle, f.Nombre_color || f.Codigo_color, nf.format(f.Stock_total)]
-          .forEach(v => tr.appendChild(rtEl('td', { text: String(v) })));
-        return tr;
-      }
-    ));
-    if (sinVentasConStock.length > 200) host.appendChild(rtEl('p', { className:'rt-note', text:'Mostrando las primeras 200 de ' + nf.format(sinVentasConStock.length) + '.' }));
-  } else {
-    host.appendChild(rtEl('p', { className:'rt-note', text:'Sin variantes con stock y cero ventas en este filtro.' }));
-  }
+  // Tarjetas (mobile) -- mismo dato, distinta presentacion, activada por CSS (.rt-oportunidades-tabla se
+  // oculta y .rt-oportunidades-cards se muestra por debajo de 640px, ver <style>)
+  const cardsWrap = rtEl('div', { className:'rt-oportunidades-cards' });
+  datos.forEach(f => {
+    const card = rtEl('div', { className:'card rt-opp-card' });
+    card.appendChild(rtBadgeEstado(f.estado_principal, f.texto_estado));
+    if (f.estados_secundarios.length) card.appendChild(rtBadgesSecundarios(f.estados_secundarios));
+    card.appendChild(rtEl('div', { className:'rt-opp-card-titulo', text: f.Codigo_producto + ' · ' + f.Nombre_producto }));
+    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: f.Nombre_marca }));
+    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(f.Stock_ctro_0000) + ' depósito)' }));
+    if (f.motivo) card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: f.motivo }));
+    if (f.diagnostico_rotacion) {
+      const ps = f.diagnostico_rotacion.par_sugerido;
+      card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: 'Origen ' + ps.origen.sucursal + ' (stock ' + ps.origen.stock + ') → Destino ' + ps.destino.sucursal + ' (ventas ' + ps.destino.ventas + ')' + (ps.cantidad_sugerida ? ' · sugerido: ' + ps.cantidad_sugerida + ' un.' : '') }));
+    }
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => rtOportunidadesVerDetalle(f.Codigo_producto));
+    cardsWrap.appendChild(card);
+  });
+  host.appendChild(cardsWrap);
+
+  const p = RT_OPORTUNIDADES.paginacion;
+  const pag = rtEl('div', { className:'rt-pagination' });
+  pag.appendChild(rtEl('span', { text: 'Mostrando ' + (p.total === 0 ? 0 : p.offset + 1) + '–' + (p.offset + p.devueltos) + ' de ' + nf.format(p.total) }));
+  const btnAnt = rtEl('button', { className:'btn-sm', text:'← Anterior' });
+  btnAnt.type = 'button'; btnAnt.disabled = p.offset === 0;
+  btnAnt.addEventListener('click', () => rtOportunidadesPagina(-1));
+  const btnSig = rtEl('button', { className:'btn-sm', text:'Siguiente →' });
+  btnSig.type = 'button'; btnSig.disabled = (p.offset + p.devueltos) >= p.total;
+  btnSig.addEventListener('click', () => rtOportunidadesPagina(1));
+  pag.appendChild(btnAnt); pag.appendChild(btnSig);
+  host.appendChild(pag);
 }
 
 function dbOpen() {
