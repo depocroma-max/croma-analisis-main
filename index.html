@@ -114,7 +114,9 @@
     table.rt-table{width:100%;border-collapse:collapse;font-size:13px}
     table.rt-table th{text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
       color:var(--gray-400);padding:9px 12px;border-bottom:1px solid var(--gray-100);white-space:nowrap}
-    table.rt-table td{padding:9px 12px;border-bottom:1px solid var(--gray-50);white-space:nowrap}
+    table.rt-table td{padding:9px 12px;border-bottom:1px solid var(--gray-50);white-space:nowrap;vertical-align:top}
+    table.rt-table td.rt-td-wrap{white-space:normal;max-width:380px;line-height:1.5}
+    table.rt-table td.rt-td-truncate{max-width:220px;overflow:hidden;text-overflow:ellipsis}
     table.rt-table tbody tr.rt-row-click{cursor:pointer}
     table.rt-table tbody tr.rt-row-click:hover{background:var(--gray-50)}
     .rt-filtro-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-s);color:var(--accent);
@@ -146,7 +148,7 @@
     .rt-opp-card-titulo{font-weight:700;font-size:14px}
     .rt-opp-card-linea{font-size:13px;color:var(--gray-600)}
     .rt-opp-card-motivo{font-size:12.5px;color:var(--gray-500);line-height:1.4}
-    .rt-badges-secundarios{display:inline-flex;gap:4px;flex-wrap:wrap;margin-left:6px}
+    .rt-badges-secundarios{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
     .rt-badge-discreto{opacity:.65;font-size:10.5px;padding:2px 7px}
     @media (max-width:640px){
       .rt-oportunidades-tabla{display:none}
@@ -309,7 +311,7 @@
     /* Panel de filtros de Productos -- siempre visible (a diferencia del viejo
        rtFormularioFiltro que desaparecia una vez aplicado un filtro), permite combinar
        campos sobre un filtro ya activo (ej. agregar rubro a una marca precargada). */
-    .rt-productos-filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end}
+    .rt-productos-filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end;margin-bottom:var(--space-4)}
     .rt-productos-filtros .fc{min-width:0}
     .rt-productos-filtros-acciones{display:flex;gap:8px;align-items:end}
     .rt-productos-origen{display:inline-flex;align-items:center;gap:6px;background:var(--info-bg);color:var(--info);
@@ -426,9 +428,6 @@
       <div class="tabs" id="rtTabs" role="tablist">
         <button class="tab active" data-view="dashboard">Dashboard</button>
         <button class="tab" data-view="marcas">Marcas</button>
-        <button class="tab" data-view="rubros">Rubros</button>
-        <button class="tab" data-view="subrubros">Subrubros</button>
-        <button class="tab" data-view="sucursales">Sucursales</button>
         <button class="tab" data-view="productos">Productos</button>
         <button class="tab" data-view="talles-colores">Talles y colores</button>
         <button class="tab" data-view="oportunidades">Oportunidades</button>
@@ -857,9 +856,6 @@ function rtRenderVistaActual() {
   host.replaceChildren();
   if (RT_VIEW === 'dashboard') renderRTDashboard(host);
   else if (RT_VIEW === 'marcas') renderRTMarcas(host);
-  else if (RT_VIEW === 'rubros') renderRTGrupo(host, 'rubro', 'por_rubro', 'Rubro');
-  else if (RT_VIEW === 'subrubros') renderRTSubrubros(host);
-  else if (RT_VIEW === 'sucursales') renderRTSucursales(host);
   else if (RT_VIEW === 'productos') renderRTProductos(host);
   else if (RT_VIEW === 'talles-colores') renderRTTallesColores(host);
   else if (RT_VIEW === 'oportunidades') renderRTOportunidades(host);
@@ -1095,8 +1091,7 @@ function renderRTInsights(host, t, tAnterior) {
   host.appendChild(panel);
 }
 
-// ── Marcas (vista dedicada -- Rubros/Subrubros siguen en renderRTGrupo/renderRTSubrubros,
-// sin tocar) ──────────────────────────────────────────────────────────────────────────
+// ── Marcas (vista dedicada) ──────────────────────────────────────────────────────────
 // Todo lo de abajo opera client-side sobre RT_RESUMEN.por_marca ya cargado (misma
 // respuesta que ya trae el Dashboard) -- ninguna funcion de esta seccion hace fetch.
 
@@ -1567,73 +1562,6 @@ function rtTablaMarcas(host, datos) {
   host.appendChild(pag);
 }
 
-// ── Rubros (agrupados desde /resumen, click aplica filtro) -- sin cambios en Fase 3 ──
-function renderRTGrupo(host, campo, listKey, etiqueta) {
-  if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando...');
-  if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar. ' + RT_RESUMEN_ERROR, rtCargarResumen);
-  if (!RT_RESUMEN) return rtEstado(host, 'vacio', 'Sin datos.');
-  const lista = RT_RESUMEN[listKey] || [];
-  if (!lista.length) return rtEstado(host, 'vacio', 'Sin resultados en el período.');
-
-  host.appendChild(rtTabla(
-    [etiqueta, 'Ventas', 'Stock', 'Variantes'],
-    lista,
-    (f) => {
-      const tr = rtEl('tr', { className:'rt-row-click' });
-      tr.appendChild(rtEl('td', { text: f[campo] }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.ventas_total) }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.stock_total) }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.variantes) }));
-      tr.addEventListener('click', () => rtAplicarFiltroYVer({ [campo]: f[campo] }));
-      return tr;
-    }
-  ));
-}
-
-function renderRTSubrubros(host) {
-  if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando...');
-  if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar. ' + RT_RESUMEN_ERROR, rtCargarResumen);
-  if (!RT_RESUMEN) return rtEstado(host, 'vacio', 'Sin datos.');
-  const lista = RT_RESUMEN.por_subrubro || [];
-  if (!lista.length) return rtEstado(host, 'vacio', 'Sin resultados en el período.');
-
-  host.appendChild(rtTabla(
-    ['Rubro', 'Subrubro', 'Ventas', 'Stock', 'Variantes'],
-    lista,
-    (f) => {
-      const tr = rtEl('tr', { className:'rt-row-click' });
-      tr.appendChild(rtEl('td', { text: f.rubro }));
-      tr.appendChild(rtEl('td', { text: f.subrubro }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.ventas_total) }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.stock_total) }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.variantes) }));
-      tr.addEventListener('click', () => rtAplicarFiltroYVer({ rubro: f.rubro, subrubro: f.subrubro }));
-      return tr;
-    }
-  ));
-}
-
-function renderRTSucursales(host) {
-  if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando...');
-  if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar. ' + RT_RESUMEN_ERROR, rtCargarResumen);
-  if (!RT_RESUMEN) return rtEstado(host, 'vacio', 'Sin datos.');
-  host.appendChild(rtTabla(
-    ['Sucursal', 'Ventas', 'Stock'],
-    RT_CENTROS,
-    (centro) => {
-      const s = RT_RESUMEN.por_sucursal[centro] || { ventas:0, stock:0 };
-      const tr = rtEl('tr');
-      const badge = rtEl('span', { className:'sb ' + RT_CENTRO_CLS[centro], text: RT_CENTRO_NOMBRE[centro] });
-      const tdNombre = rtEl('td'); tdNombre.appendChild(badge);
-      tr.appendChild(tdNombre);
-      tr.appendChild(rtEl('td', { text: nf.format(s.ventas) }));
-      tr.appendChild(rtEl('td', { text: nf.format(s.stock) }));
-      return tr;
-    }
-  ));
-  host.appendChild(rtEl('div', { className:'rt-note', text: 'Depósito Central (90 + 93): ' + nf.format(RT_RESUMEN.totales.Stock_ctro_0000) + ' unidades — no se reparte por sucursal.' }));
-}
-
 // ── Productos (agrupado por producto, filtros combinables, 100% sobre rtCargarCompleto) ──
 // El codigo se trata siempre como texto: normaliza espacios pero nunca toca ceros a la
 // izquierda ni lo convierte a numero (Codigo_producto puede tenerlos con significado).
@@ -1641,7 +1569,10 @@ function rtProductosNormalizarCodigo(valor) {
   return String(valor ?? '').replace(/\s+/g, ' ').trim();
 }
 
-function rtProductosFormulario(host) {
+// alAplicar: callback opcional que reemplaza la accion por defecto al enviar el filtro
+// (reset de pagina/expandido de Productos + rtCargarCompleto()) -- Oportunidades pasa
+// el suyo propio (reset de offset + rtCargarOportunidades()), ya que no usa RT_COMPLETO.
+function rtFormularioFiltro(host, alAplicar) {
   if (RT_PRODUCTOS_FILTRO_ORIGEN) {
     const badge = rtEl('div', { className:'rt-productos-origen' });
     badge.innerHTML = icon('info', ''); // icono estatico del helper
@@ -1654,19 +1585,35 @@ function rtProductosFormulario(host) {
   const form = rtEl('form', { className:'rt-productos-filtros' });
   form.setAttribute('novalidate', 'novalidate');
 
-  const campo = (id, label, valorActual) => {
+  const campo = (id, label, valorActual, listaSugerencias) => {
     const fc = rtEl('div', { className:'fc' });
     fc.appendChild(rtEl('label', { text:label, attrs:{ for:id } }));
-    const inp = rtEl('input', { attrs:{ type:'text', id, name:id } });
+    const attrs = { type:'text', id, name:id, autocomplete:'off' };
+    if (listaSugerencias) attrs.list = id + 'Lista';
+    const inp = rtEl('input', { attrs });
     inp.value = valorActual || '';
     fc.appendChild(inp);
+    if (listaSugerencias) {
+      const datalist = rtEl('datalist', { attrs:{ id: id + 'Lista' } });
+      listaSugerencias.forEach(v => datalist.appendChild(rtEl('option', { attrs:{ value:v } })));
+      fc.appendChild(datalist);
+    }
     form.appendChild(fc);
     return inp;
   };
+  // Sugerencias: se arman una sola vez sobre RT_RESUMEN.por_marca/por_rubro/por_subrubro
+  // (ya cargado por el Dashboard, sin pedir nada nuevo a la API) -- ordenadas y sin
+  // duplicados. Si RT_RESUMEN todavia no cargo, el campo queda sin <datalist> (se
+  // sigue pudiendo tipear el filtro a mano, solo no autocompleta).
+  const sugerenciasUnicas = valores => Array.from(new Set(valores.filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
+  const sugerenciasMarca = RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_marca.map(m => m.marca)) : null;
+  const sugerenciasRubro = RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_rubro.map(r => r.rubro)) : null;
+  const sugerenciasSubrubro = RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_subrubro.map(s => s.subrubro)) : null;
+
   const inCodigo = campo('rtProdCodigo', 'Código exacto', RT_FILTRO && RT_FILTRO.codigo);
-  const inMarca = campo('rtProdMarca', 'Marca', RT_FILTRO && RT_FILTRO.marca);
-  const inRubro = campo('rtProdRubro', 'Rubro', RT_FILTRO && RT_FILTRO.rubro);
-  const inSubrubro = campo('rtProdSubrubro', 'Subrubro', RT_FILTRO && RT_FILTRO.subrubro);
+  const inMarca = campo('rtProdMarca', 'Marca', RT_FILTRO && RT_FILTRO.marca, sugerenciasMarca);
+  const inRubro = campo('rtProdRubro', 'Rubro', RT_FILTRO && RT_FILTRO.rubro, sugerenciasRubro);
+  const inSubrubro = campo('rtProdSubrubro', 'Subrubro', RT_FILTRO && RT_FILTRO.subrubro, sugerenciasSubrubro);
 
   const acciones = rtEl('div', { className:'rt-productos-filtros-acciones' });
   const btnFiltrar = rtBotonIcono('btn-sm', 'filter', 'Filtrar');
@@ -1698,19 +1645,19 @@ function rtProductosFormulario(host) {
     if (!Object.keys(filtro).length) return;
     RT_FILTRO = filtro;
     RT_PRODUCTOS_FILTRO_ORIGEN = null; // filtro armado a mano reemplaza al precargado
-    RT_PRODUCTOS_PAGINA = 0; RT_PRODUCTOS_EXPANDIDO = null;
-    rtCargarCompleto();
+    if (alAplicar) { alAplicar(); }
+    else { RT_PRODUCTOS_PAGINA = 0; RT_PRODUCTOS_EXPANDIDO = null; rtCargarCompleto(); }
   });
 
   host.appendChild(form);
 }
 
-function rtProductosEstadoInicial(host) {
+function rtEstadoInicialFiltro(host, vista) {
   const card = rtEl('div', { className:'card rt-productos-estado-inicial' });
   const icono = rtEl('div', { className:'rt-state-icon' });
   icono.innerHTML = icon('search', ''); // icono estatico del helper
   card.appendChild(icono);
-  card.appendChild(rtEl('h4', { text:'Ingresá al menos un filtro para consultar productos', className:'rt-subtitulo' }));
+  card.appendChild(rtEl('h4', { text:'Ingresá al menos un filtro para consultar ' + vista, className:'rt-subtitulo' }));
   card.appendChild(rtEl('p', { text:'Podés combinar código, marca, rubro y subrubro. La búsqueda usa el período seleccionado arriba.' }));
   card.appendChild(rtEl('p', { className:'rt-note', text:'Ejemplos: código exacto "T0004" · marca "RIP CURL" · rubro "CALZADO"' }));
   host.appendChild(card);
@@ -2057,9 +2004,9 @@ function renderRTProductos(host) {
   host.appendChild(rtEl('p', { className:'rt-note', text:'Buscá y analizá productos reales del período ' +
     rtFmtFecha(RT_DESDE) + ' – ' + rtFmtFecha(RT_HASTA) + '.' }));
 
-  rtProductosFormulario(host);
+  rtFormularioFiltro(host);
 
-  if (!RT_FILTRO) { rtProductosEstadoInicial(host); return; }
+  if (!RT_FILTRO) { rtEstadoInicialFiltro(host, 'productos'); return; }
 
   // Mismo patron lazy-load-on-render que Talles y colores: si no hay cache para este
   // filtro, dispara rtCargarCompleto() (AbortController + numero de secuencia, cancela
@@ -2151,15 +2098,15 @@ async function rtCargarCompleto() {
   }
 }
 
-function rtPanelSinFiltro(host, vista) {
-  host.appendChild(rtEl('h3', { text: vista, className:'rt-subtitulo' }));
-  rtEstado(host, 'vacio', 'Aplicá un filtro desde Marcas, Rubros, Subrubros o Productos para ver ' + vista.toLowerCase() + '.');
-}
-
 // ── Talles y colores ─────────────────────────────────────────────────────────
 function renderRTTallesColores(host) {
   host.appendChild(rtEl('h3', { text:'Talles y colores', className:'rt-subtitulo' }));
-  if (!RT_FILTRO) return rtPanelSinFiltro(host, 'Talles y colores');
+  host.appendChild(rtEl('p', { className:'rt-note', text:'Buscá y analizá talles y colores reales del período ' +
+    rtFmtFecha(RT_DESDE) + ' – ' + rtFmtFecha(RT_HASTA) + '.' }));
+
+  rtFormularioFiltro(host);
+
+  if (!RT_FILTRO) { rtEstadoInicialFiltro(host, 'talles y colores'); return; }
   rtFiltroChip(host);
 
   const key = rtFiltroKey();
@@ -2310,8 +2257,14 @@ function rtBadgesSecundarios(estadosSecundarios) {
 
 function renderRTOportunidades(host) {
   host.appendChild(rtEl('h3', { text:'Oportunidades', className:'rt-subtitulo' }));
+
+  rtFormularioFiltro(host, () => {
+    RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0;
+    rtCargarOportunidades();
+  });
+
   if (RT_FILTRO) rtFiltroChip(host);
-  else host.appendChild(rtEl('p', { className:'rt-note', text:'Panorama general del período. Aplicá un filtro desde Marcas, Rubros, Subrubros o Productos para acotar.' }));
+  else host.appendChild(rtEl('p', { className:'rt-note', text:'Panorama general del período. Aplicá un filtro arriba para acotar.' }));
 
   if (!RT_OPORTUNIDADES && !RT_OPORTUNIDADES_LOADING) rtCargarOportunidades();
   if (RT_OPORTUNIDADES_LOADING && !RT_OPORTUNIDADES) return rtEstado(host, 'loading', 'Calculando oportunidades del período...');
@@ -2404,13 +2357,13 @@ function renderRTOportunidades(host) {
       if (f.estados_secundarios.length) tdEstado.appendChild(rtBadgesSecundarios(f.estados_secundarios));
       tr.appendChild(tdEstado);
       tr.appendChild(rtEl('td', { text: f.Codigo_producto }));
-      tr.appendChild(rtEl('td', { text: f.Nombre_producto }));
+      tr.appendChild(rtEl('td', { className:'rt-td-truncate', text: f.Nombre_producto, attrs:{ title: f.Nombre_producto || '' } }));
       tr.appendChild(rtEl('td', { text: f.Nombre_marca }));
       tr.appendChild(rtEl('td', { text: nf.format(f.Ventas_total) + (f.devoluciones_netas ? ' (con devol.)' : '') }));
       tr.appendChild(rtEl('td', { text: nf.format(f.Stock_sucursales) }));
       tr.appendChild(rtEl('td', { text: nf.format(f.Stock_ctro_0000) }));
       tr.appendChild(rtEl('td', { text: f.cobertura_estado === 'sin_ventas' ? 'sin ventas' : nf1.format(f.cobertura_dias) }));
-      const tdMotivo = rtEl('td', { text: f.motivo || '—' });
+      const tdMotivo = rtEl('td', { className:'rt-td-wrap', text: f.motivo || '—' });
       if (f.diagnostico_rotacion) {
         const ps = f.diagnostico_rotacion.par_sugerido;
         tdMotivo.appendChild(rtEl('div', { className:'rt-note', text: 'Origen ' + ps.origen.sucursal + ' (stock ' + ps.origen.stock + ') → Destino ' + ps.destino.sucursal + ' (ventas ' + ps.destino.ventas + ')' + (ps.cantidad_sugerida ? ' · sugerido: ' + ps.cantidad_sugerida + ' un.' : '') }));
