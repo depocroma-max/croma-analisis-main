@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Croma · Análisis</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src https://stock-api.croma-app.com.ar;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src https://stock-api.croma-app.com.ar;">
   <meta name="referrer" content="no-referrer">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -60,10 +60,6 @@
     .brand-section{font-size:11px;font-weight:500;letter-spacing:3px;color:var(--gray-400);
       text-transform:uppercase;padding:3px 9px;border:1px solid rgba(255,255,255,.12);border-radius:999px}
     .top-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
-    .hbtn{height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.06);cursor:pointer;font-size:12px;color:var(--gray-400);
-      font-family:var(--font-b);transition:.15s;white-space:nowrap}
-    .hbtn:hover{border-color:rgba(255,255,255,.30);color:#fff}
     /* Namespaced a proposito (topbar-icon-btn, no .btn-icon): .btn-icon ya es una clase
        oficial de croma-ds.css (sizing 40x40 sobre fondo claro) — esta variante es solo
        para la topbar oscura y no debe pisar la real al reutilizarla en Tiempo real. */
@@ -80,63 +76,6 @@
     .sesion-logout:hover{background:#dc2626;border-color:#dc2626;color:#fff}
 
     .wrap{max-width:1300px;margin:0 auto;padding:20px 20px 80px}
-    .err-box{background:var(--risk-s);border:1px solid #fca5a5;color:#991b1b;
-      border-radius:12px;padding:12px 16px;font-size:13px;margin:12px 0}
-
-    /* Mode selector */
-    .mode-sel{margin-top:8px}
-    .mode-sel h2{font-family:var(--font-d);font-size:22px;letter-spacing:1.5px;
-      margin-bottom:6px;color:var(--black)}
-    .mode-sel p{font-size:13px;color:var(--gray-400);margin-bottom:20px}
-    .mode-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:1020px}
-    .mode-card{background:var(--white);border:none;border-radius:var(--radius-xl);
-      padding:28px 24px 22px;cursor:pointer;text-align:left;font:inherit;color:inherit;
-      transition:.18s;box-shadow:0 4px 20px rgba(0,0,0,.07);position:relative;overflow:hidden}
-    .mode-card::before{content:'';position:absolute;top:-24px;right:-24px;width:90px;height:90px;
-      border-radius:50%;opacity:.35}
-    .mode-card.mc-gen::before{background:radial-gradient(circle,#c4b5fd,transparent 70%)}
-    .mode-card.mc-tyc::before{background:radial-gradient(circle,#99f6e4,transparent 70%)}
-    .mode-card.mc-rt::before{background:radial-gradient(circle,#f9a8a0,transparent 70%)}
-    .mode-card:hover{box-shadow:0 10px 36px rgba(0,0,0,.13);transform:translateY(-3px)}
-    .mc-icon{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;
-      margin-bottom:14px}
-    .mc-icon svg{width:28px;height:28px}
-    .mc-gen .mc-icon{background:var(--violet-s);color:var(--violet)}
-    .mc-tyc .mc-icon{background:var(--teal-s);color:var(--teal)}
-    .mc-rt .mc-icon{background:var(--accent-s);color:var(--accent)}
-    .mc-name{font-weight:700;font-size:16px;margin-bottom:4px}
-    .mc-desc{font-size:13px;color:var(--gray-400);line-height:1.55;margin-bottom:16px}
-    .mc-go{font-size:12px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:6px}
-    .mc-go span{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:14px}
-    .mc-gen .mc-go span{background:var(--violet-s);color:var(--violet)}
-    .mc-tyc .mc-go span{background:var(--teal-s);color:var(--teal)}
-    .mc-rt .mc-go span{background:var(--accent-s);color:var(--accent)}
-
-    /* Upload zone */
-    #uploadZone{background:var(--white);border:2px dashed var(--gray-200);border-radius:24px;
-      padding:52px 28px;text-align:center;cursor:pointer;transition:.18s;box-shadow:var(--sh);margin-top:4px}
-    #uploadZone:hover,#uploadZone.over{border-color:var(--violet);background:var(--violet-s)}
-    #uploadZone.tyc-mode:hover,#uploadZone.tyc-mode.over{border-color:var(--teal);background:var(--teal-s)}
-    .up-icon{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;
-      margin:0 auto 18px;font-size:26px}
-    .up-icon.gen{background:var(--violet-s)}
-    .up-icon.tyc{background:var(--teal-s)}
-    #uploadZone h2{font-family:var(--font-d);font-size:24px;letter-spacing:1.5px;margin-bottom:8px}
-    #uploadZone .up-desc{font-size:13px;color:var(--gray-400);max-width:460px;margin:0 auto 6px}
-    #uploadZone .up-hint{font-size:11px;color:var(--gray-400);margin-top:14px;line-height:1.7}
-    #uploadZone .up-hint b{color:var(--black)}
-    .saved-card{display:flex;align-items:center;gap:16px;background:var(--white);
-      border:2px solid var(--gray-200);border-radius:16px;padding:18px 22px;margin-bottom:16px;
-      box-shadow:0 2px 12px rgba(0,0,0,.06)}
-    .saved-card-icon{font-size:28px;flex:none}
-    .saved-card-info{flex:1;min-width:0}
-    .saved-card-name{font-weight:600;font-size:14px;color:var(--black);
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .saved-card-date{font-size:11px;color:var(--gray-400);margin-top:2px}
-    .saved-card-actions{display:flex;gap:8px;flex:none}
-    .up-back{font:inherit;font-size:12px;color:var(--gray-400);background:none;border:none;
-      cursor:pointer;margin-top:16px;text-decoration:underline}
-    .up-back:hover{color:var(--black)}
 
     /* Filter bar */
     .fbar{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r);
@@ -148,28 +87,9 @@
       border:1px solid var(--gray-200);border-radius:8px;padding:6px 10px;
       background:var(--gray-50);color:var(--black)}
     .fc input:focus,.fc select:focus{outline:2px solid var(--violet);outline-offset:1px}
-    .fc-search{flex:1;min-width:180px}
-    .fc-search input{max-width:100%;width:100%}
-    .fc-date input{max-width:145px}
-    .fc-sel select{max-width:155px}
-    .tog-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding-bottom:4px}
-    .tog{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
-    .tog input{position:absolute;opacity:0;width:0;height:0}
-    .tog-tk{width:34px;height:20px;border-radius:99px;background:var(--gray-200);
-      position:relative;transition:.15s;flex:none}
-    .tog-tk::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;
-      background:#fff;top:2px;left:2px;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-    .tog input:checked + .tog-tk{background:var(--violet)}
-    .tog input:checked + .tog-tk::after{transform:translateX(14px)}
-    .tog span{font-size:12px;font-weight:500}
     .fbar-end{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:2px}
     .fname{font-size:11.5px;color:var(--gray-400)}
     .fname b{color:var(--black);font-weight:600}
-    .mode-badge{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-      padding:2px 8px;border-radius:99px}
-    .mode-badge.gen{background:var(--violet-s);color:var(--violet)}
-    .mode-badge.tyc{background:var(--teal-s);color:var(--teal)}
-    .mode-badge.rt{background:var(--accent-s);color:var(--accent)}
 
     /* Tiempo real — periodo, tablas, paginacion, chips */
     .rt-periodo-label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--gray-400)}
@@ -232,28 +152,8 @@
       .rt-oportunidades-tabla{display:none}
       .rt-oportunidades-cards{display:block}
     }
-    /* Namespaced a proposito (excel-btn-export, no .btn-primary): .btn-primary ya es la
-       clase oficial de croma-ds.css (rojo, pill) — este boton del modo Excel es previo
-       a la adopcion del DS y tiene otro estilo (negro); renombrado para no pisar la
-       clase real cuando Tiempo real empiece a usar botones .btn-primary del DS. */
-    .excel-btn-export{font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--black);
-      border:none;border-radius:9px;padding:8px 14px;cursor:pointer;transition:.15s;
-      display:inline-flex;align-items:center;gap:6px}
-    .excel-btn-export:hover{background:#222}
-    .excel-btn-export svg{width:14px;height:14px;stroke:#fff;flex:none;stroke-linecap:round;stroke-linejoin:round}
-
-    /* KPIs */
-    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:14px}
-    .kpi{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
     .kl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:8px;line-height:1.3}
     .kv{font-family:var(--font-d);font-size:28px;letter-spacing:-.01em;line-height:1}
-    .ks{font-size:11px;color:var(--gray-400);margin-top:4px}
-    .kpi.hero{grid-column:span 2;background:var(--black);color:#fff;border-color:var(--black)}
-    .kpi.hero .kl{color:var(--gray-600)}
-    .kpi.hero .kv{font-size:36px}
-    .kpi.hero .ks{color:#a0a09a}
-    .kpi.hero .gauge{height:7px;border-radius:99px;background:rgba(255,255,255,.12);margin-top:10px;overflow:hidden}
-    .kpi.hero .gauge span{display:block;height:100%;background:var(--sold);border-radius:99px}
 
     /* Tabs */
     .tabs{display:flex;gap:3px;background:var(--white);border:1px solid var(--gray-100);
@@ -264,12 +164,6 @@
     .tab:hover{color:var(--black)}
     .tab.active{background:var(--black);color:#fff}
 
-    /* Panel */
-    .panel{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
-    .ph{display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:14px 18px;border-bottom:1px solid var(--gray-100);flex-wrap:wrap}
-    .ph h3{font-family:var(--font-d);font-size:17px;letter-spacing:1px}
-    .pnote{font-size:12px;color:var(--gray-400)}
     .btn-sm{font:inherit;font-size:12px;font-weight:600;color:var(--black);background:var(--gray-50);
       border:1px solid var(--gray-200);border-radius:8px;padding:5px 12px;cursor:pointer;
       display:inline-flex;align-items:center;gap:5px;transition:.15s}
@@ -289,20 +183,6 @@
     tbody tr:hover{background:#fafaf8}
     .nr{text-align:right;font-weight:600;white-space:nowrap}
     .pname{font-weight:500;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .cod{font-size:11px;color:var(--gray-400);font-weight:600}
-    .tag{font-size:11px;font-weight:600;color:var(--gray-600);background:var(--gray-100);
-      border:1px solid var(--gray-200);padding:2px 8px;border-radius:99px;white-space:nowrap;display:inline-block}
-    .pill{font-weight:700;font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap;display:inline-block}
-    .pill.g{background:var(--sold-s);color:#15803d}
-    .pill.a{background:var(--amber-s);color:#92400e}
-    .pill.r{background:var(--risk-s);color:#991b1b}
-    .pill.n{background:var(--gray-100);color:var(--gray-600)}
-    .rot{display:flex;align-items:center;gap:8px;min-width:150px}
-    .rot .bar{flex:1;height:7px;border-radius:99px;background:var(--gray-100);overflow:hidden}
-    .rot .bar span{display:block;height:100%;border-radius:99px}
-    .rot .pc{font-weight:700;font-size:12px;width:42px;text-align:right;flex:none}
-    .pc-lo{color:var(--risk)} .pc-mid{color:var(--amber)} .pc-hi{color:var(--sold)}
-    .empty{padding:36px;text-align:center;color:var(--gray-400);font-size:13px}
 
     /* Sucursal badges */
     .sb{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;white-space:nowrap;display:inline-block}
@@ -313,41 +193,8 @@
     .s12{color:var(--suc-12);background:var(--suc-12-s)}
     .s14{color:var(--suc-14);background:var(--suc-14-s)}
 
-    /* Sub-tabs (Oportunidades) */
-    .sub-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-    .stab{font:inherit;font-size:12px;font-weight:600;color:var(--gray-600);
-      background:var(--white);border:1px solid var(--gray-200);border-radius:99px;
-      padding:5px 13px;cursor:pointer;transition:.13s;white-space:nowrap;
-      display:inline-flex;align-items:center;gap:6px}
-    .stab:hover{border-color:var(--black);color:var(--black)}
-    .stab.active{background:var(--black);color:#fff;border-color:var(--black)}
-    .stab.active .pill{background:rgba(255,255,255,.2);color:#fff}
-
     /* Dashboard mini rows */
     .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
-    .mini-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-100)}
-    .mini-row:last-child{border-bottom:none}
-    .mini-label{width:130px;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none}
-    .mini-bar{flex:1;height:8px;border-radius:99px;background:var(--gray-100);overflow:hidden}
-    .mini-bar span{display:block;height:100%;border-radius:99px}
-    .mini-val{font-size:12px;font-weight:700;width:44px;text-align:right;flex:none}
-    .mini-pct{font-size:11px;color:var(--gray-400);width:48px;text-align:right;flex:none}
-
-    /* Curva de talles */
-    .curva-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100)}
-    .curva-row:last-child{border-bottom:none}
-    .curva-talle{width:56px;font-size:13px;font-weight:700;flex:none;text-align:center}
-    .curva-bars{flex:1;display:flex;flex-direction:column;gap:3px}
-    .curva-bar-wrap{display:flex;align-items:center;gap:6px;height:12px}
-    .curva-bar-bg{flex:1;height:12px;border-radius:99px;background:var(--gray-100);overflow:hidden;position:relative}
-    .curva-bar-v{position:absolute;left:0;top:0;height:100%;border-radius:99px}
-    .curva-bar-s{position:absolute;top:0;height:100%;border-radius:0 99px 99px 0;opacity:.45}
-    .curva-nums{width:140px;flex:none;display:flex;gap:8px;font-size:11px}
-    .curva-nums span{flex:1;text-align:right;white-space:nowrap}
-    .curva-legend{display:flex;gap:14px;font-size:11px;color:var(--gray-400);margin-bottom:10px;padding:0 2px}
-    .curva-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-
-    .footnote{font-size:11px;color:var(--gray-400);margin-top:12px;line-height:1.7}
 
     /* Tiempo real — badges de ubicación: sucursal comercial, centro 0000 (DEPO) y
        depósito 90/93 son tres cosas distintas, nunca se mezclan visualmente */
@@ -517,22 +364,18 @@
     .rt-fila-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:140px}
     .rt-fila-nombre{font-weight:600;font-size:14px}
     .rt-fila-variante{font-size:12px;color:var(--gray-400)}
-    .mini-bar span.rt-bar-fill{background:var(--accent)}
     .rt-fila-cantidad{font-size:16px;font-weight:700;margin-left:auto}
     .rt-fila-sinstock{opacity:.55}
     .rt-fila-sinstock .rt-fila-cantidad{color:var(--gray-400);font-weight:500}
 
     @media(max-width:640px){
       .wrap{padding:14px 14px 60px}
-      .kpi.hero{grid-column:span 2}
-      .mode-cards{grid-template-columns:1fr}
       .fbar{gap:8px}
       .fbar-end{margin-left:0;width:100%}
       .dash-grid{grid-template-columns:1fr}
       .topbar{padding:0 .85rem;gap:.6rem}
       .brand{min-width:0}
       .brand-divider,.brand-section{display:none}
-      .hbtn-label{display:none}
       .top-actions{gap:6px}
     }
     @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -558,7 +401,6 @@
       <span class="brand-section">ANÁLISIS</span>
     </div>
     <div class="top-actions">
-      <button class="hbtn" id="btnReset" style="display:none"><svg class="icon-16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg> <span class="hbtn-label">Cambiar archivo</span></button>
       <div class="sesion-chip">
         <span class="sesion-nombre" id="hUser"><svg class="icon-16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
         <button class="sesion-logout" id="btnSalir" title="Cerrar sesión">
@@ -572,111 +414,13 @@
   </header>
 
   <div class="wrap">
-    <div id="errBox"></div>
-
-    <!-- Mode selector -->
-    <div id="modeSelector" class="mode-sel">
-      <h2>¿QUÉ QUERÉS ANALIZAR?</h2>
-      <p>Elegí el tipo de Excel que vas a subir.</p>
-      <div class="mode-cards">
-        <button class="mode-card mc-gen" data-mode="gen">
-          <div class="mc-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>
-          <div class="mc-name">Venta general</div>
-          <div class="mc-desc">Análisis por marca, rubro y sucursal. Sin desglose de talle ni color.</div>
-          <div class="mc-go"><span>→</span> Seleccionar</div>
-        </button>
-        <button class="mode-card mc-tyc" data-mode="tyc">
-          <div class="mc-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 .55.45 1 1 1h10a1 1 0 0 0 1-1V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg></div>
-          <div class="mc-name">Venta por Talle y Color</div>
-          <div class="mc-desc">Análisis de curva de talles, colores, quiebre por sucursal y oportunidades por SKU.</div>
-          <div class="mc-go"><span>→</span> Seleccionar</div>
-        </button>
-        <button class="mode-card mc-rt" data-mode="rt">
-          <div class="mc-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg></div>
-          <div class="mc-name">Tiempo real</div>
-          <div class="mc-desc">Stock real desde Sysneo — sin subir Excel. Sucursales, stock bajo, búsqueda por producto.</div>
-          <div class="mc-go"><span>→</span> Seleccionar</div>
-        </button>
-      </div>
-    </div>
-
-    <!-- Saved file card -->
-    <div id="savedFileCard" hidden>
-      <div class="saved-card">
-        <div class="saved-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></div>
-        <div class="saved-card-info">
-          <div class="saved-card-name" id="savedFileName">—</div>
-          <div class="saved-card-date" id="savedFileDate"></div>
-        </div>
-        <div class="saved-card-actions">
-          <button class="excel-btn-export" id="btnUseSaved">Usar este</button>
-          <button class="hbtn" id="btnUploadNew">Subir nuevo</button>
-        </div>
-      </div>
-      <button class="up-back" id="btnBackFromSaved">← Cambiar tipo de análisis</button>
-    </div>
-
-    <!-- Upload zone -->
-    <div id="uploadZone" hidden tabindex="0" role="button">
-      <div class="up-icon gen" id="upIcon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>
-      <h2 id="upTitle">SUBÍ TU EXCEL</h2>
-      <p class="up-desc" id="upDesc">El archivo se procesa en tu navegador — no se sube a ningún servidor.</p>
-      <p class="up-hint" id="upHint"></p>
-      <button class="up-back" id="btnBack">← Cambiar tipo de análisis</button>
-    </div>
-    <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
-
-    <!-- Dashboard -->
-    <div id="dash" hidden>
-      <div class="fbar" id="filterBar">
-        <div class="fc fc-date"><label for="fDesde">Ingresos desde</label><input type="date" id="fDesde" value="2026-01-01"></div>
-        <div class="fc fc-date"><label for="fHasta">Hasta</label><input type="date" id="fHasta"></div>
-        <div class="fc fc-sel"><label for="fRubro">Rubro</label><select id="fRubro"><option value="">Todos</option></select></div>
-        <div class="fc fc-sel" id="fcSubrubro" hidden><label for="fSubrubro">Subrubro</label><select id="fSubrubro"><option value="">Todos</option></select></div>
-        <div class="fc fc-sel"><label for="fMarca">Marca</label><select id="fMarca"><option value="">Todas</option></select></div>
-        <div class="fc fc-sel"><label for="fSuc">Sucursal</label>
-          <select id="fSuc">
-            <option value="">Todas</option>
-            <option value="01">01 PASEO</option>
-            <option value="05">05 WAVE</option>
-            <option value="09">09 CIPO SAN MARTIN</option>
-            <option value="10">10 PERITO MORENO</option>
-            <option value="12">12 CENTENARIO</option>
-            <option value="14">14 ROCA</option>
-          </select>
-        </div>
-        <div class="fc fc-search"><label for="fSearch">Buscar</label><input type="text" id="fSearch" placeholder="Producto o código…"></div>
-        <div class="tog-row">
-          <label class="tog"><input type="checkbox" id="fSoloStock"><span class="tog-tk"></span><span>Con stock</span></label>
-          <label class="tog"><input type="checkbox" id="fSinVentas"><span class="tog-tk"></span><span>Sin ventas</span></label>
-          <label class="tog"><input type="checkbox" id="fExclInsumos" checked><span class="tog-tk"></span><span>Excluir insumos</span></label>
-        </div>
-        <div class="fbar-end">
-          <span class="mode-badge gen" id="modeBadge">General</span>
-          <span class="fname">Archivo: <b id="fname">—</b></span>
-          <button class="excel-btn-export" id="exportBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 4v12M12 16l-4-4M12 16l4-4"/><path d="M4 20h16"/></svg>
-            Exportar
-          </button>
-        </div>
-      </div>
-
-      <div class="kpis" id="kpis"></div>
-      <div class="tabs" id="tabs" role="tablist"></div>
-      <div id="panelHost"></div>
-      <p class="footnote" id="foot"></p>
-    </div>
-
-    <!-- Tiempo real (independiente de #dash — no usa Excel/IndexedDB/getFiltered) -->
-    <div id="rtApp" hidden>
+    <div id="rtApp">
       <div class="fbar" id="rtBar">
-        <span class="mode-badge rt">Tiempo real</span>
         <label class="rt-periodo-label">Desde <input type="date" id="rtDesde" class="form-control rt-periodo-input"></label>
         <label class="rt-periodo-label">Hasta <input type="date" id="rtHasta" class="form-control rt-periodo-input"></label>
         <span class="fname" id="rtUltimaActualizacion"></span>
         <div class="fbar-end">
           <button class="btn-sm" id="rtBtnActualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Actualizar</button>
-          <button class="up-back" id="rtBtnVolver">← Cambiar tipo de análisis</button>
         </div>
       </div>
       <div class="tabs" id="rtTabs" role="tablist">
@@ -694,7 +438,6 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="croma-icons.js?v=20260716-1"></script>
 <script>
 'use strict';
@@ -703,26 +446,6 @@ const HUB_URL = 'https://croma-app.com.ar/';
 // croma-api — stock real desde Sysneo (solo lectura). Requiere que el origen de esta app
 // esté sumado a ORIGENES_PERMITIDOS en croma-api/index.js (ya aplicado).
 const STOCK_API_URL = 'https://stock-api.croma-app.com.ar';
-
-// Sucursales - general mode (by number code)
-const SGEN = [
-  { key:'01', name:'01 PASEO',          cls:'s01', color:'#185FA5' },
-  { key:'05', name:'05 WAVE',            cls:'s05', color:'#0F6E56' },
-  { key:'09', name:'09 CIPO SAN MARTIN', cls:'s09', color:'#B45309' },
-  { key:'10', name:'10 PERITO MORENO',   cls:'s10', color:'#9B2563' },
-  { key:'12', name:'12 CENTENARIO',      cls:'s12', color:'#534AB7' },
-  { key:'14', name:'14 ROCA',            cls:'s14', color:'#3B6D11' },
-];
-
-// Sucursales - TyC mode (by name in column headers)
-const STYC = [
-  { key:'01', colK:'PASEO', name:'01 PASEO',          cls:'s01', color:'#185FA5' },
-  { key:'05', colK:'WAVE',  name:'05 WAVE',            cls:'s05', color:'#0F6E56' },
-  { key:'09', colK:'CIPO',  name:'09 CIPO SAN MARTIN', cls:'s09', color:'#B45309' },
-  { key:'10', colK:'PERITO',name:'10 PERITO MORENO',   cls:'s10', color:'#9B2563' },
-  { key:'12', colK:'CENTE', name:'12 CENTENARIO',      cls:'s12', color:'#534AB7' },
-  { key:'14', colK:'ROCA',  name:'14 ROCA',            cls:'s14', color:'#3B6D11' },
-];
 
 const SIZE_ALPHA = ['XS','S','M','L','XL','XXL','2XL','3XL','UNICA','U','UNI'];
 function sizeSort(a, b) {
@@ -741,17 +464,6 @@ const money  = v => '$' + nf.format(Math.round(v));
 const pct    = v => (v * 100).toFixed(1).replace('.', ',') + '%';
 const norm   = s => String(s ?? '').replace(/\s+/g,' ').trim().toUpperCase();
 const esc    = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const num    = v => { const n = Number(v); return isFinite(n) ? n : 0; };
-const fmtD   = d => {
-  if (!(d instanceof Date) || isNaN(d)) return '—';
-  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
-};
-const daysDiff = (d, ref) => ref && d ? Math.round((ref.getTime() - d.getTime()) / 864e5) : 0;
-
-let MODE = null; // 'gen' | 'tyc' | 'rt'
-let RAW = [], COLS = {}, REF_DATE = null;
-let VIEW = '', OPP_SUB = 'parado';
-let SORT = { view:null, col:null, dir:-1 };
 
 // El estado del modo Tiempo real (RT_*) se declara junto con sus funciones,
 // mas abajo en este mismo archivo (bloque "Tiempo real (croma-api)").
@@ -784,29 +496,15 @@ function getUser() {
   const u = user.usuario || '';
   document.getElementById('hUser').innerHTML = icon('user','icon-16') + ' ' + esc(u ? u.charAt(0).toUpperCase() + u.slice(1) : 'Usuario');
   setup();
+  // Diferido: RT_DESDE/RT_HASTA (let, más abajo en el mismo script) todavía no
+  // están inicializadas cuando este IIFE corre de forma síncrona al parsear.
+  setTimeout(iniciarModoRT, 0);
 })();
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 function setup() {
   document.getElementById('btnSalir').addEventListener('click', () => { location.href = HUB_URL + '?logout=1'; });
-  document.getElementById('btnReset').addEventListener('click', resetApp);
-  document.getElementById('btnBack').addEventListener('click', resetApp);
-  document.getElementById('btnBackFromSaved').addEventListener('click', resetApp);
-  document.getElementById('btnUploadNew').addEventListener('click', () => {
-    document.getElementById('savedFileCard').hidden = true;
-    document.getElementById('uploadZone').hidden = false;
-  });
-  document.getElementById('btnUseSaved').addEventListener('click', async () => {
-    const saved = await dbGet(MODE).catch(() => null);
-    if (!saved) { document.getElementById('savedFileCard').hidden = true; document.getElementById('uploadZone').hidden = false; return; }
-    readFile(new File([saved.buffer], saved.name));
-  });
 
-  document.querySelectorAll('.mode-card').forEach(btn => {
-    btn.addEventListener('click', () => selectMode(btn.dataset.mode));
-  });
-
-  document.getElementById('rtBtnVolver').addEventListener('click', resetApp);
   document.getElementById('rtBtnActualizar').addEventListener('click', () => {
     RT_COMPLETO = null; RT_INSIGHT_OPP_ALTA_KEY = null;
     rtCargarResumen(); rtCargarResumenAnterior(); if (RT_FILTRO) rtCargarCompleto();
@@ -817,115 +515,8 @@ function setup() {
   });
   document.getElementById('rtDesde').addEventListener('change', rtCambiarPeriodo);
   document.getElementById('rtHasta').addEventListener('change', rtCambiarPeriodo);
-
-  const dz = document.getElementById('uploadZone');
-  const fi = document.getElementById('fileInput');
-  dz.addEventListener('click', () => fi.click());
-  dz.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){e.preventDefault();fi.click();} });
-  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('over'); }));
-  ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('over'); }));
-  dz.addEventListener('drop', e => { const f=e.dataTransfer.files[0]; if(f) readFile(f); });
-  fi.addEventListener('change', e => { const f=e.target.files[0]; if(f) readFile(f); });
-
-  document.getElementById('tabs').addEventListener('click', e => {
-    const btn = e.target.closest('.tab'); if (!btn) return;
-    document.querySelectorAll('#tabs .tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    VIEW = btn.dataset.view;
-    SORT = { view:null, col:null, dir:-1 };
-    renderView(getFiltered());
-  });
-
-  ['fDesde','fHasta','fRubro','fSubrubro','fMarca','fSuc','fSoloStock','fSinVentas','fExclInsumos'].forEach(id => {
-    document.getElementById(id).addEventListener('change', render);
-  });
-  document.getElementById('fSearch').addEventListener('input', () => renderView(getFiltered()));
-  document.getElementById('exportBtn').addEventListener('click', exportExcel);
-
-  document.getElementById('panelHost').addEventListener('click', e => {
-    const th = e.target.closest('th[data-sv]'); if (!th) return;
-    const view=th.dataset.sv, col=th.dataset.sc;
-    if (SORT.view===view&&SORT.col===col) SORT.dir*=-1; else SORT={view,col,dir:-1};
-    renderView(getFiltered());
-  });
 }
 
-function applyModeUI(mode) {
-  const isGen = mode === 'gen';
-  const dz = document.getElementById('uploadZone');
-  dz.className = isGen ? '' : 'tyc-mode';
-  document.getElementById('upIcon').className = isGen ? 'up-icon gen' : 'up-icon tyc';
-  document.getElementById('upIcon').innerHTML = icon(isGen ? 'barChart3' : 'shirt', '');
-  document.getElementById('upTitle').textContent = isGen ? 'SUBÍ TU EXCEL DE VENTAS' : 'SUBÍ TU EXCEL DE STOCK TYC';
-  document.getElementById('upDesc').textContent = isGen
-    ? 'Ventas generales por sucursal (.xlsx). Se procesa en tu navegador.'
-    : 'Stock con talle y color por sucursal (.xlsx). Se procesa en tu navegador.';
-  document.getElementById('upHint').innerHTML = isGen
-    ? 'Columnas esperadas: <b>COD · PRODUCTO · MARCA · RUBRO · ULTIMO INGRESO · PRECIO · VENTA TOT · STOCK TOT · VENTA 01…14</b>'
-    : 'Columnas esperadas: <b>COD · T · C · NOMBE COLOR · PRODUCTO · MARCA · RUBRO · SUBRUBRO · ULTIMO INGRESO · PRECIO · COSTO · VENTA TOT · STOCK TOT · VENTA PASEO…ROCA</b>';
-}
-
-async function selectMode(mode) {
-  MODE = mode;
-  document.getElementById('modeSelector').hidden = true;
-
-  if (mode === 'rt') {
-    document.getElementById('btnReset').style.display = 'inline-flex';
-    document.getElementById('rtApp').hidden = false;
-    iniciarModoRT();
-    return;
-  }
-
-  applyModeUI(mode);
-  const saved = await dbGet(mode).catch(() => null);
-  if (saved) {
-    const d = new Date(saved.date);
-    const fmt = d.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' })
-              + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
-    document.getElementById('savedFileName').textContent = saved.name;
-    document.getElementById('savedFileDate').textContent = 'Guardado el ' + fmt;
-    document.getElementById('savedFileCard').hidden = false;
-  } else {
-    document.getElementById('uploadZone').hidden = false;
-  }
-}
-
-function showErr(msg) { document.getElementById('errBox').innerHTML = msg ? `<div class="err-box">${esc(msg)}</div>` : ''; }
-
-function resetApp() {
-  RAW=[]; COLS={}; REF_DATE=null; MODE=null; VIEW=''; OPP_SUB='parado';
-  SORT={view:null,col:null,dir:-1};
-  document.getElementById('dash').hidden=true;
-  document.getElementById('uploadZone').hidden=true;
-  document.getElementById('savedFileCard').hidden=true;
-  document.getElementById('modeSelector').hidden=false;
-  document.getElementById('btnReset').style.display='none';
-  document.getElementById('fileInput').value='';
-  document.getElementById('fcSubrubro').hidden=true;
-  showErr('');
-
-  // Tiempo real
-  document.getElementById('rtApp').hidden = true;
-  if (RT_RESUMEN_ABORT) { RT_RESUMEN_ABORT.abort(); RT_RESUMEN_ABORT = null; }
-  if (RT_RESUMEN_ANTERIOR_ABORT) { RT_RESUMEN_ANTERIOR_ABORT.abort(); RT_RESUMEN_ANTERIOR_ABORT = null; }
-  if (RT_COMPLETO_ABORT) { RT_COMPLETO_ABORT.abort(); RT_COMPLETO_ABORT = null; }
-  if (RT_OPORTUNIDADES_ABORT) { RT_OPORTUNIDADES_ABORT.abort(); RT_OPORTUNIDADES_ABORT = null; }
-  if (RT_INSIGHT_OPP_ALTA_ABORT) { RT_INSIGHT_OPP_ALTA_ABORT.abort(); RT_INSIGHT_OPP_ALTA_ABORT = null; }
-  RT_RESUMEN = null; RT_RESUMEN_LOADING = false; RT_RESUMEN_ERROR = null;
-  RT_RESUMEN_ANTERIOR = null; RT_RESUMEN_ANTERIOR_LOADING = false; RT_RESUMEN_ANTERIOR_ERROR = null;
-  RT_INSIGHT_OPP_ALTA = null; RT_INSIGHT_OPP_ALTA_LOADING = false; RT_INSIGHT_OPP_ALTA_ERROR = null; RT_INSIGHT_OPP_ALTA_KEY = null;
-  RT_FILTRO = null; RT_PRODUCTOS_FILTRO_ORIGEN = null; RT_COMPLETO = null;
-  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_PRIORIDAD = null;
-  RT_OPORTUNIDADES_CONFIANZA = null; RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
-  RT_MARCAS_ORDEN = { campo:'ventas', dir:-1 }; RT_MARCAS_BUSQUEDA = ''; RT_MARCAS_PAGINA = 0;
-  RT_MARCAS_FILAS_POR_PAGINA = 10; RT_MARCAS_SELECCIONADA = null; RT_MARCAS_TOP_GRAFICO = 10;
-  RT_PRODUCTOS_ORDEN = { campo:'ventas', dir:-1 }; RT_PRODUCTOS_BUSQUEDA = ''; RT_PRODUCTOS_PAGINA = 0;
-  RT_PRODUCTOS_FILAS_POR_PAGINA = 10; RT_PRODUCTOS_EXPANDIDO = null;
-  RT_VIEW = 'dashboard';
-  document.querySelectorAll('#rtTabs .tab').forEach((t,i) => t.classList.toggle('active', i===0));
-}
-
-// ── IndexedDB helpers ─────────────────────────────────────────────────────────
 // ── Tiempo real (croma-api) ─────────────────────────────────────────────────
 // Construcción de DOM sin innerHTML sobre datos de la API. opts.html queda
 // reservado solo para fragmentos estáticos (nunca usado con datos de croma-api).
@@ -959,8 +550,7 @@ let RT_INSIGHT_OPP_ALTA_ABORT = null, RT_INSIGHT_OPP_ALTA_KEY = null;
 
 // ── Vista Marcas -- todo client-side sobre RT_RESUMEN.por_marca ya cargado, nunca pide
 // una consulta nueva (ni al cambiar orden/buscar/paginar/seleccionar). Estado propio,
-// namespaced RT_MARCAS_*, para no pisar el SORT/VIEW del modo Excel ni el estado de
-// otras vistas RT.
+// namespaced RT_MARCAS_*, para no pisar el estado de otras vistas RT.
 let RT_MARCAS_ORDEN = { campo:'ventas', dir:-1 }; // orden inicial: ventas desc
 let RT_MARCAS_BUSQUEDA = '';
 let RT_MARCAS_PAGINA = 0;
@@ -1209,6 +799,7 @@ function rtDelta(actual, anterior) {
 function rtDeltaBadge(delta) {
   if (RT_RESUMEN_ANTERIOR_LOADING) return rtEl('span', { className:'rt-kpi-delta flat', text:'Comparando con el mismo período del año anterior…' });
   if (!delta) return rtEl('span', { className:'rt-kpi-delta flat', text:'Sin comparación disponible' });
+  if (delta.direction === 'flat') return null; // sin cambio real -- no vale la pena mostrar "0,0%"
   const span = rtEl('span', { className:'rt-kpi-delta ' + delta.direction });
   const flechaCls = delta.direction === 'up' ? 'arrow-up' : '';
   span.innerHTML = icon('arrowDown', flechaCls); // icono estatico del helper
@@ -1317,7 +908,8 @@ function rtTarjetaKPI(def) {
   card.appendChild(rtEl('div', { className:'rt-kpi-label', text: def.label }));
   card.appendChild(rtEl('div', { className:'rt-kpi-valor', text: nf.format(def.valor) }));
   if (def.deltaActual !== undefined) {
-    card.appendChild(rtDeltaBadge(rtDelta(def.deltaActual, def.deltaAnterior)));
+    const badge = rtDeltaBadge(rtDelta(def.deltaActual, def.deltaAnterior));
+    if (badge) card.appendChild(badge);
   }
   return card;
 }
@@ -1333,7 +925,8 @@ function renderRTDashboard(host) {
   const kpiDefs = [
     { label:'Ventas del período', valor:t.Ventas_total, icon:'shoppingCart', deltaActual:t.Ventas_total, deltaAnterior: tAnterior && tAnterior.Ventas_total },
     { label:'Stock total', valor:t.Stock_total, icon:'package', deltaActual:t.Stock_total, deltaAnterior: tAnterior && tAnterior.Stock_total },
-    { label:'Depósito Central (90 + 93)', valor:t.Stock_ctro_0000, icon:'warehouse' },
+    { label:'Depósito Central (90)', valor:t.Stock_deposito_90, icon:'warehouse' },
+    { label:'Fallados (93)', valor:t.Stock_deposito_93, icon:'warehouse' },
     { label:'Productos base', valor:t.productos_base, icon:'shirt' },
     { label:'Variantes con actividad', valor:t.variantes, icon:'barChart3' },
     { label:'Variantes con stock', valor:t.variantes_con_stock, icon:'circleCheck' },
@@ -1633,8 +1226,7 @@ function rtMarcasKPIs(host, datos, truncado) {
 }
 
 // Grafico de barras horizontales, 100% CSS (ancho en % del maximo mostrado) -- no hay
-// libreria de graficos cargada en esta app y no se agrega ninguna; mismo patron que
-// .mini-bar del modo Excel, redisenado con tokens reales del DS.
+// libreria de graficos cargada en esta app y no se agrega ninguna.
 function rtGraficoBarrasMarcas(host, datos) {
   const panel = rtEl('div', { className:'card' });
   const head = rtEl('div', { className:'rt-panel-head' });
@@ -2864,568 +2456,6 @@ function renderRTOportunidades(host) {
   host.appendChild(pag);
 }
 
-function dbOpen() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open('croma-analisis', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('files');
-    req.onsuccess = e => res(e.target.result);
-    req.onerror = () => rej(req.error);
-  });
-}
-async function dbSave(mode, name, buffer) {
-  const db = await dbOpen();
-  return new Promise((res, rej) => {
-    const tx = db.transaction('files', 'readwrite');
-    tx.objectStore('files').put({ name, buffer, date: new Date().toISOString() }, mode);
-    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
-  });
-}
-async function dbGet(mode) {
-  const db = await dbOpen();
-  return new Promise((res, rej) => {
-    const req = db.transaction('files').objectStore('files').get(mode);
-    req.onsuccess = () => res(req.result || null);
-    req.onerror = () => rej(req.error);
-  });
-}
-
-// ── File reading ──────────────────────────────────────────────────────────────
-function readFile(file) {
-  showErr('');
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array', cellDates:true });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval:null });
-      if (!rows.length) { showErr('El archivo no tiene filas de datos.'); return; }
-
-      const keys = Object.keys(rows[0]);
-      const find = (...terms) => keys.find(k => {
-        const n = norm(k); return terms.every(t => n.includes(norm(t)));
-      });
-
-      if (MODE === 'gen') {
-        COLS = {
-          cod:find('COD'), prod:find('PRODUCTO'), marca:find('MARCA'), rubro:find('RUBRO'),
-          ing:find('INGRESO'), precio:find('PRECIO'), vt:find('VENTA','TOT'), st:find('STOCK','TOT'),
-        };
-        SGEN.forEach(s => { s.colKey = find('VENTA', s.key); });
-        if (!COLS.vt||!COLS.st) { showErr('No encontré VENTA TOT / STOCK TOT.'); return; }
-      } else {
-        COLS = {
-          cod:find('COD'), prod:find('PRODUCTO'), marca:find('MARCA'),
-          rubro:find('RUBRO'), subrubro:find('SUBRUBRO'),
-          t:find('T'), c:find('C'), color:find('NOMBE','COLOR') || find('COLOR'),
-          ing:find('INGRESO'), precio:find('PRECIO'), costo:find('COSTO'),
-          vt:find('VENTA','TOT'), st:find('STOCK','TOT'), depo:find('STOCK','DEPO'),
-        };
-        // If 'C' matches COSTO instead of color code, try narrower
-        if (COLS.c === COLS.costo) COLS.c = keys.find(k => norm(k) === 'C');
-        STYC.forEach(s => {
-          s.colV = find('VENTA', s.colK);
-          s.colS = find('STOCK', s.colK);
-        });
-        if (!COLS.vt||!COLS.st) { showErr('No encontré VENTA TOT / STOCK TOT.'); return; }
-      }
-
-      RAW = rows;
-      const dates = rows.map(r => r[COLS.ing]).filter(d => d instanceof Date && !isNaN(d));
-      REF_DATE = dates.length ? new Date(Math.max(...dates.map(d => d.getTime()))) : new Date();
-
-      fillSelects();
-      document.getElementById('fname').textContent = file.name;
-      const badge = document.getElementById('modeBadge');
-      badge.textContent = MODE === 'gen' ? 'General' : 'Talle y color';
-      badge.className = 'mode-badge ' + MODE;
-      if (MODE === 'tyc') document.getElementById('fcSubrubro').hidden = false;
-
-      // Set tabs
-      const tabs = document.getElementById('tabs');
-      tabs.innerHTML = MODE === 'gen'
-        ? ['dashboard','marcas','rubros','sucursales','productos','oportunidades']
-            .map((v,i) => `<button class="tab${i===0?' active':''}" data-view="${v}">${
-              {dashboard:'Dashboard',marcas:'Marcas',rubros:'Rubros',sucursales:'Sucursales',productos:'Productos',oportunidades:'Oportunidades'}[v]
-            }</button>`).join('')
-        : ['dashboard','productos','talles','colores','curva','sucursales','oportunidades']
-            .map((v,i) => `<button class="tab${i===0?' active':''}" data-view="${v}">${
-              {dashboard:'Dashboard',productos:'Productos',talles:'Por talle',colores:'Por color',curva:'Curva de talles',sucursales:'Sucursales',oportunidades:'Oportunidades'}[v]
-            }</button>`).join('');
-
-      VIEW = MODE === 'gen' ? 'dashboard' : 'dashboard';
-      OPP_SUB = 'parado';
-      SORT = { view:null, col:null, dir:-1 };
-      document.getElementById('uploadZone').hidden = true;
-      document.getElementById('savedFileCard').hidden = true;
-      document.getElementById('dash').hidden = false;
-      document.getElementById('btnReset').style.display = '';
-      render();
-      dbSave(MODE, file.name, e.target.result).catch(() => {});
-    } catch(err) { showErr('No pude leer el archivo: ' + err.message); }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function fillSelects() {
-  fillSel('fRubro', COLS.rubro, 'Todos');
-  fillSel('fMarca', COLS.marca, 'Todas');
-  if (MODE === 'tyc' && COLS.subrubro) fillSel('fSubrubro', COLS.subrubro, 'Todos');
-}
-function fillSel(id, col, all) {
-  const el = document.getElementById(id);
-  if (!col) return;
-  const vals = [...new Set(RAW.map(r => r[col]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'es'));
-  el.innerHTML = `<option value="">${all}</option>` + vals.map(v=>`<option>${esc(v)}</option>`).join('');
-}
-
-// ── Filtering ─────────────────────────────────────────────────────────────────
-function getFiltered() {
-  const desde    = new Date(document.getElementById('fDesde').value+'T00:00:00');
-  const hastaV   = document.getElementById('fHasta').value;
-  const hasta    = hastaV ? new Date(hastaV+'T23:59:59') : null;
-  const fRubro   = document.getElementById('fRubro').value;
-  const fSub     = document.getElementById('fSubrubro').value;
-  const fMarca   = document.getElementById('fMarca').value;
-  const fSucKey  = document.getElementById('fSuc').value;
-  const soloStk  = document.getElementById('fSoloStock').checked;
-  const sinV     = document.getElementById('fSinVentas').checked;
-  const exclIns  = document.getElementById('fExclInsumos').checked;
-  const search   = norm(document.getElementById('fSearch').value);
-  const refTime  = REF_DATE ? REF_DATE.getTime() : Date.now();
-
-  return RAW.filter(r => {
-    const d = r[COLS.ing];
-    if (!(d instanceof Date)||isNaN(d)) return false;
-    if (d < desde) return false;
-    if (hasta && d > hasta) return false;
-    if (exclIns && COLS.rubro && norm(r[COLS.rubro])==='INSUMOS') return false;
-    if (fRubro && r[COLS.rubro] != fRubro) return false;
-    if (fSub && COLS.subrubro && r[COLS.subrubro] != fSub) return false;
-    if (fMarca && r[COLS.marca] != fMarca) return false;
-    if (fSucKey) {
-      if (MODE === 'gen') {
-        const s = SGEN.find(s=>s.key===fSucKey);
-        if (s?.colKey && num(r[s.colKey])<=0) return false;
-      } else {
-        const s = STYC.find(s=>s.key===fSucKey);
-        if (s?.colV && num(r[s.colV])<=0) return false;
-      }
-    }
-    if (soloStk && num(r[COLS.st])<=0) return false;
-    if (sinV && num(r[COLS.vt])>0) return false;
-    if (search && !norm(r[COLS.prod]).includes(search) &&
-        !norm(r[COLS.cod]).includes(search) &&
-        !norm(r[COLS.marca]).includes(search) &&
-        !norm(r[COLS.rubro]).includes(search)) return false;
-    return true;
-  }).map(r => {
-    const v = num(r[COLS.vt]), s = num(r[COLS.st]), precio = num(r[COLS.precio]);
-    const disp = v+s, st = disp>0 ? v/disp : 0;
-    const weeks = Math.max((refTime - r[COLS.ing].getTime()) / 6048e5, 1);
-    const dias  = daysDiff(r[COLS.ing], REF_DATE);
-    const sucV  = {};
-    const SUC = MODE==='gen' ? SGEN : STYC;
-    SUC.forEach(suc => {
-      sucV[suc.key] = MODE==='gen'
-        ? { v: suc.colKey ? num(r[suc.colKey]) : 0, s: 0 }
-        : { v: suc.colV ? num(r[suc.colV]) : 0, s: suc.colS ? num(r[suc.colS]) : 0 };
-    });
-    const base = { cod:r[COLS.cod]??'', prod:r[COLS.prod]??'', marca:r[COLS.marca]??'—',
-      rubro:r[COLS.rubro]??'—', ing:r[COLS.ing], precio, v, s, disp, st,
-      fact:v*precio, ritmo:v/weeks, dias, sucV };
-    if (MODE==='tyc') Object.assign(base, {
-      subrubro:r[COLS.subrubro]??'', t:String(r[COLS.t]??''), c:String(r[COLS.c]??''),
-      color:r[COLS.color]??'', costo:num(r[COLS.costo]),
-      depo:COLS.depo?num(r[COLS.depo]):0,
-    });
-    return base;
-  });
-}
-
-// ── Render ────────────────────────────────────────────────────────────────────
-function render() {
-  const d = getFiltered();
-  renderKPIs(d); renderView(d);
-  const ref = REF_DATE ? fmtD(REF_DATE) : '—';
-  const desde = document.getElementById('fDesde').value.split('-').reverse().join('/');
-  const hastaV = document.getElementById('fHasta').value;
-  document.getElementById('foot').innerHTML =
-    `<b>Sell-through</b> = vendidas ÷ disponible. <b>Referencia</b>: último ingreso del archivo (${ref}). ` +
-    `Filtrado desde ${desde}${hastaV?' hasta '+hastaV.split('-').reverse().join('/'):''}. ` +
-    (document.getElementById('fExclInsumos').checked?'Insumos excluidos.':'Insumos incluidos.');
-}
-
-function renderKPIs(d) {
-  const v=d.reduce((a,r)=>a+r.v,0), s=d.reduce((a,r)=>a+r.s,0);
-  const st=(v+s)>0?v/(v+s):0, fact=d.reduce((a,r)=>a+r.fact,0);
-  const sinV=d.filter(r=>r.v<=0).length;
-  const extra = MODE==='tyc' ? [
-    { l:'Colores distintos', v:nf.format(new Set(d.map(r=>r.color).filter(Boolean)).size) },
-    { l:'Talles distintos',  v:nf.format(new Set(d.filter(r=>r.t!=='99').map(r=>r.t).filter(Boolean)).size) },
-  ] : [
-    { l:'Facturación est.', v:money(fact), sub:'venta × precio' },
-    { l:'Modelos sin venta',v:nf.format(sinV), sub:d.length?pct(sinV/d.length)+' de los modelos':'' },
-  ];
-  const kpis = [
-    { l: MODE==='tyc'?'SKUs ingresados':'Modelos ingresados', v:nf.format(d.length) },
-    { l:'Unidades vendidas', v:nf.format(v) },
-    { l:'Stock actual',      v:nf.format(s) },
-    { hero:true, l:'Sell-through general', v:pct(st), gauge:st, sub:`${nf.format(v)} de ${nf.format(v+s)} disponibles` },
-    ...extra,
-  ];
-  document.getElementById('kpis').innerHTML = kpis.map(k =>
-    `<div class="kpi${k.hero?' hero':''}"><div class="kl">${k.l}</div><div class="kv">${k.v}</div>${k.gauge!=null?`<div class="gauge"><span style="width:${(k.gauge*100).toFixed(1)}%"></span></div>`:''}${k.sub?`<div class="ks">${k.sub}</div>`:''}</div>`
-  ).join('');
-}
-
-function renderView(d) {
-  if (MODE==='gen') {
-    switch(VIEW) {
-      case 'dashboard':    renderDashboard(d); break;
-      case 'marcas':       renderAgg(d,'marca','MARCAS'); break;
-      case 'rubros':       renderAgg(d,'rubro','RUBROS'); break;
-      case 'sucursales':   renderSucursales(d); break;
-      case 'productos':    renderProductos(d); break;
-      case 'oportunidades':renderOportunidades(d); break;
-    }
-  } else {
-    switch(VIEW) {
-      case 'dashboard':    renderDashboard(d); break;
-      case 'productos':    renderTycProductos(d); break;
-      case 'talles':       renderTycTalles(d); break;
-      case 'colores':      renderTycColores(d); break;
-      case 'curva':        renderTycCurva(d); break;
-      case 'sucursales':   renderTycSucursales(d); break;
-      case 'oportunidades':renderTycOportunidades(d); break;
-    }
-  }
-}
-
-// ── Shared: Dashboard ─────────────────────────────────────────────────────────
-function renderDashboard(d) {
-  const topMarcas = aggBy(d,'marca').slice(0,6);
-  const topRubros = aggBy(d,'rubro').slice(0,6);
-  const maxM = topMarcas[0]?.v||1, maxR = topRubros[0]?.v||1;
-  const miniRows = (rows, max, color) => rows.length
-    ? rows.map(r=>`<div class="mini-row"><div class="mini-label" title="${esc(r.name)}">${esc(r.name)}</div><div class="mini-bar"><span style="width:${(r.v/max*100).toFixed(1)}%;background:${color}"></span></div><div class="mini-val">${nf.format(r.v)}</div><div class="mini-pct">${pct(r.st)}</div></div>`).join('')
-    : '<div class="empty">Sin datos</div>';
-  const SUC = MODE==='gen' ? SGEN : STYC;
-  const sucRows = SUC.map(s => ({ ...s, v:d.reduce((a,r)=>a+r.sucV[s.key].v,0) })).sort((a,b)=>b.v-a.v);
-  const totSuc = sucRows.reduce((a,r)=>a+r.v,0)||1;
-  document.getElementById('panelHost').innerHTML = `
-    <div class="dash-grid">
-      <div class="panel"><div class="ph"><h3>TOP MARCAS</h3><span class="pnote">vendidas · sell-through</span></div><div style="padding:10px 18px 14px">${miniRows(topMarcas,maxM,'var(--violet)')}</div></div>
-      <div class="panel"><div class="ph"><h3>TOP RUBROS</h3><span class="pnote">vendidas · sell-through</span></div><div style="padding:10px 18px 14px">${miniRows(topRubros,maxR,'#3b82f6')}</div></div>
-      <div class="panel" style="grid-column:1/-1"><div class="ph"><h3>VENTAS POR SUCURSAL</h3><span class="pnote">período filtrado</span></div>
-        <div style="padding:10px 18px 14px">${sucRows.map(r=>`<div class="mini-row"><span class="sb ${r.cls}" style="width:170px;flex:none">${esc(r.name)}</span><div class="mini-bar"><span style="width:${(r.v/totSuc*100).toFixed(1)}%;background:${r.color}"></span></div><div class="mini-val">${nf.format(r.v)}</div><div class="mini-pct">${pct(r.v/totSuc)}</div></div>`).join('')}</div>
-      </div>
-    </div>`;
-}
-
-// ── General views ─────────────────────────────────────────────────────────────
-function aggBy(data, key) {
-  const m = new Map();
-  data.forEach(r => {
-    const g = m.get(r[key]) || { name:r[key], modelos:0, v:0, s:0, fact:0, sinV:0 };
-    g.modelos++; g.v+=r.v; g.s+=r.s; g.fact+=r.fact; if(r.v<=0)g.sinV++;
-    m.set(r[key], g);
-  });
-  return [...m.values()].map(g=>({...g,disp:g.v+g.s,st:(g.v+g.s)>0?g.v/(g.v+g.s):0})).sort((a,b)=>b.v-a.v);
-}
-
-function renderAgg(d, key, title) {
-  const rows = aggBy(d, key); sortRows(rows, key, 'v');
-  document.getElementById('panelHost').innerHTML = mkPanel(title, '',
-    `<div class="scroll"><table><thead><tr>
-      ${th(key==='marca'?'MARCA':'RUBRO','name',key,'l')}
-      ${th('MODELOS','modelos',key,'r')}${th('VENDIDAS','v',key,'r')}${th('STOCK','s',key,'r')}
-      ${th('DISPONIBLE','disp',key,'r')}<th class="ns">SELL-THROUGH</th>
-      ${th('FACT. EST.','fact',key,'r')}${th('SIN VENTA','sinV',key,'r')}
-    </tr></thead><tbody>
-      ${rows.length?rows.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="nr">${nf.format(r.modelos)}</td><td class="nr">${nf.format(r.v)}</td><td class="nr">${nf.format(r.s)}</td><td class="nr">${nf.format(r.disp)}</td><td>${rotBar(r.v,r.s)}</td><td class="nr">${money(r.fact)}</td><td class="nr">${r.sinV?`<span style="color:var(--risk);font-weight:700">${nf.format(r.sinV)}</span>`:'<span style="color:var(--gray-400)">0</span>'}</td></tr>`).join(''):`<tr><td colspan="8" class="empty">Sin datos.</td></tr>`}
-    </tbody></table></div>`);
-}
-
-function renderSucursales(d) {
-  const rows = SGEN.map(suc => {
-    const items=d.filter(r=>r.sucV[suc.key].v>0), v=d.reduce((a,r)=>a+r.sucV[suc.key].v,0);
-    const top = k => { const m=new Map(); items.forEach(r=>m.set(r[k],(m.get(r[k])||0)+r.sucV[suc.key].v)); return [...m.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]??'—'; };
-    return { ...suc, v, topRubro:top('rubro'), topMarca:top('marca'), modelos:items.length };
-  }).sort((a,b)=>b.v-a.v);
-  const tot=rows.reduce((a,r)=>a+r.v,0)||1;
-  document.getElementById('panelHost').innerHTML = mkPanel('VENTAS POR SUCURSAL','',
-    `<div class="scroll"><table><thead><tr><th class="ns">SUCURSAL</th><th class="ns" style="text-align:right">MODELOS</th><th class="ns" style="text-align:right">VENDIDAS</th><th class="ns">PARTICIPACIÓN</th><th class="ns" style="text-align:right">%</th><th class="ns">TOP RUBRO</th><th class="ns">TOP MARCA</th></tr></thead><tbody>
-      ${rows.map(r=>`<tr><td><span class="sb ${r.cls}">${esc(r.name)}</span></td><td class="nr">${nf.format(r.modelos)}</td><td class="nr">${nf.format(r.v)}</td><td><div class="rot" style="min-width:120px"><div class="bar"><span style="width:${(r.v/tot*100).toFixed(1)}%;background:${r.color}"></span></div></div></td><td class="nr">${pct(r.v/tot)}</td><td><span class="tag">${esc(r.topRubro)}</span></td><td><span class="tag">${esc(r.topMarca)}</span></td></tr>`).join('')}
-    </tbody></table></div>`);
-}
-
-function renderProductos(d) {
-  const rows=d.slice(); sortRows(rows,'prod','v');
-  document.getElementById('panelHost').innerHTML = mkPanel('DETALLE DE PRODUCTOS',
-    `<button class="btn-sm" id="exportProd"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 4v12M12 16l-4-4M12 16l4-4"/><path d="M4 20h16"/></svg>Exportar vista</button>`,
-    `<div class="scroll"><table><thead><tr>
-      ${th('CÓD.','cod','prod','l')}${th('PRODUCTO','prod','prod','l')}${th('MARCA','marca','prod','l')}${th('RUBRO','rubro','prod','l')}
-      ${th('INGRESO','ing','prod','r')}${th('PRECIO','precio','prod','r')}${th('VENDIDAS','v','prod','r')}${th('STOCK','s','prod','r')}${th('DISPONIBLE','disp','prod','r')}<th class="ns">SELL-THROUGH</th>
-    </tr></thead><tbody>
-      ${rows.length?rows.slice(0,500).map(r=>`<tr><td class="cod">${esc(r.cod)}</td><td class="pname" title="${esc(r.prod)}">${esc(r.prod)}</td><td><span class="tag">${esc(r.marca)}</span></td><td style="font-size:11px;color:var(--gray-400)">${esc(r.rubro)}</td><td class="nr" style="color:var(--gray-400)">${fmtD(r.ing)}</td><td class="nr">${r.precio?money(r.precio):'—'}</td><td class="nr">${nf.format(r.v)}</td><td class="nr">${nf.format(r.s)}</td><td class="nr">${nf.format(r.disp)}</td><td>${rotBar(r.v,r.s)}</td></tr>`).join(''):`<tr><td colspan="10" class="empty">Sin resultados.</td></tr>`}
-    </tbody></table></div>${rows.length>500?`<p style="font-size:11px;color:var(--gray-400);padding:8px 18px">Mostrando 500 de ${nf.format(rows.length)}. Usá los filtros para acotar.</p>`:''}`);
-  document.getElementById('exportProd')?.addEventListener('click',()=>exportProductos(rows));
-}
-
-function renderOportunidades(d) {
-  const sets = {
-    parado:  { data:d.filter(r=>r.v<=1&&r.s>=5).sort((a,b)=>b.s-a.s),    label:'Stock parado',       note:'Ventas ≤ 1 y stock ≥ 5', pill:'r' },
-    rotacion:{ data:d.filter(r=>r.s>=5&&r.st<0.30&&r.v>1).sort((a,b)=>a.st-b.st), label:'Posible rotación', note:'Stock ≥ 5 y sell-through < 30%', pill:'a' },
-    descuento:{ data:d.filter(r=>r.st<0.20&&r.dias>60).sort((a,b)=>a.st-b.st), label:'Posible descuento', note:'Sell-through < 20% y > 60 días desde ingreso', pill:'a' },
-    exitoso: { data:d.filter(r=>r.st>=0.70).sort((a,b)=>b.st-a.st),        label:'Productos exitosos', note:'Sell-through ≥ 70%', pill:'g' },
-    reponer: { data:d.filter(r=>r.st>=0.70&&r.s<=3).sort((a,b)=>a.s-b.s),  label:'Reposición sugerida',note:'Sell-through ≥ 70% y stock ≤ 3', pill:'g' },
-  };
-  renderOppPanel(sets, d);
-}
-
-// ── TyC views ─────────────────────────────────────────────────────────────────
-function renderTycProductos(d) {
-  // Group by COD
-  const m = new Map();
-  d.forEach(r => {
-    const g = m.get(r.cod) || { cod:r.cod, prod:r.prod, marca:r.marca, rubro:r.rubro, ing:r.ing, precio:r.precio, v:0, s:0, fact:0, talles:new Set(), colores:new Set() };
-    g.v+=r.v; g.s+=r.s; g.fact+=r.fact;
-    if (r.t&&r.t!=='99') g.talles.add(r.t); if (r.color) g.colores.add(r.color);
-    if (r.ing > g.ing) g.ing = r.ing;
-    m.set(r.cod, g);
-  });
-  const rows = [...m.values()].map(g=>({...g,disp:g.v+g.s,st:(g.v+g.s)>0?g.v/(g.v+g.s):0,nTalles:g.talles.size,nColores:g.colores.size}));
-  sortRows(rows,'tyc-prod','v');
-  document.getElementById('panelHost').innerHTML = mkPanel('PRODUCTOS (AGRUPADO POR CÓDIGO)',
-    `<button class="btn-sm" id="exportProd"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 4v12M12 16l-4-4M12 16l4-4"/><path d="M4 20h16"/></svg>Exportar</button>`,
-    `<div class="scroll"><table><thead><tr>
-      ${th('CÓD.','cod','tyc-prod','l')}${th('PRODUCTO','prod','tyc-prod','l')}${th('MARCA','marca','tyc-prod','l')}
-      ${th('VENDIDAS','v','tyc-prod','r')}${th('STOCK','s','tyc-prod','r')}${th('DISPONIBLE','disp','tyc-prod','r')}
-      <th class="ns">SELL-THROUGH</th>${th('TALLES','nTalles','tyc-prod','r')}${th('COLORES','nColores','tyc-prod','r')}
-    </tr></thead><tbody>
-      ${rows.length?rows.slice(0,500).map(r=>`<tr><td class="cod">${esc(r.cod)}</td><td class="pname" title="${esc(r.prod)}">${esc(r.prod)}</td><td><span class="tag">${esc(r.marca)}</span></td><td class="nr">${nf.format(r.v)}</td><td class="nr">${nf.format(r.s)}</td><td class="nr">${nf.format(r.disp)}</td><td>${rotBar(r.v,r.s)}</td><td class="nr">${r.nTalles||'—'}</td><td class="nr">${r.nColores||'—'}</td></tr>`).join(''):`<tr><td colspan="9" class="empty">Sin resultados.</td></tr>`}
-    </tbody></table></div>`);
-  document.getElementById('exportProd')?.addEventListener('click',()=>{
-    const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['COD','PRODUCTO','MARCA','RUBRO','VENDIDAS','STOCK','DISPONIBLE','SELL-THRU','TALLES','COLORES'],...rows.map(r=>[r.cod,r.prod,r.marca,r.rubro,r.v,r.s,r.disp,+r.st.toFixed(4),r.nTalles,r.nColores])]),'Productos');
-    XLSX.writeFile(wb,'Croma_TyC_Productos_'+new Date().toISOString().slice(0,10)+'.xlsx');
-  });
-}
-
-function renderTycTalles(d) {
-  const items = d.filter(r => r.t && r.t !== '99');
-  const m = new Map();
-  items.forEach(r => {
-    const g = m.get(r.t) || { talle:r.t, skus:0, v:0, s:0 };
-    g.skus++; g.v+=r.v; g.s+=r.s; m.set(r.t,g);
-  });
-  const rows = [...m.values()].map(g=>({...g,disp:g.v+g.s,st:(g.v+g.s)>0?g.v/(g.v+g.s):0})).sort((a,b)=>sizeSort(a.talle,b.talle));
-  sortRows(rows,'talles','v');
-  document.getElementById('panelHost').innerHTML = mkPanel('VENTAS Y STOCK POR TALLE',
-    `<span class="pnote">SKUs con T=99 (sin talle) excluidos de esta vista</span>`,
-    `<div class="scroll"><table><thead><tr>
-      ${th('TALLE','talle','talles','l')}${th('SKUs','skus','talles','r')}${th('VENDIDAS','v','talles','r')}${th('STOCK','s','talles','r')}${th('DISPONIBLE','disp','talles','r')}<th class="ns">SELL-THROUGH</th>
-    </tr></thead><tbody>
-      ${rows.length?rows.map(r=>`<tr><td><b style="font-size:14px">${esc(r.talle)}</b></td><td class="nr">${nf.format(r.skus)}</td><td class="nr">${nf.format(r.v)}</td><td class="nr">${nf.format(r.s)}</td><td class="nr">${nf.format(r.disp)}</td><td>${rotBar(r.v,r.s)}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">Sin datos de talles.</td></tr>`}
-    </tbody></table></div>`);
-}
-
-function renderTycColores(d) {
-  const m = new Map();
-  d.forEach(r => {
-    const key = r.color || r.c || '—';
-    const g = m.get(key) || { color:key, skus:0, v:0, s:0 };
-    g.skus++; g.v+=r.v; g.s+=r.s; m.set(key,g);
-  });
-  const rows = [...m.values()].map(g=>({...g,disp:g.v+g.s,st:(g.v+g.s)>0?g.v/(g.v+g.s):0}));
-  sortRows(rows,'colores','v');
-  document.getElementById('panelHost').innerHTML = mkPanel('VENTAS Y STOCK POR COLOR','',
-    `<div class="scroll"><table><thead><tr>
-      ${th('COLOR','color','colores','l')}${th('SKUs','skus','colores','r')}${th('VENDIDAS','v','colores','r')}${th('STOCK','s','colores','r')}${th('DISPONIBLE','disp','colores','r')}<th class="ns">SELL-THROUGH</th>
-    </tr></thead><tbody>
-      ${rows.length?rows.map(r=>`<tr><td><b>${esc(r.color)}</b></td><td class="nr">${nf.format(r.skus)}</td><td class="nr">${nf.format(r.v)}</td><td class="nr">${nf.format(r.s)}</td><td class="nr">${nf.format(r.disp)}</td><td>${rotBar(r.v,r.s)}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">Sin datos.</td></tr>`}
-    </tbody></table></div>`);
-}
-
-function renderTycCurva(d) {
-  const items = d.filter(r => r.t && r.t !== '99');
-  const m = new Map();
-  items.forEach(r => {
-    const g = m.get(r.t) || { talle:r.t, v:0, s:0 };
-    g.v+=r.v; g.s+=r.s; m.set(r.t,g);
-  });
-  const rows = [...m.values()].sort((a,b)=>sizeSort(a.talle,b.talle));
-  const maxDisp = rows.reduce((a,r)=>Math.max(a,r.v+r.s),0)||1;
-  const totV = rows.reduce((a,r)=>a+r.v,0)||1;
-
-  document.getElementById('panelHost').innerHTML = mkPanel('CURVA DE TALLES',
-    `<span class="pnote">Distribución de ventas y stock por talle · aplicá filtros de rubro/marca para ver la curva de un segmento</span>`,
-    `<div style="padding:14px 18px">
-      <div class="curva-legend">
-        <span><i style="background:var(--violet)"></i>Vendidas</span>
-        <span><i style="background:var(--gray-200)"></i>Stock restante</span>
-      </div>
-      ${rows.length ? rows.map(r => {
-        const disp=r.v+r.s, vPct=disp/maxDisp*100, sPct=r.s/maxDisp*100, vShare=r.v/totV;
-        const barColor = r.v/disp>=0.7?'var(--sold)':r.v/disp>=0.4?'var(--violet)':'var(--risk)';
-        return `<div class="curva-row">
-          <div class="curva-talle">${esc(r.talle)}</div>
-          <div class="curva-bars">
-            <div class="curva-bar-wrap">
-              <div class="curva-bar-bg">
-                <div class="curva-bar-v" style="width:${vPct.toFixed(1)}%;background:${barColor}"></div>
-                <div class="curva-bar-s" style="left:${vPct.toFixed(1)}%;width:${sPct.toFixed(1)}%;background:var(--gray-400)"></div>
-              </div>
-            </div>
-          </div>
-          <div class="curva-nums">
-            <span style="color:${barColor};font-weight:700">${nf.format(r.v)} v</span>
-            <span style="color:var(--gray-400)">${nf.format(r.s)} s</span>
-            <span style="font-weight:700">${pct(vShare)}</span>
-          </div>
-        </div>`;
-      }).join('') : '<div class="empty">Sin datos de talles.</div>'}
-    </div>`);
-}
-
-function renderTycSucursales(d) {
-  const rows = STYC.map(suc => {
-    const items=d.filter(r=>r.sucV[suc.key].v>0);
-    const v=d.reduce((a,r)=>a+r.sucV[suc.key].v,0);
-    const s=d.reduce((a,r)=>a+r.sucV[suc.key].s,0);
-    const top = k => { const m=new Map(); items.forEach(r=>m.set(r[k],(m.get(r[k])||0)+r.sucV[suc.key].v)); return [...m.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]??'—'; };
-    return { ...suc, v, s, topRubro:top('rubro'), topMarca:top('marca'), skus:items.length };
-  }).sort((a,b)=>b.v-a.v);
-  const tot=rows.reduce((a,r)=>a+r.v,0)||1;
-  document.getElementById('panelHost').innerHTML = mkPanel('VENTAS POR SUCURSAL','',
-    `<div class="scroll"><table><thead><tr><th class="ns">SUCURSAL</th><th class="ns" style="text-align:right">SKUs</th><th class="ns" style="text-align:right">VENDIDAS</th><th class="ns" style="text-align:right">STOCK</th><th class="ns">PARTICIPACIÓN</th><th class="ns" style="text-align:right">%</th><th class="ns">TOP RUBRO</th><th class="ns">TOP MARCA</th></tr></thead><tbody>
-      ${rows.map(r=>`<tr><td><span class="sb ${r.cls}">${esc(r.name)}</span></td><td class="nr">${nf.format(r.skus)}</td><td class="nr">${nf.format(r.v)}</td><td class="nr">${nf.format(r.s)}</td><td><div class="rot" style="min-width:100px"><div class="bar"><span style="width:${(r.v/tot*100).toFixed(1)}%;background:${r.color}"></span></div></div></td><td class="nr">${pct(r.v/tot)}</td><td><span class="tag">${esc(r.topRubro)}</span></td><td><span class="tag">${esc(r.topMarca)}</span></td></tr>`).join('')}
-    </tbody></table></div>`);
-}
-
-function renderTycOportunidades(d) {
-  // Quiebre de talle: CODs que vendieron en algún talle pero lo agotaron (stock=0) mientras otros talles tienen stock
-  const byCode = new Map();
-  d.filter(r=>r.t&&r.t!=='99').forEach(r=>{
-    if(!byCode.has(r.cod)) byCode.set(r.cod,{cod:r.cod,prod:r.prod,marca:r.marca,rubro:r.rubro,talles:[]});
-    byCode.get(r.cod).talles.push({t:r.t,v:r.v,s:r.s});
-  });
-  const quiebre = [...byCode.values()].filter(p=>{
-    const conStock=p.talles.filter(t=>t.s>0), sinStock=p.talles.filter(t=>t.s<=0&&t.v>0);
-    return conStock.length>0 && sinStock.length>0;
-  }).map(p=>{
-    const agot=p.talles.filter(t=>t.s<=0&&t.v>0).sort((a,b)=>sizeSort(a.t,b.t));
-    const hayStock=p.talles.filter(t=>t.s>0).sort((a,b)=>sizeSort(a.t,b.t));
-    return {...p, agotados:agot, conStock:hayStock, vtot:p.talles.reduce((a,t)=>a+t.v,0)};
-  }).sort((a,b)=>b.vtot-a.vtot);
-
-  const sets = {
-    quiebre: { data:quiebre, label:'Quiebre de talle', note:'Producto con talles agotados (vendidos, stock=0) y otros talles con stock disponible', pill:'r' },
-    parado:  { data:d.filter(r=>r.v<=1&&r.s>=5).sort((a,b)=>b.s-a.s), label:'Stock parado (SKU)',  note:'SKU con ventas ≤ 1 y stock ≥ 5', pill:'r' },
-    reponer: { data:d.filter(r=>r.st>=0.70&&r.s<=3).sort((a,b)=>a.s-b.s), label:'Reposición sugerida', note:'Sell-through ≥ 70% y stock ≤ 3', pill:'g' },
-    exitoso: { data:d.filter(r=>r.st>=0.70).sort((a,b)=>b.st-a.st), label:'SKUs exitosos', note:'Sell-through ≥ 70%', pill:'g' },
-  };
-
-  if (!['quiebre','parado','reponer','exitoso'].includes(OPP_SUB)) OPP_SUB='quiebre';
-
-  const subTabsHtml = `<div class="sub-tabs">${Object.entries(sets).map(([key,s])=>
-    `<button class="stab${OPP_SUB===key?' active':''}" data-sub="${key}">${s.label} <span class="pill ${s.pill}">${s.data.length}</span></button>`
-  ).join('')}</div>`;
-
-  let tableHtml;
-  if (OPP_SUB==='quiebre') {
-    tableHtml = mkPanel('QUIEBRE DE TALLE', `<span class="pnote">${sets.quiebre.note}</span>`,
-      `<div class="scroll"><table><thead><tr><th class="ns">CÓD.</th><th class="ns">PRODUCTO</th><th class="ns">MARCA</th><th class="ns" style="text-align:right">TALLES AGOTADOS</th><th class="ns">TALLES CON STOCK</th></tr></thead><tbody>
-        ${quiebre.length?quiebre.slice(0,200).map(r=>`<tr>
-          <td class="cod">${esc(r.cod)}</td><td class="pname">${esc(r.prod)}</td><td><span class="tag">${esc(r.marca)}</span></td>
-          <td class="nr">${r.agotados.map(t=>`<span class="pill r" style="margin-left:3px">${esc(t.t)}</span>`).join('')}</td>
-          <td>${r.conStock.map(t=>`<span class="pill g" style="margin-left:3px">${esc(t.t)} (${t.s})</span>`).join('')}</td>
-        </tr>`).join(''):`<tr><td colspan="5" class="empty">Sin quiebres detectados.</td></tr>`}
-      </tbody></table></div>`);
-  } else if (OPP_SUB==='parado') {
-    const cur=sets.parado.data;
-    tableHtml = mkPanel('STOCK PARADO POR SKU',`<span class="pnote">${sets.parado.note}</span>`,
-      `<div class="scroll"><table><thead><tr><th class="ns">CÓD.</th><th class="ns">PRODUCTO</th><th class="ns">TALLE</th><th class="ns">COLOR</th><th class="ns" style="text-align:right">VENDIDAS</th><th class="ns" style="text-align:right">STOCK</th></tr></thead><tbody>
-        ${cur.length?cur.slice(0,200).map(r=>`<tr><td class="cod">${esc(r.cod)}</td><td class="pname">${esc(r.prod)}</td><td style="font-weight:700">${esc(r.t)}</td><td>${esc(r.color)}</td><td class="nr">${nf.format(r.v)}</td><td class="nr" style="color:var(--risk);font-weight:700">${nf.format(r.s)}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">Sin resultados.</td></tr>`}
-      </tbody></table></div>`);
-  } else if (OPP_SUB==='reponer') {
-    const cur=sets.reponer.data;
-    tableHtml = mkPanel('REPOSICIÓN SUGERIDA',`<span class="pnote">${sets.reponer.note}</span>`,
-      `<div class="scroll"><table><thead><tr><th class="ns">CÓD.</th><th class="ns">PRODUCTO</th><th class="ns">TALLE</th><th class="ns">COLOR</th><th class="ns" style="text-align:right">VENDIDAS</th><th class="ns" style="text-align:right">STOCK</th><th class="ns">SELL-THROUGH</th></tr></thead><tbody>
-        ${cur.length?cur.slice(0,200).map(r=>`<tr><td class="cod">${esc(r.cod)}</td><td class="pname">${esc(r.prod)}</td><td style="font-weight:700">${esc(r.t)}</td><td>${esc(r.color)}</td><td class="nr">${nf.format(r.v)}</td><td class="nr" style="color:var(--amber);font-weight:700">${nf.format(r.s)}</td><td>${rotBar(r.v,r.s)}</td></tr>`).join(''):`<tr><td colspan="7" class="empty">Sin resultados.</td></tr>`}
-      </tbody></table></div>`);
-  } else {
-    const cur=sets.exitoso.data;
-    tableHtml = mkPanel('SKUs EXITOSOS',`<span class="pnote">${sets.exitoso.note}</span>`,
-      `<div class="scroll"><table><thead><tr><th class="ns">CÓD.</th><th class="ns">PRODUCTO</th><th class="ns">TALLE</th><th class="ns">COLOR</th><th class="ns" style="text-align:right">VENDIDAS</th><th class="ns" style="text-align:right">STOCK</th><th class="ns">SELL-THROUGH</th></tr></thead><tbody>
-        ${cur.length?cur.slice(0,200).map(r=>`<tr><td class="cod">${esc(r.cod)}</td><td class="pname">${esc(r.prod)}</td><td style="font-weight:700">${esc(r.t)}</td><td>${esc(r.color)}</td><td class="nr" style="color:var(--sold);font-weight:700">${nf.format(r.v)}</td><td class="nr">${nf.format(r.s)}</td><td>${rotBar(r.v,r.s)}</td></tr>`).join(''):`<tr><td colspan="7" class="empty">Sin resultados.</td></tr>`}
-      </tbody></table></div>`);
-  }
-
-  document.getElementById('panelHost').innerHTML = subTabsHtml + tableHtml;
-  document.querySelectorAll('.stab').forEach(btn=>{
-    btn.addEventListener('click',()=>{ OPP_SUB=btn.dataset.sub; SORT={view:null,col:null,dir:-1}; renderTycOportunidades(d); });
-  });
-}
-
-// ── General Oportunidades helper ──────────────────────────────────────────────
-function renderOppPanel(sets, d) {
-  const cur=sets[OPP_SUB];
-  const subTabsHtml=`<div class="sub-tabs">${Object.entries(sets).map(([key,s])=>`<button class="stab${OPP_SUB===key?' active':''}" data-sub="${key}">${s.label} <span class="pill ${s.pill}">${s.data.length}</span></button>`).join('')}</div>`;
-  let headRow, rowFn, cols;
-  if(OPP_SUB==='parado'){headRow=`<tr>${th('CÓD.','cod','opp','l')}${th('PRODUCTO','prod','opp','l')}${th('MARCA','marca','opp','l')}${th('RUBRO','rubro','opp','l')}${th('VENDIDAS','v','opp','r')}${th('STOCK','s','opp','r')}</tr>`;rowFn=r=>`<td class="cod">${esc(r.cod)}</td><td class="pname">${esc(r.prod)}</td><td><span class="tag">${esc(r.marca)}</span></td><td style="font-size:11px;color:var(--gray-400)">${esc(r.rubro)}</td><td class="nr">${nf.format(r.v)}</td><td class="nr" style="color:var(--risk);font-weight:700">${nf.format(r.s)}</td>`;cols=6;}
-  else if(OPP_SUB==='rotacion'){headRow=`<tr>${th('CÓD.','cod','opp','l')}${th('PRODUCTO','prod','opp','l')}${th('MARCA','marca','opp','l')}${th('VENDIDAS','v','opp','r')}${th('STOCK','s','opp','r')}<th class="ns">SELL-THROUGH</th></tr>`;rowFn=r=>`<td class="cod">${esc(r.cod)}</td><td class="pname">${esc(r.prod)}</td><td><span class="tag">${esc(r.marca)}</span></td><td class="nr">${nf.format(r.v)}</td><td class="nr">${nf.format(r.s)}</td><td>${rotBar(r.v,r.s)}</td>`;cols=6;}
-  else if(OPP_SUB==='descuento'){headRow=`<tr>${th('CÓD.','cod','opp','l')}${th('PRODUCTO','prod','opp','l')}${th('MARCA','marca','opp','l')}${th('INGRESO','ing','opp','r')}${th('DÍAS','dias','opp','r')}<th class="ns">SELL-THROUGH</th></tr>`;rowFn=r=>`<td class="cod">${esc(r.cod)}</td><td class="pname">${esc(r.prod)}</td><td><span class="tag">${esc(r.marca)}</span></td><td class="nr" style="color:var(--gray-400)">${fmtD(r.ing)}</td><td class="nr">${r.dias}d</td><td>${rotBar(r.v,r.s)}</td>`;cols=6;}
-  else if(OPP_SUB==='exitoso'){headRow=`<tr>${th('CÓD.','cod','opp','l')}${th('PRODUCTO','prod','opp','l')}${th('MARCA','marca','opp','l')}${th('VENDIDAS','v','opp','r')}${th('STOCK','s','opp','r')}<th class="ns">SELL-THROUGH</th></tr>`;rowFn=r=>`<td class="cod">${esc(r.cod)}</td><td class="pname">${esc(r.prod)}</td><td><span class="tag">${esc(r.marca)}</span></td><td class="nr" style="color:var(--sold);font-weight:700">${nf.format(r.v)}</td><td class="nr">${nf.format(r.s)}</td><td>${rotBar(r.v,r.s)}</td>`;cols=6;}
-  else{headRow=`<tr>${th('CÓD.','cod','opp','l')}${th('PRODUCTO','prod','opp','l')}${th('MARCA','marca','opp','l')}${th('VENDIDAS','v','opp','r')}${th('STOCK','s','opp','r')}<th class="ns">SELL-THROUGH</th></tr>`;rowFn=r=>`<td class="cod">${esc(r.cod)}</td><td class="pname">${esc(r.prod)}</td><td><span class="tag">${esc(r.marca)}</span></td><td class="nr">${nf.format(r.v)}</td><td class="nr" style="color:var(--amber);font-weight:700">${nf.format(r.s)}</td><td>${rotBar(r.v,r.s)}</td>`;cols=6;}
-  const oppRows=cur.data.slice(); sortRows(oppRows,'opp',null);
-  document.getElementById('panelHost').innerHTML=subTabsHtml+mkPanel(cur.label.toUpperCase(),`<span class="pnote">${cur.note}</span>`,
-    `<div class="scroll"><table><thead>${headRow}</thead><tbody>${oppRows.length?oppRows.slice(0,200).map(r=>`<tr>${rowFn(r)}</tr>`).join(''):`<tr><td colspan="${cols}" class="empty">Sin resultados.</td></tr>`}</tbody></table></div>`);
-  document.querySelectorAll('.stab').forEach(btn=>{btn.addEventListener('click',()=>{OPP_SUB=btn.dataset.sub;SORT={view:null,col:null,dir:-1};renderOportunidades(d);});});
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function pctCls(v){return v<0.3?'pc-lo':v<0.6?'pc-mid':'pc-hi';}
-function rotBar(v,s){const disp=v+s,st=disp>0?v/disp:0,c=st<0.3?'var(--risk)':st<0.6?'var(--amber)':'var(--sold)';return `<div class="rot"><div class="bar"><span style="width:${(st*100).toFixed(1)}%;background:${c}"></span></div><span class="pc ${pctCls(st)}">${pct(st)}</span></div>`;}
-function mkPanel(title,right,body){return `<div class="panel"><div class="ph"><h3>${title}</h3>${right||''}</div>${body}</div>`;}
-function th(label,col,view,align){const sorted=SORT.view===view&&SORT.col===col,arr=sorted?(SORT.dir<0?'▼':'▲'):'↕',a=align==='l'?'left':'right';return `<th class="${sorted?'sorted':''}" style="text-align:${a}" data-sv="${view}" data-sc="${col}">${label}<span class="arr">${arr}</span></th>`;}
-function sortRows(rows,view,defCol){const col=SORT.view===view?SORT.col:defCol,dir=SORT.view===view?SORT.dir:-1;if(!col)return;rows.sort((a,b)=>{let x=a[col],y=b[col];if(x instanceof Date)x=x.getTime();if(y instanceof Date)y=y.getTime();if(x==null)x=-Infinity;if(y==null)y=-Infinity;if(typeof x==='string')return dir*x.localeCompare(y,'es');return dir*((x||0)-(y||0));});}
-
-// ── Export ────────────────────────────────────────────────────────────────────
-function exportExcel() {
-  const d=getFiltered(), wb=XLSX.utils.book_new();
-  const v=d.reduce((a,r)=>a+r.v,0), s=d.reduce((a,r)=>a+r.s,0);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
-    ['Análisis Croma — '+( MODE==='gen'?'Ventas generales':'Stock talle y color')],
-    ['Fecha',new Date().toLocaleDateString('es-AR')],['Desde',document.getElementById('fDesde').value],
-    ['Hasta',document.getElementById('fHasta').value||'(sin tope)'],
-    ['Modelos/SKUs',d.length],['Vendidas',v],['Stock',s],['Disponible',v+s],['Sell-through',(v+s)>0?+(v/(v+s)).toFixed(4):0],
-  ]),'Resumen');
-  if(MODE==='gen'){
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['COD','PRODUCTO','MARCA','RUBRO','ULT.INGRESO','PRECIO','VENDIDAS','STOCK','DISPONIBLE','SELL-THRU'],...d.sort((a,b)=>b.v-a.v).map(r=>[r.cod,r.prod,r.marca,r.rubro,fmtD(r.ing),r.precio,r.v,r.s,r.disp,+r.st.toFixed(4)])]),'Detalle');
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['MARCA','MODELOS','VENDIDAS','STOCK','DISPONIBLE','SELL-THRU','FACT.EST.','SIN VENTA'],...aggBy(d,'marca').map(g=>[g.name,g.modelos,g.v,g.s,g.disp,+g.st.toFixed(4),g.fact,g.sinV])]),'Por marca');
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['RUBRO','MODELOS','VENDIDAS','STOCK','DISPONIBLE','SELL-THRU','FACT.EST.','SIN VENTA'],...aggBy(d,'rubro').map(g=>[g.name,g.modelos,g.v,g.s,g.disp,+g.st.toFixed(4),g.fact,g.sinV])]),'Por rubro');
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['SUCURSAL','VENDIDAS'],...SGEN.map(suc=>[suc.name,d.reduce((a,r)=>a+r.sucV[suc.key].v,0)])]),'Por sucursal');
-    const opp=[['TIPO','COD','PRODUCTO','MARCA','VENDIDAS','STOCK','SELL-THRU'],...d.filter(r=>r.v<=1&&r.s>=5).map(r=>['Stock parado',r.cod,r.prod,r.marca,r.v,r.s,+r.st.toFixed(4)]),...d.filter(r=>r.st>=0.70&&r.s<=3).map(r=>['Reposición',r.cod,r.prod,r.marca,r.v,r.s,+r.st.toFixed(4)]),...d.filter(r=>r.st>=0.70).map(r=>['Exitoso',r.cod,r.prod,r.marca,r.v,r.s,+r.st.toFixed(4)]),...d.filter(r=>r.st<0.20&&r.dias>60).map(r=>['Descuento',r.cod,r.prod,r.marca,r.v,r.s,+r.st.toFixed(4)])];
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(opp),'Oportunidades');
-  } else {
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['COD','PRODUCTO','MARCA','RUBRO','SUBRUBRO','TALLE','COLOR','PRECIO','VENDIDAS','STOCK','DISPONIBLE','SELL-THRU'],...d.sort((a,b)=>b.v-a.v).map(r=>[r.cod,r.prod,r.marca,r.rubro,r.subrubro,r.t,r.color,r.precio,r.v,r.s,r.disp,+r.st.toFixed(4)])]),'Detalle SKU');
-    // Talles
-    const talleMap=new Map();d.filter(r=>r.t&&r.t!=='99').forEach(r=>{const g=talleMap.get(r.t)||{t:r.t,v:0,s:0};g.v+=r.v;g.s+=r.s;talleMap.set(r.t,g);});
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['TALLE','VENDIDAS','STOCK','DISPONIBLE','SELL-THRU'],...[...talleMap.values()].sort((a,b)=>sizeSort(a.t,b.t)).map(g=>[g.t,g.v,g.s,g.v+g.s,(g.v+g.s)>0?+(g.v/(g.v+g.s)).toFixed(4):0])]),'Por talle');
-    // Colores
-    const colorMap=new Map();d.forEach(r=>{const k=r.color||'—';const g=colorMap.get(k)||{color:k,v:0,s:0};g.v+=r.v;g.s+=r.s;colorMap.set(k,g);});
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['COLOR','VENDIDAS','STOCK','DISPONIBLE','SELL-THRU'],...[...colorMap.values()].sort((a,b)=>b.v-a.v).map(g=>[g.color,g.v,g.s,g.v+g.s,(g.v+g.s)>0?+(g.v/(g.v+g.s)).toFixed(4):0])]),'Por color');
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['SUCURSAL','VENDIDAS','STOCK'],...STYC.map(suc=>[suc.name,d.reduce((a,r)=>a+r.sucV[suc.key].v,0),d.reduce((a,r)=>a+r.sucV[suc.key].s,0)])]),'Por sucursal');
-  }
-  XLSX.writeFile(wb,'Croma_Analisis_'+(MODE==='gen'?'General':'TyC')+'_'+document.getElementById('fDesde').value.slice(0,7)+'.xlsx');
-}
-
-function exportProductos(rows){
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['COD','PRODUCTO','MARCA','RUBRO','ULT.INGRESO','PRECIO','VENDIDAS','STOCK','DISPONIBLE','SELL-THRU'],...rows.map(r=>[r.cod,r.prod,r.marca,r.rubro,fmtD(r.ing),r.precio,r.v,r.s,r.disp,+r.st.toFixed(4)])]),'Productos');
-  XLSX.writeFile(wb,'Croma_Productos_'+new Date().toISOString().slice(0,10)+'.xlsx');
-}
 </script>
 </body>
 </html>
