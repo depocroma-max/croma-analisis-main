@@ -64,10 +64,13 @@
       background:rgba(255,255,255,.06);cursor:pointer;font-size:12px;color:var(--gray-400);
       font-family:var(--font-b);transition:.15s;white-space:nowrap}
     .hbtn:hover{border-color:rgba(255,255,255,.30);color:#fff}
-    .btn-icon{width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+    /* Namespaced a proposito (topbar-icon-btn, no .btn-icon): .btn-icon ya es una clase
+       oficial de croma-ds.css (sizing 40x40 sobre fondo claro) — esta variante es solo
+       para la topbar oscura y no debe pisar la real al reutilizarla en Tiempo real. */
+    .topbar-icon-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;
       border:1px solid rgba(255,255,255,.12);border-radius:12px;
       background:rgba(255,255,255,.04);color:var(--gray-400);cursor:pointer;transition:.15s}
-    .btn-icon:hover{color:#fff;border-color:#555;background:rgba(255,255,255,.11);transform:translateY(-1px)}
+    .topbar-icon-btn:hover{color:#fff;border-color:#555;background:rgba(255,255,255,.11);transform:translateY(-1px)}
     .sesion-chip{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 12px;
       background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:20px}
     .sesion-nombre{font-size:12px;font-weight:600;color:#e8e8e2;white-space:nowrap;letter-spacing:.2px}
@@ -171,11 +174,23 @@
     /* Tiempo real — periodo, tablas, paginacion, chips */
     .rt-periodo-label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--gray-400)}
     .rt-periodo-input{padding:5px 8px!important;font-size:12.5px!important}
-    .rt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
-    .rt-kpi{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r);padding:14px}
-    .rt-kpi .rt-kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400)}
-    .rt-kpi .rt-kpi-valor{font-family:var(--font-d);font-size:26px;margin-top:2px}
-    .rt-table-wrap{overflow-x:auto;background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r)}
+    /* .rt-kpi se aplica siempre junto con .card (croma-ds.css) -- .card ya da fondo,
+       borde, radio y sombra reales del DS; acá solo el layout interno (icono+label+valor). */
+    .rt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-3);margin-bottom:var(--space-4)}
+    .rt-kpi{display:flex;flex-direction:column;gap:6px;padding:var(--space-4)}
+    .rt-kpi-icon{width:32px;height:32px;border-radius:var(--radius-md);display:grid;place-items:center;
+      background:var(--gray-100);color:var(--gray-600);flex:none}
+    .rt-kpi-icon svg{width:16px;height:16px}
+    .rt-kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400)}
+    .rt-kpi-valor{font-family:var(--font-display);font-size:26px;letter-spacing:-.01em;line-height:1}
+    .rt-kpi-delta{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600}
+    .rt-kpi-delta svg{width:11px;height:11px;flex:none}
+    .rt-kpi-delta.up{color:var(--success)}
+    .rt-kpi-delta.down{color:var(--danger)}
+    .rt-kpi-delta.flat{color:var(--gray-400);font-weight:500}
+    .rt-kpi-delta .arrow-up{transform:rotate(180deg)}
+    .rt-table-wrap{overflow-x:auto;background:var(--white);border:1px solid var(--gray-100);
+      border-radius:16px;box-shadow:var(--shadow-sm)}
     table.rt-table{width:100%;border-collapse:collapse;font-size:13px}
     table.rt-table th{text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
       color:var(--gray-400);padding:9px 12px;border-bottom:1px solid var(--gray-100);white-space:nowrap}
@@ -184,12 +199,23 @@
     table.rt-table tbody tr.rt-row-click:hover{background:var(--gray-50)}
     .rt-filtro-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-s);color:var(--accent);
       font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:99px;margin-bottom:12px}
-    .rt-filtro-chip button{background:none;border:none;cursor:pointer;color:inherit;font-weight:700;padding:0 2px}
+    .rt-filtro-chip-icon{display:inline-flex}
+    .rt-filtro-chip button{background:none;border:none;cursor:pointer;color:inherit;padding:0 2px;
+      display:inline-flex;align-items:center}
     .rt-pagination{display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:10px 12px;font-size:12.5px;color:var(--gray-400)}
     .rt-progress{font-size:12.5px;color:var(--gray-400);display:flex;align-items:center;gap:8px;margin:8px 0}
     .rt-buscador-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
     .rt-buscador-row input,.rt-buscador-row select{font:inherit;font-size:13px;border:1px solid var(--gray-200);
       border-radius:8px;padding:7px 11px;background:var(--gray-50)}
+    /* Titulos de seccion dentro de una vista RT (ej. "Ventas y stock por sucursal",
+       "Por talle") -- clase usada en varias vistas pero sin regla propia hasta ahora,
+       caia al h3/h4 por defecto del navegador. */
+    .rt-subtitulo{font-family:var(--font-display);font-size:16px;letter-spacing:.5px;
+      color:var(--black);margin:var(--space-5) 0 var(--space-2)}
+    .rt-subtitulo:first-child{margin-top:0}
+    .rt-filtros-titulo{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin:var(--space-3) 0 6px}
+    .rt-filtros-titulo svg{width:14px;height:14px}
 
     /* Oportunidades — tarjetas de resumen clickeables, tabla desktop / tarjetas mobile */
     .rt-kpi-click{transition:box-shadow .15s,border-color .15s}
@@ -206,11 +232,15 @@
       .rt-oportunidades-tabla{display:none}
       .rt-oportunidades-cards{display:block}
     }
-    .btn-primary{font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--black);
+    /* Namespaced a proposito (excel-btn-export, no .btn-primary): .btn-primary ya es la
+       clase oficial de croma-ds.css (rojo, pill) — este boton del modo Excel es previo
+       a la adopcion del DS y tiene otro estilo (negro); renombrado para no pisar la
+       clase real cuando Tiempo real empiece a usar botones .btn-primary del DS. */
+    .excel-btn-export{font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--black);
       border:none;border-radius:9px;padding:8px 14px;cursor:pointer;transition:.15s;
       display:inline-flex;align-items:center;gap:6px}
-    .btn-primary:hover{background:#222}
-    .btn-primary svg{width:14px;height:14px;stroke:#fff;flex:none;stroke-linecap:round;stroke-linejoin:round}
+    .excel-btn-export:hover{background:#222}
+    .excel-btn-export svg{width:14px;height:14px;stroke:#fff;flex:none;stroke-linecap:round;stroke-linejoin:round}
 
     /* KPIs */
     .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:14px}
@@ -328,7 +358,27 @@
     .rt-state{padding:40px 20px;text-align:center;color:var(--gray-400);font-size:13px}
     .rt-state .spinner{border:2px solid var(--gray-200);border-top-color:var(--black);margin:0 auto 12px}
     .rt-state .btn-sm{margin-top:12px}
+    .rt-state-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+      margin:0 auto 10px;background:var(--gray-100);color:var(--gray-400)}
+    .rt-state-icon svg{width:18px;height:18px}
+    .rt-state-icon.danger{background:var(--danger-bg);color:var(--danger)}
     .rt-note{font-size:11.5px;color:var(--gray-400);padding:10px 16px;border-top:1px solid var(--gray-100);line-height:1.6}
+
+    /* Estado "pendiente" (dato del boceto que la API todavia no entrega, ver Fase 1) */
+    .rt-pendiente{border-style:dashed;border-color:var(--gray-200)}
+    .rt-pendiente-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+    .rt-pendiente-head .rt-state-icon{margin:0;width:28px;height:28px}
+    .rt-pendiente-head .rt-state-icon svg{width:14px;height:14px}
+    .rt-pendiente .rt-note{padding:0;border-top:none}
+
+    /* Insights del periodo */
+    .rt-insights-lista{display:flex;flex-direction:column;gap:var(--space-3)}
+    .rt-insight-fila{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.5}
+    .rt-insight-icon{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;
+      background:var(--gray-100);color:var(--gray-600)}
+    .rt-insight-icon svg{width:15px;height:15px}
+    .rt-insight-icon.up{background:var(--success-bg);color:var(--success)}
+    .rt-insight-icon.down{background:var(--danger-bg);color:var(--danger)}
 
     .rt-search{max-width:480px;margin-bottom:14px}
     .rt-search input{font:inherit;font-size:14px;width:100%;border:1px solid var(--gray-200);
@@ -401,7 +451,7 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         </button>
       </div>
-      <button class="btn-icon" id="btnHub" title="Volver al hub" onclick="location.href='https://croma-app.com.ar/'">
+      <button class="topbar-icon-btn" id="btnHub" title="Volver al hub" onclick="location.href='https://croma-app.com.ar/'">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       </button>
     </div>
@@ -445,7 +495,7 @@
           <div class="saved-card-date" id="savedFileDate"></div>
         </div>
         <div class="saved-card-actions">
-          <button class="btn-primary" id="btnUseSaved">Usar este</button>
+          <button class="excel-btn-export" id="btnUseSaved">Usar este</button>
           <button class="hbtn" id="btnUploadNew">Subir nuevo</button>
         </div>
       </div>
@@ -490,7 +540,7 @@
         <div class="fbar-end">
           <span class="mode-badge gen" id="modeBadge">General</span>
           <span class="fname">Archivo: <b id="fname">—</b></span>
-          <button class="btn-primary" id="exportBtn">
+          <button class="excel-btn-export" id="exportBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 4v12M12 16l-4-4M12 16l4-4"/><path d="M4 20h16"/></svg>
             Exportar
           </button>
@@ -531,7 +581,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="croma-icons.js?v=20260714-1"></script>
+<script src="croma-icons.js?v=20260716-1"></script>
 <script>
 'use strict';
 
@@ -643,7 +693,10 @@ function setup() {
   });
 
   document.getElementById('rtBtnVolver').addEventListener('click', resetApp);
-  document.getElementById('rtBtnActualizar').addEventListener('click', () => { RT_DETALLE = null; RT_COMPLETO = null; rtCargarResumen(); if (RT_FILTRO) rtCargarPaginaDetalle(); });
+  document.getElementById('rtBtnActualizar').addEventListener('click', () => {
+    RT_DETALLE = null; RT_COMPLETO = null; RT_INSIGHT_OPP_ALTA_KEY = null;
+    rtCargarResumen(); rtCargarResumenAnterior(); if (RT_FILTRO) rtCargarPaginaDetalle();
+  });
   document.getElementById('rtTabs').addEventListener('click', e => {
     const btn = e.target.closest('.tab'); if (!btn) return;
     rtCambiarVista(btn.dataset.view);
@@ -740,10 +793,14 @@ function resetApp() {
   // Tiempo real
   document.getElementById('rtApp').hidden = true;
   if (RT_RESUMEN_ABORT) { RT_RESUMEN_ABORT.abort(); RT_RESUMEN_ABORT = null; }
+  if (RT_RESUMEN_ANTERIOR_ABORT) { RT_RESUMEN_ANTERIOR_ABORT.abort(); RT_RESUMEN_ANTERIOR_ABORT = null; }
   if (RT_DETALLE_ABORT) { RT_DETALLE_ABORT.abort(); RT_DETALLE_ABORT = null; }
   if (RT_COMPLETO_ABORT) { RT_COMPLETO_ABORT.abort(); RT_COMPLETO_ABORT = null; }
   if (RT_OPORTUNIDADES_ABORT) { RT_OPORTUNIDADES_ABORT.abort(); RT_OPORTUNIDADES_ABORT = null; }
+  if (RT_INSIGHT_OPP_ALTA_ABORT) { RT_INSIGHT_OPP_ALTA_ABORT.abort(); RT_INSIGHT_OPP_ALTA_ABORT = null; }
   RT_RESUMEN = null; RT_RESUMEN_LOADING = false; RT_RESUMEN_ERROR = null;
+  RT_RESUMEN_ANTERIOR = null; RT_RESUMEN_ANTERIOR_LOADING = false; RT_RESUMEN_ANTERIOR_ERROR = null;
+  RT_INSIGHT_OPP_ALTA = null; RT_INSIGHT_OPP_ALTA_LOADING = false; RT_INSIGHT_OPP_ALTA_ERROR = null; RT_INSIGHT_OPP_ALTA_KEY = null;
   RT_FILTRO = null; RT_DETALLE = null; RT_DETALLE_OFFSET = 0; RT_COMPLETO = null;
   RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_PRIORIDAD = null;
   RT_OPORTUNIDADES_CONFIANZA = null; RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
@@ -770,6 +827,18 @@ const RT_LIMITE_PAGINAS_COMPLETO = 20; // tope de seguridad: 20 * 500 = 10.000 f
 let RT_DESDE = null, RT_HASTA = null;
 let RT_VIEW = 'dashboard';
 let RT_RESUMEN = null, RT_RESUMEN_LOADING = false, RT_RESUMEN_ERROR = null, RT_RESUMEN_ABORT = null;
+// Resumen del "periodo anterior" (mismo largo de dias, inmediatamente antes de RT_DESDE) --
+// solo alimenta los deltas de comparacion del dashboard. Se pide en paralelo a rtCargarResumen()
+// pero nunca bloquea el render principal: si falla o tarda, el dashboard se muestra igual y el
+// delta queda oculto/"sin comparacion". Cache en memoria por "desde|hasta" (dura la sesion).
+const RT_RESUMEN_ANTERIOR_CACHE = new Map();
+let RT_RESUMEN_ANTERIOR = null, RT_RESUMEN_ANTERIOR_LOADING = false, RT_RESUMEN_ANTERIOR_ERROR = null, RT_RESUMEN_ANTERIOR_ABORT = null;
+// Insight "oportunidades prioritarias" del dashboard -- fetch propio y liviano
+// (prioridad=alta, limit=1, solo interesa paginacion.total), independiente del estado
+// de la pestaña Oportunidades para no pisar sus filtros/paginacion.
+const RT_INSIGHT_OPP_ALTA_CACHE = new Map();
+let RT_INSIGHT_OPP_ALTA = null, RT_INSIGHT_OPP_ALTA_LOADING = false, RT_INSIGHT_OPP_ALTA_ERROR = null;
+let RT_INSIGHT_OPP_ALTA_ABORT = null, RT_INSIGHT_OPP_ALTA_KEY = null;
 let RT_FILTRO = null; // { marca } | { rubro } | { rubro, subrubro } | { codigo } | null
 let RT_DETALLE = null; // ultima respuesta paginada de /stock-ventas para RT_FILTRO
 let RT_DETALLE_OFFSET = 0;
@@ -796,6 +865,19 @@ const RT_ESTADO_CLS = {
   seguimiento: 'badge-neutral', posible_descuento: 'badge-neutral', stock_parado: 'badge-neutral',
 };
 
+// Boton chico con icono del helper icon() + texto -- unico lugar donde se arma este
+// patron (botones "Buscar"/"Filtrar" de Productos y Oportunidades), para no repetir
+// el mismo innerHTML a mano en cada vista.
+function rtBotonIcono(className, iconName, texto) {
+  const btn = rtEl('button', { className });
+  btn.type = 'button';
+  const span = rtEl('span', { className:'rt-boton-icono-svg' });
+  span.innerHTML = icon(iconName, 'icon-16'); // icono estatico, no dato de API
+  btn.appendChild(span);
+  btn.appendChild(document.createTextNode(texto));
+  return btn;
+}
+
 function rtEl(tag, opts) {
   const e = document.createElement(tag);
   if (opts) {
@@ -816,17 +898,37 @@ function rtEstado(container, tipo, mensaje, onRetry) {
     box.appendChild(rtEl('div', { className:'spinner' }));
     box.appendChild(rtEl('p', { text: mensaje || 'Cargando...' }));
   } else if (tipo === 'error') {
+    const iconoErr = rtEl('div', { className:'rt-state-icon danger' });
+    iconoErr.innerHTML = icon('alertTriangle', ''); // icono estatico del helper
+    box.appendChild(iconoErr);
     box.appendChild(rtEl('p', { text: mensaje || 'Error de conexión.' }));
     if (onRetry) {
-      const btn = rtEl('button', { className:'btn-sm', text:'Reintentar' });
-      btn.type = 'button';
+      const btn = rtBotonIcono('btn-sm', 'refresh', 'Reintentar');
       btn.addEventListener('click', onRetry);
       box.appendChild(btn);
     }
   } else if (tipo === 'vacio') {
+    const iconoVacio = rtEl('div', { className:'rt-state-icon' });
+    iconoVacio.innerHTML = icon('info', ''); // icono estatico del helper
+    box.appendChild(iconoVacio);
     box.appendChild(rtEl('p', { text: mensaje || 'Sin datos.' }));
   }
   container.appendChild(box);
+}
+
+// Estado "pendiente de implementacion" (distinto de loading/error/vacio): se usa para
+// secciones del boceto cuyo dato todavia no entrega la API (ver diagnostico Fase 1) --
+// nunca se rellena con datos simulados, siempre queda visualmente explicito.
+function rtPanelPendiente(detalle) {
+  const box = rtEl('div', { className:'card rt-pendiente' });
+  const head = rtEl('div', { className:'rt-pendiente-head' });
+  const iconoPendiente = rtEl('span', { className:'rt-state-icon' });
+  iconoPendiente.innerHTML = icon('info', ''); // icono estatico del helper
+  head.appendChild(iconoPendiente);
+  head.appendChild(rtEl('span', { className:'badge badge-neutral', text:'Pendiente' }));
+  box.appendChild(head);
+  box.appendChild(rtEl('p', { className:'rt-note', text: detalle }));
+  return box;
 }
 
 function rtFmtFecha(iso) {
@@ -853,6 +955,7 @@ function iniciarModoRT() {
   document.getElementById('rtDesde').value = RT_DESDE;
   document.getElementById('rtHasta').value = RT_HASTA;
   rtCargarResumen();
+  rtCargarResumenAnterior(); // en paralelo, nunca bloquea el dashboard principal
 }
 
 function rtGuardarPeriodo() {
@@ -871,6 +974,7 @@ function rtCambiarPeriodo() {
   if (RT_DETALLE_ABORT) { RT_DETALLE_ABORT.abort(); RT_DETALLE_ABORT = null; }
   if (RT_OPORTUNIDADES_ABORT) { RT_OPORTUNIDADES_ABORT.abort(); RT_OPORTUNIDADES_ABORT = null; }
   rtCargarResumen();
+  rtCargarResumenAnterior(); // en paralelo, nunca bloquea el dashboard principal
 }
 
 async function rtCargarResumen() {
@@ -894,6 +998,72 @@ async function rtCargarResumen() {
     RT_RESUMEN_LOADING = false;
     rtRenderVistaActual();
   }
+}
+
+// Rango "periodo anterior": misma cantidad de dias que [desde,hasta] (inclusive),
+// terminando el dia inmediatamente anterior a "desde".
+function rtRangoAnterior(desde, hasta) {
+  const dDesde = new Date(desde + 'T00:00:00Z');
+  const dHasta = new Date(hasta + 'T00:00:00Z');
+  const cantidadDias = Math.round((dHasta - dDesde) / 864e5) + 1;
+  const anteriorHasta = new Date(dDesde.getTime() - 864e5);
+  const anteriorDesde = new Date(anteriorHasta.getTime() - (cantidadDias - 1) * 864e5);
+  const fmt = d => d.toISOString().slice(0, 10);
+  return { desde: fmt(anteriorDesde), hasta: fmt(anteriorHasta) };
+}
+
+// Se llama siempre en paralelo a rtCargarResumen() (nunca con await entre medio), y
+// nunca lanza ni bloquea el render del dashboard principal: un fallo solo hace que el
+// delta de comparacion quede oculto. Cacheada por "desde|hasta" para no repetir el
+// fetch si el usuario vuelve al mismo periodo dentro de la sesion.
+async function rtCargarResumenAnterior() {
+  if (RT_RESUMEN_ANTERIOR_ABORT) RT_RESUMEN_ANTERIOR_ABORT.abort();
+  const { desde, hasta } = rtRangoAnterior(RT_DESDE, RT_HASTA);
+  const cacheKey = desde + '|' + hasta;
+  const cacheado = RT_RESUMEN_ANTERIOR_CACHE.get(cacheKey);
+  if (cacheado) {
+    RT_RESUMEN_ANTERIOR = cacheado; RT_RESUMEN_ANTERIOR_LOADING = false; RT_RESUMEN_ANTERIOR_ERROR = null;
+    rtRenderVistaActual();
+    return;
+  }
+  const controller = new AbortController();
+  RT_RESUMEN_ANTERIOR_ABORT = controller;
+  RT_RESUMEN_ANTERIOR_LOADING = true; RT_RESUMEN_ANTERIOR_ERROR = null; RT_RESUMEN_ANTERIOR = null;
+  rtRenderVistaActual();
+  try {
+    const url = STOCK_API_URL + '/analisis/resumen?desde=' + encodeURIComponent(desde) + '&hasta=' + encodeURIComponent(hasta);
+    const resp = await fetch(url, { signal: controller.signal });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    RT_RESUMEN_ANTERIOR_CACHE.set(cacheKey, data);
+    RT_RESUMEN_ANTERIOR = data;
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    RT_RESUMEN_ANTERIOR = null; RT_RESUMEN_ANTERIOR_ERROR = err.message; // no bloquea el dashboard principal
+  } finally {
+    RT_RESUMEN_ANTERIOR_LOADING = false;
+    rtRenderVistaActual();
+  }
+}
+
+// null cuando no se puede comparar de forma valida (sin dato anterior, o anterior = 0 --
+// evita division por cero / porcentajes infinitos).
+function rtDelta(actual, anterior) {
+  if (actual == null || !isFinite(actual)) return null;
+  if (anterior == null || !isFinite(anterior) || anterior === 0) return null;
+  const cambio = (actual - anterior) / anterior;
+  const direction = cambio > 0.0005 ? 'up' : (cambio < -0.0005 ? 'down' : 'flat');
+  return { pct: cambio, direction };
+}
+
+function rtDeltaBadge(delta) {
+  if (RT_RESUMEN_ANTERIOR_LOADING) return rtEl('span', { className:'rt-kpi-delta flat', text:'Comparando con período anterior…' });
+  if (!delta) return rtEl('span', { className:'rt-kpi-delta flat', text:'Sin comparación disponible' });
+  const span = rtEl('span', { className:'rt-kpi-delta ' + delta.direction });
+  const flechaCls = delta.direction === 'up' ? 'arrow-up' : '';
+  span.innerHTML = icon('arrowDown', flechaCls); // icono estatico del helper
+  span.appendChild(document.createTextNode(' ' + pct(Math.abs(delta.pct)) + ' vs. período anterior'));
+  return span;
 }
 
 // ── Navegación ───────────────────────────────────────────────────────────────
@@ -966,43 +1136,62 @@ function rtTabla(headers, filas, renderFila, opts) {
 function rtFiltroChip(host) {
   if (!RT_FILTRO) return;
   const chip = rtEl('div', { className:'rt-filtro-chip' });
+  const iconoFiltro = rtEl('span', { className:'rt-filtro-chip-icon' });
+  iconoFiltro.innerHTML = icon('filter', 'icon-16'); // icono estatico del helper, no dato de API
+  chip.appendChild(iconoFiltro);
   chip.appendChild(rtEl('span', { text: rtFiltroTexto() }));
-  const btn = rtEl('button', { text:'✕ quitar' });
+  const btn = rtEl('button', { attrs:{ 'aria-label':'Quitar filtro' } });
   btn.type = 'button';
+  btn.innerHTML = icon('x', 'icon-16');
   btn.addEventListener('click', rtQuitarFiltro);
   chip.appendChild(btn);
   host.appendChild(chip);
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
+// Tarjeta de KPI con icono del helper icon() + valor + (opcional) delta vs periodo
+// anterior. Unico lugar donde se arma este componente -- reutilizado por todas las
+// tarjetas del dashboard para no repetir el mismo markup en cada una.
+function rtTarjetaKPI(def) {
+  const card = rtEl('div', { className:'card rt-kpi' });
+  const iconChip = rtEl('div', { className:'rt-kpi-icon' });
+  iconChip.innerHTML = icon(def.icon, ''); // icono estatico del helper, no dato de API
+  card.appendChild(iconChip);
+  card.appendChild(rtEl('div', { className:'rt-kpi-label', text: def.label }));
+  card.appendChild(rtEl('div', { className:'rt-kpi-valor', text: nf.format(def.valor) }));
+  if (def.deltaActual !== undefined) {
+    card.appendChild(rtDeltaBadge(rtDelta(def.deltaActual, def.deltaAnterior)));
+  }
+  return card;
+}
+
 function renderRTDashboard(host) {
   if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando resumen del período...');
   if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar el resumen. ' + RT_RESUMEN_ERROR, rtCargarResumen);
   if (!RT_RESUMEN) return rtEstado(host, 'vacio', 'Sin datos.');
   const t = RT_RESUMEN.totales;
+  const tAnterior = RT_RESUMEN_ANTERIOR ? RT_RESUMEN_ANTERIOR.totales : null;
 
   host.appendChild(rtEl('div', { className:'alert alert-info', text: RT_RESUMEN.nota }));
 
   const kpis = rtEl('div', { className:'rt-kpis' });
   const kpiDefs = [
-    ['Ventas del período', nf.format(t.Ventas_total)],
-    ['Stock total', nf.format(t.Stock_total)],
-    ['Depósito Central (90 + 93)', nf.format(t.Stock_ctro_0000)],
-    ['Productos base', nf.format(t.productos_base)],
-    ['Variantes con actividad', nf.format(t.variantes)],
-    ['Variantes con stock', nf.format(t.variantes_con_stock)],
-    ['Variantes sin ventas', nf.format(t.variantes_sin_ventas)],
+    { label:'Ventas del período', valor:t.Ventas_total, icon:'shoppingCart', deltaActual:t.Ventas_total, deltaAnterior: tAnterior && tAnterior.Ventas_total },
+    { label:'Stock total', valor:t.Stock_total, icon:'package', deltaActual:t.Stock_total, deltaAnterior: tAnterior && tAnterior.Stock_total },
+    { label:'Depósito Central (90 + 93)', valor:t.Stock_ctro_0000, icon:'warehouse' },
+    { label:'Productos base', valor:t.productos_base, icon:'shirt' },
+    { label:'Variantes con actividad', valor:t.variantes, icon:'barChart3' },
+    { label:'Variantes con stock', valor:t.variantes_con_stock, icon:'circleCheck' },
+    { label:'Variantes sin ventas', valor:t.variantes_sin_ventas, icon:'info' },
   ];
-  kpiDefs.forEach(([label, valor]) => {
-    const card = rtEl('div', { className:'rt-kpi' });
-    card.appendChild(rtEl('div', { className:'rt-kpi-label', text:label }));
-    card.appendChild(rtEl('div', { className:'rt-kpi-valor', text:valor }));
-    kpis.appendChild(card);
-  });
+  kpiDefs.forEach(def => kpis.appendChild(rtTarjetaKPI(def)));
   host.appendChild(kpis);
 
-  host.appendChild(rtEl('h3', { text:'Ventas y stock por sucursal', className:'rt-subtitulo' }));
-  host.appendChild(rtTabla(
+  const grid = rtEl('div', { className:'dash-grid' });
+
+  const panelSucursales = rtEl('div');
+  panelSucursales.appendChild(rtEl('h3', { text:'Ventas y stock por sucursal', className:'rt-subtitulo' }));
+  panelSucursales.appendChild(rtTabla(
     ['Sucursal', 'Ventas', 'Stock'],
     RT_CENTROS,
     (centro) => {
@@ -1014,6 +1203,148 @@ function renderRTDashboard(host) {
       return tr;
     }
   ));
+  grid.appendChild(panelSucursales);
+
+  const panelTop = rtEl('div');
+  panelTop.appendChild(rtEl('h3', { text:'Top productos por ventas', className:'rt-subtitulo' }));
+  // Tolerante a una API todavia sin desplegar: top_productos puede no venir en la respuesta
+  // (version anterior de /analisis/resumen) -- en ese caso queda el estado informativo, nunca
+  // datos simulados. No hace falta una segunda consulta: el campo ya viene armado en /resumen.
+  const topProductos = Array.isArray(RT_RESUMEN.top_productos) ? RT_RESUMEN.top_productos : null;
+  if (topProductos === null) {
+    panelTop.appendChild(rtPanelPendiente(
+      'Top productos por ventas requiere una versión de la API que todavía no está desplegada ' +
+      '(el campo top_productos no vino en la respuesta de /analisis/resumen).'
+    ));
+  } else if (!topProductos.length) {
+    const vacioHost = rtEl('div', { className:'card' });
+    rtEstado(vacioHost, 'vacio', 'Sin ventas en el período para calcular un top de productos.');
+    panelTop.appendChild(vacioHost);
+  } else {
+    const ordenados = topProductos.slice().sort((a, b) => (b.ventas || 0) - (a.ventas || 0));
+    panelTop.appendChild(rtTabla(
+      ['Código', 'Producto', 'Marca', 'Ventas'],
+      ordenados,
+      (f) => {
+        const tr = rtEl('tr');
+        tr.appendChild(rtEl('td', { text: f.codigo || '—' }));
+        tr.appendChild(rtEl('td', { text: f.producto || '—' }));
+        tr.appendChild(rtEl('td', { text: f.marca || '—' }));
+        tr.appendChild(rtEl('td', { text: nf.format(f.ventas || 0) }));
+        return tr;
+      }
+    ));
+  }
+  grid.appendChild(panelTop);
+
+  host.appendChild(grid);
+
+  renderRTInsights(host, t, tAnterior);
+}
+
+// ── Insights del período (solo metricas derivables de datos ya confiables -- el margen
+// bruto queda pospuesto hasta definir formula/ponderacion/tratamiento de costos) ──────
+function rtCargarInsightOportunidadesAlta() {
+  const key = RT_DESDE + '|' + RT_HASTA;
+  // Una vez intentado para este periodo (exito, error o en curso) no se reintenta solo
+  // porque el dashboard se vuelva a renderizar -- un error aca no debe convertirse en un
+  // fetch en loop en cada render. Reintenta recien cuando cambia el periodo (nueva key)
+  // o con una accion explicita del usuario (Actualizar).
+  if (RT_INSIGHT_OPP_ALTA_KEY === key) return;
+  const cacheado = RT_INSIGHT_OPP_ALTA_CACHE.get(key);
+  if (cacheado != null) { RT_INSIGHT_OPP_ALTA = cacheado; RT_INSIGHT_OPP_ALTA_KEY = key; rtRenderVistaActual(); return; }
+  if (RT_INSIGHT_OPP_ALTA_ABORT) RT_INSIGHT_OPP_ALTA_ABORT.abort();
+  const controller = new AbortController();
+  RT_INSIGHT_OPP_ALTA_ABORT = controller;
+  RT_INSIGHT_OPP_ALTA_KEY = key; RT_INSIGHT_OPP_ALTA_LOADING = true; RT_INSIGHT_OPP_ALTA_ERROR = null;
+  (async () => {
+    try {
+      const params = new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, prioridad: 'alta', limit: '1' });
+      const resp = await fetch(STOCK_API_URL + '/analisis/oportunidades?' + params.toString(), { signal: controller.signal });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+      RT_INSIGHT_OPP_ALTA = data.paginacion.total;
+      RT_INSIGHT_OPP_ALTA_CACHE.set(key, RT_INSIGHT_OPP_ALTA);
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      RT_INSIGHT_OPP_ALTA_ERROR = err.message;
+    } finally {
+      RT_INSIGHT_OPP_ALTA_LOADING = false;
+      rtRenderVistaActual();
+    }
+  })();
+}
+
+function rtInsightFila(iconName, cls, html) {
+  const fila = rtEl('div', { className:'rt-insight-fila' });
+  const chip = rtEl('div', { className:'rt-insight-icon' + (cls ? ' ' + cls : '') });
+  chip.innerHTML = icon(iconName, ''); // icono estatico del helper
+  fila.appendChild(chip);
+  const texto = rtEl('div');
+  texto.innerHTML = html; // fragmento armado en las funciones de abajo, con esc() sobre cualquier dato de API
+  fila.appendChild(texto);
+  return fila;
+}
+
+function renderRTInsights(host, t, tAnterior) {
+  const panel = rtEl('div', { className:'card' });
+  panel.appendChild(rtEl('h3', { text:'Insights del período', className:'rt-subtitulo' }));
+  const lista = rtEl('div', { className:'rt-insights-lista' });
+
+  // 1) Variacion de ventas vs periodo anterior
+  const deltaVentas = rtDelta(t.Ventas_total, tAnterior && tAnterior.Ventas_total);
+  if (RT_RESUMEN_ANTERIOR_LOADING) {
+    lista.appendChild(rtInsightFila('barChart3', '', 'Comparando ventas con el período anterior…'));
+  } else if (!deltaVentas) {
+    lista.appendChild(rtInsightFila('barChart3', '', 'Sin comparación disponible contra el período anterior.'));
+  } else {
+    const subio = deltaVentas.direction === 'up';
+    lista.appendChild(rtInsightFila('barChart3', subio ? 'up' : (deltaVentas.direction === 'down' ? 'down' : ''),
+      'Las ventas ' + (subio ? 'aumentaron' : deltaVentas.direction === 'down' ? 'bajaron' : 'se mantuvieron') +
+      ' <b>' + esc(pct(Math.abs(deltaVentas.pct))) + '</b> comparado con el período anterior.'));
+  }
+
+  // 2) Sucursal con mejor rotacion (ventas / (ventas+stock), mismo patron que sell-through)
+  let mejorSuc = null;
+  RT_CENTROS.forEach(c => {
+    const s = RT_RESUMEN.por_sucursal[c];
+    if (!s) return;
+    const disp = s.ventas + s.stock;
+    if (disp <= 0) return;
+    const rot = s.ventas / disp;
+    if (!mejorSuc || rot > mejorSuc.rot) mejorSuc = { centro:c, rot };
+  });
+  if (mejorSuc) {
+    lista.appendChild(rtInsightFila('store', '', '<b>' + esc(RT_CENTRO_NOMBRE[mejorSuc.centro]) + '</b> tiene la mejor rotación de stock (' + esc(nf1.format(mejorSuc.rot)) + ').'));
+  } else {
+    lista.appendChild(rtInsightFila('store', '', 'Sin datos suficientes para calcular rotación por sucursal.'));
+  }
+
+  // 3) Rubro con mayor participacion (por_rubro ya viene ordenado por ventas_total desc)
+  const topRubro = (RT_RESUMEN.por_rubro || [])[0];
+  if (topRubro && t.Ventas_total > 0) {
+    const participacion = topRubro.ventas_total / t.Ventas_total;
+    lista.appendChild(rtInsightFila('barChart3', '', '<b>' + esc(topRubro.rubro) + '</b> es el rubro con mayor participación (' + esc(pct(participacion)) + ' de las ventas).'));
+  } else {
+    lista.appendChild(rtInsightFila('barChart3', '', 'Sin datos suficientes para calcular participación por rubro.'));
+  }
+
+  // 4) Variantes sin actividad
+  lista.appendChild(rtInsightFila('info', '', '<b>' + esc(nf.format(t.variantes_sin_ventas)) + '</b> variantes sin ventas en el período.'));
+
+  // 5) Oportunidades prioritarias (fetch liviano y propio, no comparte estado con la pestaña Oportunidades)
+  rtCargarInsightOportunidadesAlta();
+  if (RT_INSIGHT_OPP_ALTA_LOADING) {
+    lista.appendChild(rtInsightFila('alertTriangle', '', 'Calculando oportunidades prioritarias…'));
+  } else if (RT_INSIGHT_OPP_ALTA_ERROR) {
+    lista.appendChild(rtInsightFila('alertTriangle', 'down', 'No se pudieron calcular las oportunidades prioritarias.'));
+  } else if (RT_INSIGHT_OPP_ALTA != null) {
+    lista.appendChild(rtInsightFila('alertTriangle', RT_INSIGHT_OPP_ALTA > 0 ? 'down' : '',
+      '<b>' + esc(nf.format(RT_INSIGHT_OPP_ALTA)) + '</b> oportunidades de prioridad alta requieren atención.'));
+  }
+
+  panel.appendChild(lista);
+  host.appendChild(panel);
 }
 
 // ── Marcas / Rubros (agrupados desde /resumen, click aplica filtro) ─────────
@@ -1090,8 +1421,7 @@ function rtFormularioFiltro(host, onBuscar) {
   const inMarca = rtEl('input', { attrs:{ type:'text', placeholder:'Marca' } });
   const inRubro = rtEl('input', { attrs:{ type:'text', placeholder:'Rubro' } });
   const inSubrubro = rtEl('input', { attrs:{ type:'text', placeholder:'Subrubro' } });
-  const btn = rtEl('button', { className:'btn-sm', text:'Buscar' });
-  btn.type = 'button';
+  const btn = rtBotonIcono('btn-sm', 'filter', 'Filtrar');
   btn.addEventListener('click', () => {
     const codigo = inCodigo.value.trim(), marca = inMarca.value.trim(), rubro = inRubro.value.trim(), subrubro = inSubrubro.value.trim();
     if (!codigo && !marca && !rubro && !subrubro) return;
@@ -1352,7 +1682,7 @@ function rtBadgeEstado(estadoPrincipal, texto) {
 }
 
 function rtTarjetaResumen(clave, etiqueta, valor, activo, onClick) {
-  const card = rtEl('div', { className: 'rt-kpi rt-kpi-click' + (activo ? ' rt-kpi-activo' : '') });
+  const card = rtEl('div', { className: 'card rt-kpi rt-kpi-click' + (activo ? ' rt-kpi-activo' : '') });
   card.appendChild(rtEl('div', { className:'rt-kpi-label', text: etiqueta }));
   card.appendChild(rtEl('div', { className:'rt-kpi-valor', text: nf.format(valor) }));
   card.style.cursor = 'pointer';
@@ -1408,6 +1738,9 @@ function renderRTOportunidades(host) {
   }
 
   // Filtro de prioridad (chips simples, ademas de las tarjetas por estado)
+  const tituloFiltros = rtEl('div', { className:'rt-filtros-titulo' });
+  tituloFiltros.innerHTML = icon('filter', '') + '<span>Filtros</span>'; // icono + rotulo estaticos
+  host.appendChild(tituloFiltros);
   const prioRow = rtEl('div', { className:'rt-buscador-row' });
   ['alta', 'media', 'baja'].forEach(p => {
     const btn = rtEl('button', { className:'btn-sm' + (RT_OPORTUNIDADES_PRIORIDAD === p ? ' rt-kpi-activo' : ''), text: 'Prioridad ' + p });
