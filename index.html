@@ -1172,8 +1172,6 @@ function renderRTDashboard(host) {
   const t = RT_RESUMEN.totales;
   const tAnterior = RT_RESUMEN_ANTERIOR ? RT_RESUMEN_ANTERIOR.totales : null;
 
-  host.appendChild(rtEl('div', { className:'alert alert-info', text: RT_RESUMEN.nota }));
-
   const kpis = rtEl('div', { className:'rt-kpis' });
   const kpiDefs = [
     { label:'Ventas del período', valor:t.Ventas_total, icon:'shoppingCart', deltaActual:t.Ventas_total, deltaAnterior: tAnterior && tAnterior.Ventas_total },
