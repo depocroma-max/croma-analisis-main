@@ -827,10 +827,11 @@ const RT_LIMITE_PAGINAS_COMPLETO = 20; // tope de seguridad: 20 * 500 = 10.000 f
 let RT_DESDE = null, RT_HASTA = null;
 let RT_VIEW = 'dashboard';
 let RT_RESUMEN = null, RT_RESUMEN_LOADING = false, RT_RESUMEN_ERROR = null, RT_RESUMEN_ABORT = null;
-// Resumen del "periodo anterior" (mismo largo de dias, inmediatamente antes de RT_DESDE) --
-// solo alimenta los deltas de comparacion del dashboard. Se pide en paralelo a rtCargarResumen()
-// pero nunca bloquea el render principal: si falla o tarda, el dashboard se muestra igual y el
-// delta queda oculto/"sin comparacion". Cache en memoria por "desde|hasta" (dura la sesion).
+// Resumen del "mismo periodo, año anterior" (mismas fechas de RT_DESDE/RT_HASTA, un año
+// antes) -- solo alimenta los deltas de comparacion del dashboard. Se pide en paralelo a
+// rtCargarResumen() pero nunca bloquea el render principal: si falla o tarda, el dashboard
+// se muestra igual y el delta queda oculto/"sin comparacion". Cache en memoria por
+// "desde|hasta" (dura la sesion).
 const RT_RESUMEN_ANTERIOR_CACHE = new Map();
 let RT_RESUMEN_ANTERIOR = null, RT_RESUMEN_ANTERIOR_LOADING = false, RT_RESUMEN_ANTERIOR_ERROR = null, RT_RESUMEN_ANTERIOR_ABORT = null;
 // Insight "oportunidades prioritarias" del dashboard -- fetch propio y liviano
@@ -1000,14 +1001,14 @@ async function rtCargarResumen() {
   }
 }
 
-// Rango "periodo anterior": misma cantidad de dias que [desde,hasta] (inclusive),
-// terminando el dia inmediatamente anterior a "desde".
+// Rango "mismo periodo, año anterior": mismas fechas (mes y dia) de desde/hasta, un
+// año antes -- no son los N dias inmediatamente previos. Si "hasta" cae en 29/02 y el
+// año anterior no es bisiesto, el Date nativo lo normaliza a 01/03 (no se corrige a mano).
 function rtRangoAnterior(desde, hasta) {
   const dDesde = new Date(desde + 'T00:00:00Z');
   const dHasta = new Date(hasta + 'T00:00:00Z');
-  const cantidadDias = Math.round((dHasta - dDesde) / 864e5) + 1;
-  const anteriorHasta = new Date(dDesde.getTime() - 864e5);
-  const anteriorDesde = new Date(anteriorHasta.getTime() - (cantidadDias - 1) * 864e5);
+  const anteriorDesde = new Date(Date.UTC(dDesde.getUTCFullYear() - 1, dDesde.getUTCMonth(), dDesde.getUTCDate()));
+  const anteriorHasta = new Date(Date.UTC(dHasta.getUTCFullYear() - 1, dHasta.getUTCMonth(), dHasta.getUTCDate()));
   const fmt = d => d.toISOString().slice(0, 10);
   return { desde: fmt(anteriorDesde), hasta: fmt(anteriorHasta) };
 }
@@ -1057,12 +1058,12 @@ function rtDelta(actual, anterior) {
 }
 
 function rtDeltaBadge(delta) {
-  if (RT_RESUMEN_ANTERIOR_LOADING) return rtEl('span', { className:'rt-kpi-delta flat', text:'Comparando con período anterior…' });
+  if (RT_RESUMEN_ANTERIOR_LOADING) return rtEl('span', { className:'rt-kpi-delta flat', text:'Comparando con el mismo período del año anterior…' });
   if (!delta) return rtEl('span', { className:'rt-kpi-delta flat', text:'Sin comparación disponible' });
   const span = rtEl('span', { className:'rt-kpi-delta ' + delta.direction });
   const flechaCls = delta.direction === 'up' ? 'arrow-up' : '';
   span.innerHTML = icon('arrowDown', flechaCls); // icono estatico del helper
-  span.appendChild(document.createTextNode(' ' + pct(Math.abs(delta.pct)) + ' vs. período anterior'));
+  span.appendChild(document.createTextNode(' ' + pct(Math.abs(delta.pct)) + ' vs. mismo período año anterior'));
   return span;
 }
 
@@ -1289,17 +1290,17 @@ function renderRTInsights(host, t, tAnterior) {
   panel.appendChild(rtEl('h3', { text:'Insights del período', className:'rt-subtitulo' }));
   const lista = rtEl('div', { className:'rt-insights-lista' });
 
-  // 1) Variacion de ventas vs periodo anterior
+  // 1) Variacion de ventas vs mismo periodo del año anterior
   const deltaVentas = rtDelta(t.Ventas_total, tAnterior && tAnterior.Ventas_total);
   if (RT_RESUMEN_ANTERIOR_LOADING) {
-    lista.appendChild(rtInsightFila('barChart3', '', 'Comparando ventas con el período anterior…'));
+    lista.appendChild(rtInsightFila('barChart3', '', 'Comparando ventas con el mismo período del año anterior…'));
   } else if (!deltaVentas) {
-    lista.appendChild(rtInsightFila('barChart3', '', 'Sin comparación disponible contra el período anterior.'));
+    lista.appendChild(rtInsightFila('barChart3', '', 'Sin comparación disponible contra el mismo período del año anterior.'));
   } else {
     const subio = deltaVentas.direction === 'up';
     lista.appendChild(rtInsightFila('barChart3', subio ? 'up' : (deltaVentas.direction === 'down' ? 'down' : ''),
       'Las ventas ' + (subio ? 'aumentaron' : deltaVentas.direction === 'down' ? 'bajaron' : 'se mantuvieron') +
-      ' <b>' + esc(pct(Math.abs(deltaVentas.pct))) + '</b> comparado con el período anterior.'));
+      ' <b>' + esc(pct(Math.abs(deltaVentas.pct))) + '</b> comparado con el mismo período del año anterior.'));
   }
 
   // 2) Sucursal con mejor rotacion (ventas / (ventas+stock), mismo patron que sell-through)
