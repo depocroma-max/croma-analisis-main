@@ -380,6 +380,79 @@
     .rt-insight-icon.up{background:var(--success-bg);color:var(--success)}
     .rt-insight-icon.down{background:var(--danger-bg);color:var(--danger)}
 
+    /* Vista Marcas -- KPIs en 2 columnas solo en tablet (601-900px), aislado del
+       .rt-kpis compartido (Dashboard/Oportunidades no se tocan). */
+    @media (min-width:601px) and (max-width:900px){
+      .rt-marcas-kpis{grid-template-columns:repeat(2,1fr)}
+    }
+
+    /* Vista Marcas -- encabezado */
+    .rt-marcas-header{margin-bottom:var(--space-4)}
+    .rt-marcas-header p{font-size:13px;color:var(--gray-400);margin-top:2px}
+    .rt-marcas-header .rt-note{padding:0;border-top:none;margin-top:4px}
+
+    .rt-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+    .rt-panel-head .rt-subtitulo{margin:0}
+
+    /* Grafico de barras "Ventas por marca" */
+    .rt-chart-toggle{display:flex;gap:4px}
+    .rt-barras-lista{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;padding-right:2px}
+    .rt-barra-fila{display:flex;align-items:center;gap:10px;width:100%;font:inherit;background:none;
+      border:none;border-radius:8px;padding:4px 6px;cursor:pointer;text-align:left;transition:background-color .13s}
+    .rt-barra-fila:hover{background:var(--gray-50)}
+    .rt-barra-fila.rt-marcas-activa{background:var(--accent-s)}
+    .rt-barra-nombre{width:120px;flex:none;font-size:12.5px;font-weight:600;color:var(--black);
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rt-barra-track{flex:1;height:14px;border-radius:99px;background:var(--gray-100);overflow:hidden}
+    .rt-barra-fill{display:block;height:100%;border-radius:99px;background:var(--accent);transition:width .2s}
+    .rt-barra-valor{width:64px;flex:none;text-align:right;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+
+    /* Grafico de dona "Participacion de ventas" */
+    .rt-dona-wrap{display:flex;flex-direction:column;align-items:center;gap:var(--space-4)}
+    .rt-dona-circulo{width:180px;height:180px;border-radius:50%;position:relative;flex:none}
+    .rt-dona-circulo::after{content:'';position:absolute;inset:26px;border-radius:50%;background:var(--white)}
+    .rt-dona-centro{position:absolute;inset:26px;border-radius:50%;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;text-align:center;z-index:1}
+    .rt-dona-centro b{font-family:var(--font-display);font-size:20px;letter-spacing:-.01em}
+    .rt-dona-centro span{font-size:10.5px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em}
+    .rt-dona-leyenda{display:flex;flex-direction:column;gap:6px;width:100%}
+    .rt-dona-item{display:flex;align-items:center;gap:8px;width:100%;font:inherit;background:none;
+      border:none;border-radius:8px;padding:5px 6px;cursor:pointer;text-align:left;font-size:12.5px;transition:background-color .13s}
+    .rt-dona-item:hover{background:var(--gray-50)}
+    .rt-dona-item.rt-marcas-activa{background:var(--accent-s)}
+    .rt-dona-chip{width:10px;height:10px;border-radius:3px;flex:none}
+    .rt-dona-item-nombre{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+    .rt-dona-item-valor{flex:none;color:var(--gray-400);font-variant-numeric:tabular-nums}
+
+    /* Detalle de marca seleccionada */
+    .rt-marcas-detalle{border-color:var(--accent);margin-bottom:var(--space-4)}
+    .rt-marcas-detalle-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+    .rt-marcas-detalle-titulo{font-family:var(--font-display);font-size:17px;letter-spacing:.5px}
+    .rt-marcas-detalle-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+    .rt-marcas-detalle-item .kl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400)}
+    .rt-marcas-detalle-item .kv{font-family:var(--font-display);font-size:19px;margin-top:2px}
+
+    /* Toolbar (buscador + filas por pagina) y tabla ordenable */
+    .rt-marcas-toolbar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .rt-marcas-search{position:relative;flex:1;min-width:200px;max-width:340px}
+    .rt-marcas-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--gray-400);width:15px;height:15px}
+    .rt-marcas-search input{width:100%;padding:7px 32px 7px 32px!important}
+    .rt-marcas-search-clear{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:none;
+      border:none;cursor:pointer;color:var(--gray-400);display:flex;padding:4px;border-radius:6px}
+    .rt-marcas-search-clear:hover{color:var(--black);background:var(--gray-100)}
+    .rt-marcas-filas-sel{display:flex;flex-direction:column;gap:3px}
+    .rt-marcas-filas-sel label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400)}
+    table.rt-table th.rt-th-ordenable{padding:0}
+    .rt-th-btn{background:none;border:none;font:inherit;font-size:10.5px;font-weight:700;text-transform:uppercase;
+      letter-spacing:.05em;color:var(--gray-400);cursor:pointer;display:flex;align-items:center;
+      padding:9px 12px;width:100%;white-space:nowrap}
+    .rt-th-btn:hover{color:var(--black)}
+    .rt-th-arrow{opacity:.35;font-size:9px;margin-left:3px}
+    th.rt-th-sorted .rt-th-arrow{opacity:1;color:var(--black)}
+    tr.rt-marcas-fila-activa{background:var(--accent-s)}
+    tr.rt-marcas-fila-activa:hover{background:var(--accent-s)}
+    .rt-marcas-detalle-cta{margin-top:12px}
+
     .rt-search{max-width:480px;margin-bottom:14px}
     .rt-search input{font:inherit;font-size:14px;width:100%;border:1px solid var(--gray-200);
       border-radius:10px;padding:10px 14px;background:var(--white)}
@@ -804,6 +877,8 @@ function resetApp() {
   RT_FILTRO = null; RT_DETALLE = null; RT_DETALLE_OFFSET = 0; RT_COMPLETO = null;
   RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_PRIORIDAD = null;
   RT_OPORTUNIDADES_CONFIANZA = null; RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
+  RT_MARCAS_ORDEN = { campo:'ventas', dir:-1 }; RT_MARCAS_BUSQUEDA = ''; RT_MARCAS_PAGINA = 0;
+  RT_MARCAS_FILAS_POR_PAGINA = 10; RT_MARCAS_SELECCIONADA = null; RT_MARCAS_TOP_GRAFICO = 10;
   RT_VIEW = 'dashboard';
   document.querySelectorAll('#rtTabs .tab').forEach((t,i) => t.classList.toggle('active', i===0));
 }
@@ -840,6 +915,25 @@ let RT_RESUMEN_ANTERIOR = null, RT_RESUMEN_ANTERIOR_LOADING = false, RT_RESUMEN_
 const RT_INSIGHT_OPP_ALTA_CACHE = new Map();
 let RT_INSIGHT_OPP_ALTA = null, RT_INSIGHT_OPP_ALTA_LOADING = false, RT_INSIGHT_OPP_ALTA_ERROR = null;
 let RT_INSIGHT_OPP_ALTA_ABORT = null, RT_INSIGHT_OPP_ALTA_KEY = null;
+
+// ── Vista Marcas -- todo client-side sobre RT_RESUMEN.por_marca ya cargado, nunca pide
+// una consulta nueva (ni al cambiar orden/buscar/paginar/seleccionar). Estado propio,
+// namespaced RT_MARCAS_*, para no pisar el SORT/VIEW del modo Excel ni el estado de
+// otras vistas RT.
+let RT_MARCAS_ORDEN = { campo:'ventas', dir:-1 }; // orden inicial: ventas desc
+let RT_MARCAS_BUSQUEDA = '';
+let RT_MARCAS_PAGINA = 0;
+let RT_MARCAS_FILAS_POR_PAGINA = 10;
+let RT_MARCAS_SELECCIONADA = null; // nombre de marca resaltada (grafico de barras/dona/tabla)
+let RT_MARCAS_TOP_GRAFICO = 10; // 10 | 20 | 'todas' -- cuantas barras mostrar
+// Umbral minimo de ventas para considerar una marca en el insight "mejor rotacion":
+// sin esto, una marca con 1 venta y 0 stock da rotacion=100% y encabeza el ranking de
+// forma enganosa. Constante con nombre para que quede documentado junto al calculo.
+const RT_MARCAS_ROTACION_VENTAS_MIN = 10;
+// Paleta categorica fija (6 colores + "Otras" en gris) reutilizando tokens ya definidos
+// en este archivo/croma-ds.css -- nunca colores aleatorios ni hex nuevos.
+const RT_MARCAS_PALETA = ['var(--accent)', 'var(--info)', 'var(--violet)', 'var(--teal)', 'var(--success)', 'var(--amber)'];
+const RT_MARCAS_COLOR_OTRAS = 'var(--gray-300)';
 let RT_FILTRO = null; // { marca } | { rubro } | { rubro, subrubro } | { codigo } | null
 let RT_DETALLE = null; // ultima respuesta paginada de /stock-ventas para RT_FILTRO
 let RT_DETALLE_OFFSET = 0;
@@ -974,6 +1068,9 @@ function rtCambiarPeriodo() {
   if (RT_COMPLETO_ABORT) { RT_COMPLETO_ABORT.abort(); RT_COMPLETO_ABORT = null; }
   if (RT_DETALLE_ABORT) { RT_DETALLE_ABORT.abort(); RT_DETALLE_ABORT = null; }
   if (RT_OPORTUNIDADES_ABORT) { RT_OPORTUNIDADES_ABORT.abort(); RT_OPORTUNIDADES_ABORT = null; }
+  // orden/busqueda/filas-por-pagina son preferencia del usuario y persisten; pagina y
+  // seleccion se resetean porque la lista de marcas del nuevo periodo puede ser otra.
+  RT_MARCAS_PAGINA = 0; RT_MARCAS_SELECCIONADA = null;
   rtCargarResumen();
   rtCargarResumenAnterior(); // en paralelo, nunca bloquea el dashboard principal
 }
@@ -1109,7 +1206,7 @@ function rtRenderVistaActual() {
   if (!host) return;
   host.replaceChildren();
   if (RT_VIEW === 'dashboard') renderRTDashboard(host);
-  else if (RT_VIEW === 'marcas') renderRTGrupo(host, 'marca', 'por_marca', 'Marca');
+  else if (RT_VIEW === 'marcas') renderRTMarcas(host);
   else if (RT_VIEW === 'rubros') renderRTGrupo(host, 'rubro', 'por_rubro', 'Rubro');
   else if (RT_VIEW === 'subrubros') renderRTSubrubros(host);
   else if (RT_VIEW === 'sucursales') renderRTSucursales(host);
@@ -1346,7 +1443,480 @@ function renderRTInsights(host, t, tAnterior) {
   host.appendChild(panel);
 }
 
-// ── Marcas / Rubros (agrupados desde /resumen, click aplica filtro) ─────────
+// ── Marcas (vista dedicada -- Rubros/Subrubros siguen en renderRTGrupo/renderRTSubrubros,
+// sin tocar) ──────────────────────────────────────────────────────────────────────────
+// Todo lo de abajo opera client-side sobre RT_RESUMEN.por_marca ya cargado (misma
+// respuesta que ya trae el Dashboard) -- ninguna funcion de esta seccion hace fetch.
+
+// Normaliza por_marca a la forma que usan grafico/tabla/insights, calculando
+// participacion y rotacion una sola vez (evita repetir la cuenta en cada lugar).
+// participacion = ventas de la marca / Ventas_total del periodo (RT_RESUMEN.totales,
+// no la suma de por_marca -- ver limite de 100 marcas mas abajo). rotacion =
+// ventas / (ventas + stock); null cuando ventas+stock=0 (no hay Infinity/NaN).
+function rtMarcasDatos() {
+  const totalVentas = RT_RESUMEN.totales.Ventas_total;
+  return (RT_RESUMEN.por_marca || []).map(m => {
+    const ventas = m.ventas_total || 0, stock = m.stock_total || 0;
+    const disp = ventas + stock;
+    // Sysneo puede traer nombre_marca vacio (producto sin marca asignada en el
+    // catalogo) -- se muestra como "Sin marca" en vez de una fila en blanco. esSinMarca
+    // se guarda aparte (no comparar el string "Sin marca") porque el valor real en la
+    // API es '' -- /analisis/stock-ventas?marca=Sin marca no matchea esos productos
+    // (ver rtMarcaDetalle: ahi se bloquea "Ver productos" para este caso).
+    const esSinMarca = !(m.marca && m.marca.trim());
+    return {
+      marca: esSinMarca ? 'Sin marca' : m.marca,
+      esSinMarca,
+      ventas, stock,
+      variantes: m.variantes || 0,
+      participacion: totalVentas > 0 ? ventas / totalVentas : null,
+      rotacion: disp > 0 ? ventas / disp : null,
+    };
+  });
+}
+
+function rtMarcasAplicarBusqueda(datos) {
+  if (!RT_MARCAS_BUSQUEDA) return datos;
+  const q = norm(RT_MARCAS_BUSQUEDA);
+  return datos.filter(m => norm(m.marca).includes(q));
+}
+
+function rtMarcasOrdenar(datos) {
+  const { campo, dir } = RT_MARCAS_ORDEN;
+  const copia = datos.slice();
+  copia.sort((a, b) => {
+    const x = a[campo], y = b[campo];
+    if (x == null && y == null) return 0;
+    if (x == null) return 1; // nulos (rotacion/participacion sin datos) siempre al final
+    if (y == null) return -1;
+    if (typeof x === 'string') return dir * x.localeCompare(y, 'es');
+    return dir * (x - y);
+  });
+  return copia;
+}
+
+function rtMarcasOrdenarPor(campo) {
+  if (RT_MARCAS_ORDEN.campo === campo) RT_MARCAS_ORDEN.dir *= -1;
+  else RT_MARCAS_ORDEN = { campo, dir: campo === 'marca' ? 1 : -1 };
+  RT_MARCAS_PAGINA = 0;
+  rtRenderVistaActual();
+}
+
+function rtMarcasBuscar(valor) {
+  RT_MARCAS_BUSQUEDA = valor;
+  RT_MARCAS_PAGINA = 0;
+  rtRenderVistaActual();
+}
+
+// Selecciona/deselecciona (toggle) una marca -- resalta en grafico de barras, dona y
+// tabla, y muestra el panel de detalle. Re-renderiza sobre datos ya en memoria, nunca
+// pide de nuevo /analisis/resumen.
+function rtMarcasSeleccionar(marca) {
+  RT_MARCAS_SELECCIONADA = (RT_MARCAS_SELECCIONADA === marca) ? null : marca;
+  rtRenderVistaActual();
+}
+
+function renderRTMarcas(host) {
+  if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando marcas del período...');
+  if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar. ' + RT_RESUMEN_ERROR, rtCargarResumen);
+  if (!RT_RESUMEN) return rtEstado(host, 'vacio', 'Sin datos.');
+
+  const datos = rtMarcasDatos();
+  if (!datos.length) return rtEstado(host, 'vacio', 'Sin marcas con actividad en el período.');
+
+  const truncado = (RT_RESUMEN.por_marca || []).length >= 100;
+
+  const header = rtEl('div', { className:'rt-marcas-header' });
+  header.appendChild(rtEl('h3', { text:'Análisis por marca', className:'rt-subtitulo' }));
+  header.appendChild(rtEl('p', { text:'Ventas, stock y rotación por marca del período seleccionado.' }));
+  header.appendChild(rtEl('p', { className:'rt-note', text:
+    rtFmtFecha(RT_DESDE) + ' – ' + rtFmtFecha(RT_HASTA) + ' · ' + nf.format(datos.length) +
+    (datos.length === 1 ? ' marca encontrada' : ' marcas encontradas') +
+    (truncado ? ' (la API devuelve como máximo 100 por período, ordenadas por ventas)' : '')
+  }));
+  host.appendChild(header);
+
+  rtMarcasKPIs(host, datos, truncado);
+
+  const grid = rtEl('div', { className:'dash-grid' });
+  rtGraficoBarrasMarcas(grid, datos);
+  rtGraficoDonaMarcas(grid, datos, truncado);
+  host.appendChild(grid);
+
+  rtInsightsMarcas(host, datos, truncado);
+
+  if (RT_MARCAS_SELECCIONADA) {
+    const sel = datos.find(m => m.marca === RT_MARCAS_SELECCIONADA);
+    if (sel) rtMarcaDetalle(host, sel);
+  }
+
+  rtTablaMarcas(host, datos);
+}
+
+// Ventas totales y Stock total salen de RT_RESUMEN.totales (mismo dato que el Dashboard,
+// ya neto de INSUMOS/SEÑAS -- ver ADR-030): son el total real del periodo, no la suma de
+// por_marca, que puede venir truncada a 100 marcas. Marcas activas y Variantes totales SI
+// se calculan sobre por_marca porque son inherentemente "de las marcas listadas".
+function rtMarcasKPIs(host, datos, truncado) {
+  const t = RT_RESUMEN.totales;
+  const tAnterior = RT_RESUMEN_ANTERIOR ? RT_RESUMEN_ANTERIOR.totales : null;
+  const marcasActivas = datos.filter(m => m.ventas > 0).length;
+  const variantesTotales = datos.reduce((a, m) => a + m.variantes, 0);
+  const sufijo = truncado ? ' (100+)' : '';
+
+  const kpis = rtEl('div', { className:'rt-kpis rt-marcas-kpis' });
+  kpis.appendChild(rtTarjetaKPI({ label:'Ventas totales', valor:t.Ventas_total, icon:'shoppingCart',
+    deltaActual:t.Ventas_total, deltaAnterior: tAnterior && tAnterior.Ventas_total }));
+  kpis.appendChild(rtTarjetaKPI({ label:'Stock total', valor:t.Stock_total, icon:'package' }));
+  kpis.appendChild(rtTarjetaKPI({ label:'Marcas activas' + sufijo, valor:marcasActivas, icon:'shoppingBag' }));
+  kpis.appendChild(rtTarjetaKPI({ label:'Variantes totales' + sufijo, valor:variantesTotales, icon:'barChart3' }));
+  host.appendChild(kpis);
+}
+
+// Grafico de barras horizontales, 100% CSS (ancho en % del maximo mostrado) -- no hay
+// libreria de graficos cargada en esta app y no se agrega ninguna; mismo patron que
+// .mini-bar del modo Excel, redisenado con tokens reales del DS.
+function rtGraficoBarrasMarcas(host, datos) {
+  const panel = rtEl('div', { className:'card' });
+  const head = rtEl('div', { className:'rt-panel-head' });
+  head.appendChild(rtEl('h3', { text:'Ventas por marca', className:'rt-subtitulo' }));
+  const toggle = rtEl('div', { className:'rt-chart-toggle', attrs:{ role:'group', 'aria-label':'Cantidad de marcas a mostrar en el gráfico' } });
+  [[10, 'Top 10'], [20, 'Top 20'], ['todas', 'Todas']].forEach(([valor, etiqueta]) => {
+    const activo = RT_MARCAS_TOP_GRAFICO === valor;
+    const btn = rtEl('button', { className:'btn-sm' + (activo ? ' rt-kpi-activo' : ''), text: etiqueta });
+    btn.type = 'button';
+    btn.setAttribute('aria-pressed', String(activo));
+    btn.addEventListener('click', () => { RT_MARCAS_TOP_GRAFICO = valor; rtRenderVistaActual(); });
+    toggle.appendChild(btn);
+  });
+  head.appendChild(toggle);
+  panel.appendChild(head);
+
+  const ordenadas = datos.slice().sort((a, b) => b.ventas - a.ventas);
+  const cantidad = RT_MARCAS_TOP_GRAFICO === 'todas' ? ordenadas.length : Math.min(RT_MARCAS_TOP_GRAFICO, ordenadas.length);
+  const mostrar = ordenadas.slice(0, cantidad);
+  const max = mostrar.reduce((a, m) => Math.max(a, m.ventas), 0) || 1;
+
+  const lista = rtEl('div', { className:'rt-barras-lista' });
+  if (!mostrar.length) {
+    rtEstado(lista, 'vacio', 'Sin marcas con ventas en el período.');
+  } else {
+    mostrar.forEach(m => {
+      const fila = rtEl('button', { className:'rt-barra-fila' + (RT_MARCAS_SELECCIONADA === m.marca ? ' rt-marcas-activa' : '') });
+      fila.type = 'button';
+      const detalleTxt = nf.format(m.ventas) + ' ventas, ' + nf.format(m.stock) + ' de stock, ' +
+        nf.format(m.variantes) + ' variantes' + (m.participacion != null ? ', ' + pct(m.participacion) + ' de participación' : '');
+      fila.setAttribute('aria-label', m.marca + ': ' + detalleTxt);
+      fila.setAttribute('title', m.marca + ' — ' + detalleTxt);
+      fila.appendChild(rtEl('span', { className:'rt-barra-nombre', text: m.marca }));
+      const track = rtEl('span', { className:'rt-barra-track' });
+      track.appendChild(rtEl('span', { className:'rt-barra-fill', attrs:{ style:'width:' + ((m.ventas / max) * 100).toFixed(1) + '%' } }));
+      fila.appendChild(track);
+      fila.appendChild(rtEl('span', { className:'rt-barra-valor', text: nf.format(m.ventas) }));
+      fila.addEventListener('click', () => rtMarcasSeleccionar(m.marca));
+      lista.appendChild(fila);
+    });
+  }
+  panel.appendChild(lista);
+  host.appendChild(panel);
+}
+
+// Dona 100% CSS (conic-gradient + circulo blanco superpuesto para el agujero central,
+// sin SVG ni libreria). Top 6 marcas + "Otras" agrupando el resto con datos reales (suma
+// de ventas del resto, no una estimacion visual). Paleta fija de RT_MARCAS_PALETA.
+function rtGraficoDonaMarcas(host, datos, truncado) {
+  const panel = rtEl('div', { className:'card' });
+  panel.appendChild(rtEl('h3', { text:'Participación de ventas', className:'rt-subtitulo' }));
+
+  const conVentas = datos.filter(m => m.ventas > 0).sort((a, b) => b.ventas - a.ventas);
+  const totalDona = conVentas.reduce((a, m) => a + m.ventas, 0);
+  if (!conVentas.length || totalDona <= 0) {
+    // rtEstado() hace container.replaceChildren() -- si se le pasa "panel" directo se
+    // borra tambien el <h3> ya agregado arriba. Se usa un contenedor propio para el
+    // mensaje y se deja el titulo del panel intacto.
+    const vacio = rtEl('div');
+    rtEstado(vacio, 'vacio', 'Sin ventas para calcular participación.');
+    panel.appendChild(vacio);
+    host.appendChild(panel);
+    return;
+  }
+
+  const TOP_DONA = 6;
+  const principales = conVentas.slice(0, TOP_DONA);
+  const resto = conVentas.slice(TOP_DONA);
+  const ventasOtras = resto.reduce((a, m) => a + m.ventas, 0);
+  const segmentos = principales.map((m, i) => ({ nombre: m.marca, ventas: m.ventas, color: RT_MARCAS_PALETA[i] }));
+  if (ventasOtras > 0) {
+    segmentos.push({ nombre: 'Otras (' + nf.format(resto.length) + ' marcas)', ventas: ventasOtras, color: RT_MARCAS_COLOR_OTRAS, esOtras: true });
+  }
+
+  let acumulado = 0;
+  const stops = segmentos.map(s => {
+    const desde = (acumulado / totalDona) * 100;
+    acumulado += s.ventas;
+    const hasta = (acumulado / totalDona) * 100;
+    return s.color + ' ' + desde.toFixed(2) + '% ' + hasta.toFixed(2) + '%';
+  }).join(', ');
+
+  const wrap = rtEl('div', { className:'rt-dona-wrap' });
+  const circulo = rtEl('div', {
+    className:'rt-dona-circulo',
+    attrs:{
+      style:'background:conic-gradient(' + stops + ')',
+      role:'img',
+      'aria-label':'Distribución de ventas por marca: ' + segmentos.map(s => s.nombre + ' ' + pct(s.ventas / totalDona)).join(', '),
+    },
+  });
+  const centro = rtEl('div', { className:'rt-dona-centro' });
+  centro.appendChild(rtEl('b', { text: nf.format(totalDona) }));
+  centro.appendChild(rtEl('span', { text: truncado ? 'unid. (marcas listadas)' : 'unidades' }));
+  circulo.appendChild(centro);
+  wrap.appendChild(circulo);
+
+  const leyenda = rtEl('div', { className:'rt-dona-leyenda' });
+  segmentos.forEach(s => {
+    const participacionTxt = pct(s.ventas / totalDona);
+    const item = rtEl('button', { className:'rt-dona-item' + (RT_MARCAS_SELECCIONADA === s.nombre ? ' rt-marcas-activa' : '') });
+    item.type = 'button';
+    item.setAttribute('aria-label', s.nombre + ': ' + nf.format(s.ventas) + ' ventas, ' + participacionTxt);
+    item.setAttribute('title', s.nombre + ' — ' + nf.format(s.ventas) + ' (' + participacionTxt + ')');
+    item.appendChild(rtEl('span', { className:'rt-dona-chip', attrs:{ style:'background:' + s.color } }));
+    item.appendChild(rtEl('span', { className:'rt-dona-item-nombre', text: s.nombre }));
+    item.appendChild(rtEl('span', { className:'rt-dona-item-valor', text: participacionTxt }));
+    if (s.esOtras) {
+      item.disabled = true; // agrupa varias marcas -- no hay una sola marca que seleccionar
+    } else {
+      item.addEventListener('click', () => rtMarcasSeleccionar(s.nombre));
+    }
+    leyenda.appendChild(item);
+  });
+  wrap.appendChild(leyenda);
+  panel.appendChild(wrap);
+  host.appendChild(panel);
+}
+
+// Umbral minimo de ventas para "mejor rotacion": ver RT_MARCAS_ROTACION_VENTAS_MIN
+// (declarada junto al resto del estado de Marcas), documentado tambien acá porque es
+// el unico lugar donde se usa.
+function rtInsightsMarcas(host, datos, truncado) {
+  const panel = rtEl('div', { className:'card' });
+  panel.appendChild(rtEl('h3', { text:'Insights de marcas', className:'rt-subtitulo' }));
+  const lista = rtEl('div', { className:'rt-insights-lista' });
+  const conVentas = datos.filter(m => m.ventas > 0);
+
+  // 1) Marca con mayores ventas
+  if (conVentas.length) {
+    const top = conVentas.slice().sort((a, b) => b.ventas - a.ventas)[0];
+    lista.appendChild(rtInsightFila('shoppingCart', 'up', '<b>' + esc(top.marca) + '</b> es la marca con más ventas (' + esc(nf.format(top.ventas)) + ' unidades).'));
+  } else {
+    lista.appendChild(rtInsightFila('shoppingCart', '', 'Sin marcas con ventas en el período.'));
+  }
+
+  // 2) Marca con mayor stock
+  const conStock = datos.filter(m => m.stock > 0);
+  if (conStock.length) {
+    const topStock = conStock.slice().sort((a, b) => b.stock - a.stock)[0];
+    lista.appendChild(rtInsightFila('package', '', '<b>' + esc(topStock.marca) + '</b> tiene el mayor stock (' + esc(nf.format(topStock.stock)) + ' unidades).'));
+  } else {
+    lista.appendChild(rtInsightFila('package', '', 'Sin datos de stock por marca.'));
+  }
+
+  // 3) Marca con mejor rotacion, con umbral minimo de ventas (evita que una marca con
+  // 1 venta y 0 stock -- rotacion=100% -- encabece el ranking de forma enganosa)
+  const candidatas = datos.filter(m => m.ventas >= RT_MARCAS_ROTACION_VENTAS_MIN && m.rotacion != null);
+  if (candidatas.length) {
+    const mejor = candidatas.slice().sort((a, b) => b.rotacion - a.rotacion)[0];
+    lista.appendChild(rtInsightFila('barChart3', 'up', '<b>' + esc(mejor.marca) + '</b> tiene la mejor rotación (' +
+      esc(pct(mejor.rotacion)) + ', con al menos ' + RT_MARCAS_ROTACION_VENTAS_MIN + ' ventas en el período).'));
+  } else {
+    lista.appendChild(rtInsightFila('barChart3', '', 'Ninguna marca alcanza el mínimo de ' + RT_MARCAS_ROTACION_VENTAS_MIN + ' ventas para calcular la mejor rotación.'));
+  }
+
+  // 4) Concentracion de las 3 principales marcas (sobre Ventas_total real, no la suma de por_marca)
+  const totalVentas = RT_RESUMEN.totales.Ventas_total;
+  if (totalVentas > 0 && conVentas.length) {
+    const top3 = conVentas.slice().sort((a, b) => b.ventas - a.ventas).slice(0, 3);
+    const ventasTop3 = top3.reduce((a, m) => a + m.ventas, 0);
+    lista.appendChild(rtInsightFila('circleCheck', '', 'Las <b>' + top3.length + ' marcas principales</b> concentran el <b>' +
+      esc(pct(ventasTop3 / totalVentas)) + '</b> de las ventas del período.'));
+  } else {
+    lista.appendChild(rtInsightFila('circleCheck', '', 'Sin datos suficientes para calcular concentración.'));
+  }
+
+  // 5) Marcas sin ventas -- solo identificable dentro de lo que devuelve la API (top 100
+  // por ventas); si esta truncado puede haber mas marcas sin ventas fuera de esa lista.
+  const sinVentas = datos.filter(m => m.ventas === 0).length;
+  lista.appendChild(rtInsightFila('info', '', '<b>' + esc(nf.format(sinVentas)) + '</b> ' +
+    (sinVentas === 1 ? 'marca' : 'marcas') + ' sin ventas en el período' +
+    (truncado ? ' (dentro de las marcas devueltas por la API; puede haber más fuera del top 100)' : '') + '.'));
+
+  panel.appendChild(lista);
+  host.appendChild(panel);
+}
+
+// Panel de detalle compacto (no fila expandida: la marca seleccionada puede no estar en
+// la pagina actual de la tabla, un panel aparte evita ese problema por completo).
+function rtMarcaDetalle(host, m) {
+  const panel = rtEl('div', { className:'card rt-marcas-detalle' });
+  const head = rtEl('div', { className:'rt-marcas-detalle-head' });
+  head.appendChild(rtEl('div', { className:'rt-marcas-detalle-titulo', text: m.marca }));
+  const cerrar = rtEl('button', { className:'btn-sm', attrs:{ 'aria-label':'Cerrar detalle de ' + m.marca } });
+  cerrar.type = 'button';
+  cerrar.innerHTML = icon('x', 'icon-16'); // icono estatico del helper
+  cerrar.addEventListener('click', () => rtMarcasSeleccionar(m.marca));
+  head.appendChild(cerrar);
+  panel.appendChild(head);
+
+  const grid = rtEl('div', { className:'rt-marcas-detalle-grid' });
+  const item = (label, valor) => {
+    const div = rtEl('div', { className:'rt-marcas-detalle-item' });
+    div.appendChild(rtEl('div', { className:'kl', text: label }));
+    div.appendChild(rtEl('div', { className:'kv', text: valor }));
+    grid.appendChild(div);
+  };
+  item('Ventas', nf.format(m.ventas));
+  item('Participación', m.participacion != null ? pct(m.participacion) : '—');
+  item('Stock', nf.format(m.stock));
+  item('Variantes', nf.format(m.variantes));
+  item('Rotación', m.rotacion != null ? pct(m.rotacion) : '—');
+  panel.appendChild(grid);
+
+  const ctaWrap = rtEl('div', { className:'rt-marcas-detalle-cta' });
+  if (m.esSinMarca) {
+    // "Sin marca" es un fallback de UI para nombre_marca='' -- /analisis/stock-ventas
+    // filtra con LIKE, no matchea la cadena vacia real, asi que navegar con
+    // { marca:'Sin marca' } no encontraria esos productos. Se explica en vez de navegar,
+    // sin tocar el backend ni el contrato del filtro.
+    ctaWrap.appendChild(rtEl('p', { className:'rt-note', text:
+      'Estos productos no tienen una marca válida asignada en el catálogo — no se puede filtrar Productos por este valor.' }));
+  } else {
+    const btnVer = rtBotonIcono('btn-primary', 'search', 'Ver productos de esta marca');
+    // Reutiliza rtAplicarFiltroYVer (ya existente, usado por Marcas/Rubros/Subrubros) --
+    // aplica { marca } como filtro y navega a Productos con paginacion, sin consulta masiva
+    // sin filtro. No se duplica logica de filtros entre Marcas y Productos.
+    btnVer.addEventListener('click', () => rtAplicarFiltroYVer({ marca: m.marca }));
+    ctaWrap.appendChild(btnVer);
+  }
+  panel.appendChild(ctaWrap);
+
+  host.appendChild(panel);
+}
+
+function rtTablaMarcas(host, datos) {
+  const toolbar = rtEl('div', { className:'rt-marcas-toolbar' });
+
+  const searchWrap = rtEl('div', { className:'rt-marcas-search' });
+  const searchIcon = rtEl('span', { attrs:{ 'aria-hidden':'true' } });
+  searchIcon.innerHTML = icon('search', ''); // icono estatico del helper
+  searchWrap.appendChild(searchIcon);
+  const searchInput = rtEl('input', { attrs:{ type:'text', placeholder:'Buscar marca…', 'aria-label':'Buscar marca', id:'rtMarcasBuscador' } });
+  searchInput.value = RT_MARCAS_BUSQUEDA;
+  // Filtra los datos ya cargados en memoria -- nunca dispara una consulta nueva por tecla.
+  // rtRenderVistaActual() reconstruye todo #rtPanelHost (incluido este input), asi que sin
+  // restaurar foco+cursor a mano el usuario perderia el foco despues de cada letra.
+  searchInput.addEventListener('input', () => {
+    const cursor = searchInput.selectionStart;
+    RT_MARCAS_BUSQUEDA = searchInput.value;
+    RT_MARCAS_PAGINA = 0;
+    rtRenderVistaActual();
+    const nuevo = document.getElementById('rtMarcasBuscador');
+    if (nuevo) { nuevo.focus(); try { nuevo.setSelectionRange(cursor, cursor); } catch (e) {} }
+  });
+  searchWrap.appendChild(searchInput);
+  if (RT_MARCAS_BUSQUEDA) {
+    const clear = rtEl('button', { className:'rt-marcas-search-clear', attrs:{ 'aria-label':'Limpiar búsqueda' } });
+    clear.type = 'button';
+    clear.innerHTML = icon('x', 'icon-16');
+    clear.addEventListener('click', () => rtMarcasBuscar(''));
+    searchWrap.appendChild(clear);
+  }
+  toolbar.appendChild(searchWrap);
+
+  const filasSel = rtEl('div', { className:'rt-marcas-filas-sel' });
+  filasSel.appendChild(rtEl('label', { text:'Filas por página', attrs:{ for:'rtMarcasFilas' } }));
+  const select = rtEl('select', { attrs:{ id:'rtMarcasFilas', 'aria-label':'Filas por página' } });
+  [10, 25, 50].forEach(n => {
+    const opt = rtEl('option', { text:String(n), attrs:{ value:String(n) } });
+    if (n === RT_MARCAS_FILAS_POR_PAGINA) opt.selected = true;
+    select.appendChild(opt);
+  });
+  select.addEventListener('change', () => { RT_MARCAS_FILAS_POR_PAGINA = Number(select.value); RT_MARCAS_PAGINA = 0; rtRenderVistaActual(); });
+  filasSel.appendChild(select);
+  toolbar.appendChild(filasSel);
+  host.appendChild(toolbar);
+
+  const filtrados = rtMarcasAplicarBusqueda(datos);
+  if (!filtrados.length) {
+    const vacioHost = rtEl('div', { className:'card' });
+    rtEstado(vacioHost, 'vacio', RT_MARCAS_BUSQUEDA
+      ? 'Sin marcas que coincidan con "' + RT_MARCAS_BUSQUEDA + '".'
+      : 'Sin marcas para mostrar.');
+    host.appendChild(vacioHost);
+    return;
+  }
+
+  const ordenados = rtMarcasOrdenar(filtrados);
+  const total = ordenados.length;
+  const totalPaginas = Math.max(1, Math.ceil(total / RT_MARCAS_FILAS_POR_PAGINA));
+  if (RT_MARCAS_PAGINA >= totalPaginas) RT_MARCAS_PAGINA = totalPaginas - 1;
+  const offset = RT_MARCAS_PAGINA * RT_MARCAS_FILAS_POR_PAGINA;
+  const pagina = ordenados.slice(offset, offset + RT_MARCAS_FILAS_POR_PAGINA);
+
+  const wrap = rtEl('div', { className:'rt-table-wrap' });
+  const table = rtEl('table', { className:'rt-table' });
+  const thead = rtEl('thead');
+  const trh = rtEl('tr');
+  [['marca', 'Marca'], ['ventas', 'Ventas'], ['participacion', 'Participación'],
+   ['stock', 'Stock'], ['variantes', 'Variantes'], ['rotacion', 'Rotación']].forEach(([campo, etiqueta]) => {
+    const sorted = RT_MARCAS_ORDEN.campo === campo;
+    const th = rtEl('th', { className:'rt-th-ordenable' + (sorted ? ' rt-th-sorted' : ''),
+      attrs:{ 'aria-sort': sorted ? (RT_MARCAS_ORDEN.dir < 0 ? 'descending' : 'ascending') : 'none' } });
+    const btn = rtEl('button', { className:'rt-th-btn' });
+    btn.type = 'button';
+    btn.appendChild(document.createTextNode(etiqueta));
+    btn.appendChild(rtEl('span', { className:'rt-th-arrow', text: sorted ? (RT_MARCAS_ORDEN.dir < 0 ? '▼' : '▲') : '↕' }));
+    btn.addEventListener('click', () => rtMarcasOrdenarPor(campo));
+    th.appendChild(btn);
+    trh.appendChild(th);
+  });
+  thead.appendChild(trh);
+  table.appendChild(thead);
+
+  const tbody = rtEl('tbody');
+  pagina.forEach(m => {
+    const activa = RT_MARCAS_SELECCIONADA === m.marca;
+    const tr = rtEl('tr', { className: 'rt-row-click' + (activa ? ' rt-marcas-fila-activa' : '') });
+    tr.appendChild(rtEl('td', { text: m.marca }));
+    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(m.ventas) }));
+    tr.appendChild(rtEl('td', { className:'nr', text: m.participacion != null ? pct(m.participacion) : '—' }));
+    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(m.stock) }));
+    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(m.variantes) }));
+    tr.appendChild(rtEl('td', { className:'nr', text: m.rotacion != null ? pct(m.rotacion) : '—' }));
+    tr.tabIndex = 0;
+    tr.setAttribute('role', 'button');
+    tr.setAttribute('aria-label', 'Ver detalle de ' + m.marca);
+    tr.setAttribute('aria-pressed', String(activa));
+    tr.addEventListener('click', () => rtMarcasSeleccionar(m.marca));
+    tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rtMarcasSeleccionar(m.marca); } });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  host.appendChild(wrap);
+
+  const pag = rtEl('div', { className:'rt-pagination' });
+  pag.appendChild(rtEl('span', { text:'Mostrando ' + (offset + 1) + '–' + Math.min(offset + RT_MARCAS_FILAS_POR_PAGINA, total) + ' de ' + nf.format(total) + (total === 1 ? ' marca' : ' marcas') }));
+  const btnAnt = rtEl('button', { className:'btn-sm', text:'← Anterior' });
+  btnAnt.type = 'button'; btnAnt.disabled = RT_MARCAS_PAGINA === 0;
+  btnAnt.addEventListener('click', () => { RT_MARCAS_PAGINA--; rtRenderVistaActual(); });
+  const btnSig = rtEl('button', { className:'btn-sm', text:'Siguiente →' });
+  btnSig.type = 'button'; btnSig.disabled = offset + RT_MARCAS_FILAS_POR_PAGINA >= total;
+  btnSig.addEventListener('click', () => { RT_MARCAS_PAGINA++; rtRenderVistaActual(); });
+  pag.appendChild(btnAnt); pag.appendChild(btnSig);
+  host.appendChild(pag);
+}
+
+// ── Rubros (agrupados desde /resumen, click aplica filtro) -- sin cambios en Fase 3 ──
 function renderRTGrupo(host, campo, listKey, etiqueta) {
   if (RT_RESUMEN_LOADING) return rtEstado(host, 'loading', 'Cargando...');
   if (RT_RESUMEN_ERROR) return rtEstado(host, 'error', 'No se pudo cargar. ' + RT_RESUMEN_ERROR, rtCargarResumen);
