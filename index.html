@@ -2255,6 +2255,15 @@ function rtBadgesSecundarios(estadosSecundarios) {
   return wrap;
 }
 
+// Compatibilidad transitoria: croma-api renombró Stock_ctro_0000 -> Stock_deposito
+// (ver docs/DECISIONS.md) en /analisis/oportunidades. Si el backend desplegado todavía
+// es el anterior a ese cambio, sigue devolviendo Stock_ctro_0000 -- este fallback evita
+// un despliegue coordinado estricto entre frontend y backend. Sacar este fallback una
+// vez confirmado que croma-api en producción ya no devuelve el campo viejo.
+function rtOportunidadesStockDeposito(f) {
+  return f.Stock_deposito ?? f.Stock_ctro_0000 ?? 0;
+}
+
 function renderRTOportunidades(host) {
   host.appendChild(rtEl('h3', { text:'Oportunidades', className:'rt-subtitulo' }));
 
@@ -2348,7 +2357,7 @@ function renderRTOportunidades(host) {
   // Tabla (desktop) -- reutiliza rtTabla()
   const tablaWrap = rtEl('div', { className:'rt-oportunidades-tabla' });
   tablaWrap.appendChild(rtTabla(
-    ['Estado', 'Código', 'Producto', 'Marca', 'Ventas', 'Stock sucursales', 'Depósito 90', 'Cobertura (días)', 'Motivo'],
+    ['Estado', 'Código', 'Producto', 'Marca', 'Ventas', 'Stock sucursales', 'Depósito 90', 'Fallados (93)', 'Cobertura (días)', 'Motivo'],
     datos,
     (f) => {
       const tr = rtEl('tr', { className:'rt-row-click' });
@@ -2361,7 +2370,10 @@ function renderRTOportunidades(host) {
       tr.appendChild(rtEl('td', { text: f.Nombre_marca }));
       tr.appendChild(rtEl('td', { text: nf.format(f.Ventas_total) + (f.devoluciones_netas ? ' (con devol.)' : '') }));
       tr.appendChild(rtEl('td', { text: nf.format(f.Stock_sucursales) }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.Stock_ctro_0000) }));
+      tr.appendChild(rtEl('td', { text: nf.format(rtOportunidadesStockDeposito(f)) }));
+      // Fallados (93) es informativo -- nunca participa en ratio de venta, cobertura
+      // ni reposición (ver ADR correspondiente en docs/DECISIONS.md).
+      tr.appendChild(rtEl('td', { text: nf.format(f.Stock_fallados || 0) }));
       tr.appendChild(rtEl('td', { text: f.cobertura_estado === 'sin_ventas' ? 'sin ventas' : nf1.format(f.cobertura_dias) }));
       const tdMotivo = rtEl('td', { className:'rt-td-wrap', text: f.motivo || '—' });
       if (f.diagnostico_rotacion) {
@@ -2384,7 +2396,7 @@ function renderRTOportunidades(host) {
     if (f.estados_secundarios.length) card.appendChild(rtBadgesSecundarios(f.estados_secundarios));
     card.appendChild(rtEl('div', { className:'rt-opp-card-titulo', text: f.Codigo_producto + ' · ' + f.Nombre_producto }));
     card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: f.Nombre_marca }));
-    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(f.Stock_ctro_0000) + ' depósito 90)' }));
+    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(rtOportunidadesStockDeposito(f)) + ' depósito 90' + (f.Stock_fallados ? ' · ' + nf.format(f.Stock_fallados) + ' fallados' : '') + ')' }));
     if (f.motivo) card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: f.motivo }));
     if (f.diagnostico_rotacion) {
       const ps = f.diagnostico_rotacion.par_sugerido;
