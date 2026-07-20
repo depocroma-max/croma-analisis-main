@@ -101,6 +101,16 @@
     .rt-kpi-icon{width:32px;height:32px;border-radius:var(--radius-md);display:grid;place-items:center;
       background:var(--gray-100);color:var(--gray-600);flex:none}
     .rt-kpi-icon svg{width:16px;height:16px}
+    /* Color por tipo de metrica/estado (2026-07-20) -- antes todos los iconos de KPI eran
+       gris plano; estas clases opcionales los distinguen de un vistazo. */
+    .rt-kpi-icon-accent{background:var(--accent-s);color:var(--accent)}
+    .rt-kpi-icon-info{background:var(--info-bg);color:var(--info)}
+    .rt-kpi-icon-warning{background:var(--warning-bg);color:var(--warning)}
+    .rt-kpi-icon-danger{background:var(--danger-bg);color:var(--danger)}
+    .rt-kpi-icon-success{background:var(--success-bg);color:var(--success)}
+    .rt-kpi-icon-violet{background:var(--violet-s);color:var(--violet)}
+    .rt-kpi-icon-teal{background:var(--teal-s);color:var(--teal)}
+    .rt-kpi-icon-amber{background:var(--amber-s);color:var(--amber)}
     .rt-kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400)}
     .rt-kpi-valor{font-family:var(--font-display);font-size:26px;letter-spacing:-.01em;line-height:1}
     .rt-kpi-delta{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600}
@@ -185,6 +195,8 @@
     .rt-oport-detalle-etiqueta{font-size:10px;font-weight:700;text-transform:uppercase;
       letter-spacing:.06em;color:var(--gray-400)}
     .rt-oport-detalle-valor{font-size:13px;color:var(--black)}
+    .rt-oport-detalle-suc-lista{display:flex;flex-direction:column;gap:4px}
+    .rt-oport-detalle-suc-fila{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
     .rt-oport-detalle-acciones{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;
       padding-top:8px;border-top:1px solid var(--gray-200)}
     @media (max-width:1024px){
@@ -569,6 +581,17 @@ const RT_CENTRO_NOMBRE = {
 const RT_CENTRO_CLS = { '0001':'s01', '0005':'s05', '0009':'s09', '0010':'s10', '0012':'s12', '0014':'s14' };
 const RT_LIMITE_PAGINAS_COMPLETO = 20; // tope de seguridad: 20 * 500 = 10.000 filas
 
+// Badge de color por sucursal (clases .sN/.suc-N ya definidas en <style>, sin usar hasta
+// ahora) -- un color fijo por sucursal en toda la app para reconocerla de un vistazo,
+// en vez de leer el nombre cada vez (pedido 2026-07-20).
+function rtSucursalBadge(centro) {
+  return rtEl('span', { className:'sb ' + (RT_CENTRO_CLS[centro] || 's00'), text: RT_CENTRO_NOMBRE[centro] || centro });
+}
+function rtSucursalColorVar(centro) {
+  const cls = RT_CENTRO_CLS[centro];
+  return cls ? 'var(--suc-' + cls.slice(1) + ')' : 'var(--gray-400)';
+}
+
 let RT_DESDE = null, RT_HASTA = null;
 let RT_VIEW = 'dashboard';
 let RT_RESUMEN = null, RT_RESUMEN_LOADING = false, RT_RESUMEN_ERROR = null, RT_RESUMEN_ABORT = null;
@@ -639,6 +662,15 @@ const RT_ESTADO_CLS = {
   reposicion_proxima: 'badge-warning', venta_destacada: 'badge-warning', bien_vendido: 'badge-warning',
   seguimiento: 'badge-neutral', posible_descuento: 'badge-neutral', stock_parado: 'badge-neutral',
 };
+// Icono por estado para las tarjetas de resumen de Oportunidades (antes sin iconos,
+// pedido 2026-07-20) -- el color sigue la misma severidad que ya usa el badge de estado
+// (RT_ESTADO_CLS), nunca una logica de clasificacion nueva.
+const RT_ESTADO_ICON = {
+  revisar_devoluciones:'alertTriangle', reposicion_urgente:'package', reponer_desde_deposito:'warehouse', posible_rotacion:'refresh',
+  reposicion_proxima:'clock', venta_destacada:'shoppingCart', bien_vendido:'circleCheck',
+  seguimiento:'eye', posible_descuento:'timer', stock_parado:'pause',
+};
+const RT_BADGE_A_ICONO_CLS = { 'badge-danger':'danger', 'badge-warning':'warning', 'badge-neutral':'' };
 
 // Boton chico con icono del helper icon() + texto -- unico lugar donde se arma este
 // patron (botones "Buscar"/"Filtrar" de Productos y Oportunidades), para no repetir
@@ -959,9 +991,16 @@ function rtFiltroChip(host) {
 // Tarjeta de KPI con icono del helper icon() + valor + (opcional) delta vs periodo
 // anterior. Unico lugar donde se arma este componente -- reutilizado por todas las
 // tarjetas del dashboard para no repetir el mismo markup en cada una.
+// Color por defecto segun el icono (def.cls lo puede pisar cuando dos KPIs comparten
+// icono pero necesitan distinguirse, ej. Deposito 90 vs Fallados 93, ambos "warehouse").
+const RT_ICON_CLS = {
+  shoppingCart:'accent', package:'info', warehouse:'amber', shirt:'violet',
+  shoppingBag:'violet', barChart3:'teal', circleCheck:'success',
+};
 function rtTarjetaKPI(def) {
   const card = rtEl('div', { className:'card rt-kpi' });
-  const iconChip = rtEl('div', { className:'rt-kpi-icon' });
+  const cls = def.cls || RT_ICON_CLS[def.icon] || '';
+  const iconChip = rtEl('div', { className:'rt-kpi-icon' + (cls ? ' rt-kpi-icon-' + cls : '') });
   iconChip.innerHTML = icon(def.icon, ''); // icono estatico del helper, no dato de API
   card.appendChild(iconChip);
   card.appendChild(rtEl('div', { className:'rt-kpi-label', text: def.label }));
@@ -984,8 +1023,8 @@ function renderRTDashboard(host) {
   const kpiDefs = [
     { label:'Ventas del período', valor:t.Ventas_total, icon:'shoppingCart', deltaActual:t.Ventas_total, deltaAnterior: tAnterior && tAnterior.Ventas_total },
     { label:'Stock total', valor:t.Stock_total, icon:'package', deltaActual:t.Stock_total, deltaAnterior: tAnterior && tAnterior.Stock_total },
-    { label:'Depósito Central (90)', valor:t.Stock_deposito_90, icon:'warehouse' },
-    { label:'Fallados (93)', valor:t.Stock_deposito_93, icon:'warehouse' },
+    { label:'Depósito Central (90)', valor:t.Stock_deposito_90, icon:'warehouse', cls:'amber' },
+    { label:'Fallados (93)', valor:t.Stock_deposito_93, icon:'warehouse', cls:'danger' },
     { label:'Productos base', valor:t.productos_base, icon:'shirt' },
     { label:'Variantes con actividad', valor:t.variantes, icon:'barChart3' },
     { label:'Variantes con stock', valor:t.variantes_con_stock, icon:'circleCheck' },
@@ -1004,7 +1043,9 @@ function renderRTDashboard(host) {
     (centro) => {
       const s = RT_RESUMEN.por_sucursal[centro] || { ventas:0, stock:0 };
       const tr = rtEl('tr');
-      tr.appendChild(rtEl('td', { text: RT_CENTRO_NOMBRE[centro] }));
+      const tdSuc = rtEl('td');
+      tdSuc.appendChild(rtSucursalBadge(centro));
+      tr.appendChild(tdSuc);
       tr.appendChild(rtEl('td', { text: nf.format(s.ventas) }));
       tr.appendChild(rtEl('td', { text: nf.format(s.stock) }));
       return tr;
@@ -1059,7 +1100,22 @@ function rtCargarInsightOportunidadesAlta() {
   // o con una accion explicita del usuario (Actualizar).
   if (RT_INSIGHT_OPP_ALTA_KEY === key) return;
   const cacheado = RT_INSIGHT_OPP_ALTA_CACHE.get(key);
-  if (cacheado != null) { RT_INSIGHT_OPP_ALTA = cacheado; RT_INSIGHT_OPP_ALTA_KEY = key; rtRenderVistaActual(); return; }
+  if (cacheado != null) {
+    // Esta funcion se llama desde adentro de renderRTInsights(), que a su vez corre
+    // dentro de un rtRenderVistaActual() ya en curso. Llamar rtRenderVistaActual() de
+    // forma sincronica aca reentraba en medio del armado del DOM (host.replaceChildren()
+    // de nuevo con el host a medio construir) y el panel "Insights del período" terminaba
+    // duplicado al presionar Actualizar (bug reportado 2026-07-20). queueMicrotask lo
+    // pospone hasta que el render en curso termine, igual que ya hace el camino con fetch.
+    RT_INSIGHT_OPP_ALTA_LOADING = true;
+    queueMicrotask(() => {
+      RT_INSIGHT_OPP_ALTA = cacheado;
+      RT_INSIGHT_OPP_ALTA_KEY = key;
+      RT_INSIGHT_OPP_ALTA_LOADING = false;
+      rtRenderVistaActual();
+    });
+    return;
+  }
   if (RT_INSIGHT_OPP_ALTA_ABORT) RT_INSIGHT_OPP_ALTA_ABORT.abort();
   const controller = new AbortController();
   RT_INSIGHT_OPP_ALTA_ABORT = controller;
@@ -1909,18 +1965,20 @@ function rtProductosDetalle(g) {
   wrap.appendChild(rtEl('h4', { text:'Distribución por ubicación', className:'rt-subtitulo' }));
   const ubicaciones = rtEl('div', { className:'rt-productos-ubicaciones' });
   const porUbicacion = RT_CENTROS.map(c => ({
+    centro: c,
     nombre: RT_CENTRO_NOMBRE[c],
     ventas: g.filas.reduce((a, f) => a + (f['Ventas_ctro_' + c] || 0), 0),
     stock: g.filas.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0),
   }));
-  porUbicacion.push({ nombre:'Depósito Central (90 + 93)', ventas:null, stock: g.filas.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0) });
+  porUbicacion.push({ centro:null, nombre:'Depósito Central (90 + 93)', ventas:null, stock: g.filas.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0) });
   const maxValor = Math.max(1, ...porUbicacion.map(u => Math.max(u.ventas || 0, u.stock || 0)));
   porUbicacion.forEach(u => {
     const fila = rtEl('div', { className:'rt-ubicacion-fila' });
-    fila.appendChild(rtEl('span', { className:'rt-ubicacion-nombre', text:u.nombre }));
+    if (u.centro) fila.appendChild(rtSucursalBadge(u.centro));
+    else fila.appendChild(rtEl('span', { className:'rt-ubicacion-nombre', text:u.nombre }));
     const track = rtEl('span', { className:'rt-barra-track' });
     track.appendChild(rtEl('span', { className:'rt-barra-fill',
-      attrs:{ style:'width:' + ((u.stock / maxValor) * 100).toFixed(1) + '%;background:var(--gray-400)' } }));
+      attrs:{ style:'width:' + ((u.stock / maxValor) * 100).toFixed(1) + '%;background:' + rtSucursalColorVar(u.centro) } }));
     fila.appendChild(track);
     fila.appendChild(rtEl('span', { className:'rt-ubicacion-valor', text:
       (u.ventas != null ? nf.format(u.ventas) + ' vta. · ' : '') + nf.format(u.stock) + ' stock' }));
@@ -2297,6 +2355,13 @@ function rtBadgeEstado(estadoPrincipal, texto) {
 
 function rtTarjetaResumen(clave, etiqueta, valor, activo, onClick) {
   const card = rtEl('div', { className: 'card rt-kpi rt-kpi-click' + (activo ? ' rt-kpi-activo' : '') });
+  const iconName = RT_ESTADO_ICON[clave];
+  if (iconName) {
+    const cls = RT_BADGE_A_ICONO_CLS[RT_ESTADO_CLS[clave]] || '';
+    const iconChip = rtEl('div', { className:'rt-kpi-icon' + (cls ? ' rt-kpi-icon-' + cls : '') });
+    iconChip.innerHTML = icon(iconName, ''); // icono estatico del helper, no dato de API
+    card.appendChild(iconChip);
+  }
   card.appendChild(rtEl('div', { className:'rt-kpi-label', text: etiqueta }));
   card.appendChild(rtEl('div', { className:'rt-kpi-valor', text: nf.format(valor) }));
   card.style.cursor = 'pointer';
@@ -2421,8 +2486,8 @@ function rtOportunidadesGrupoColumnas(estado, datos) {
   if (estado === 'posible_rotacion') {
     return [
       rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
-      { header:'Origen', render: f => { const o = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.origen; return o ? (RT_CENTRO_NOMBRE[o.sucursal] || o.sucursal) : '—'; } },
-      { header:'Destino', render: f => { const d = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.destino; return d ? (RT_CENTRO_NOMBRE[d.sucursal] || d.sucursal) : '—'; } },
+      { header:'Origen', render: f => { const o = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.origen; return o ? rtSucursalBadge(o.sucursal) : '—'; } },
+      { header:'Destino', render: f => { const d = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.destino; return d ? rtSucursalBadge(d.sucursal) : '—'; } },
       { header:'Ventas destino', numeric:true, render: f => { const d = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.destino; return d ? nf.format(d.ventas) : '—'; } },
       { header:'Stock origen', numeric:true, className:'rt-col-secundaria', render: f => { const o = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.origen; return o ? nf.format(o.stock) : '—'; } },
       { header:'Cobertura origen', numeric:true, className:'rt-col-secundaria', render: f => {
@@ -2500,10 +2565,13 @@ function rtOportunidadesPanelDetalle(f) {
   panel.appendChild(bloque('Ratio y confiabilidad', (f.ratio_venta == null ? '—' : rtOportunidadesPct(f.ratio_venta)) + (f.ratio_confiable === false ? ' · muestra chica, poco confiable' : '')));
   panel.appendChild(bloque('Ventas por semana', nf1.format(f.ventas_semana || 0)));
 
-  const filasSucursal = rtEl('div');
+  const filasSucursal = rtEl('div', { className:'rt-oport-detalle-suc-lista' });
   RT_CENTROS.forEach(c => {
     const s = f.por_sucursal[c] || { ventas:0, stock:0 };
-    filasSucursal.appendChild(rtEl('div', { text: RT_CENTRO_NOMBRE[c] + ': ventas ' + nf.format(s.ventas) + ' · stock ' + nf.format(s.stock) }));
+    const filaSuc = rtEl('div', { className:'rt-oport-detalle-suc-fila' });
+    filaSuc.appendChild(rtSucursalBadge(c));
+    filaSuc.appendChild(rtEl('span', { text: 'ventas ' + nf.format(s.ventas) + ' · stock ' + nf.format(s.stock) }));
+    filasSucursal.appendChild(filaSuc);
   });
   panel.appendChild(bloque('Stock por sucursal', filasSucursal));
   panel.appendChild(bloque('Depósito 90 / Fallados 93', nf.format(rtOportunidadesStockDeposito(f)) + ' / ' + nf.format(f.Stock_fallados || 0)));
@@ -2511,7 +2579,12 @@ function rtOportunidadesPanelDetalle(f) {
   if (f.diagnostico_rotacion) {
     const ps = f.diagnostico_rotacion.par_sugerido;
     const rotWrap = rtEl('div');
-    rotWrap.appendChild(rtEl('div', { text: 'Origen ' + (RT_CENTRO_NOMBRE[ps.origen.sucursal] || ps.origen.sucursal) + ' (stock ' + ps.origen.stock + ') → Destino ' + (RT_CENTRO_NOMBRE[ps.destino.sucursal] || ps.destino.sucursal) + ' (ventas ' + ps.destino.ventas + ')' }));
+    const rotLinea = rtEl('div', { className:'rt-oport-detalle-suc-fila' });
+    rotLinea.appendChild(rtSucursalBadge(ps.origen.sucursal));
+    rotLinea.appendChild(rtEl('span', { text: '(stock ' + ps.origen.stock + ') →' }));
+    rotLinea.appendChild(rtSucursalBadge(ps.destino.sucursal));
+    rotLinea.appendChild(rtEl('span', { text: '(ventas ' + ps.destino.ventas + ')' }));
+    rotWrap.appendChild(rotLinea);
     if (ps.cantidad_sugerida) rotWrap.appendChild(rtOportunidadesEstimacionRotacion(ps.cantidad_sugerida));
     panel.appendChild(bloque('Diagnóstico de rotación', rotWrap));
   }
@@ -2674,7 +2747,13 @@ function renderRTOportunidades(host) {
     const mensajeVacio = RT_OPORTUNIDADES_ESTADO === 'reponer_desde_deposito'
       ? 'No se encontraron productos que necesiten reposición desde Depósito 90 para este período.'
       : 'Sin oportunidades para este filtro y período.';
-    return rtEstado(host, 'vacio', mensajeVacio);
+    // rtEstado() hace container.replaceChildren() -- pasarle "host" directo borraria las
+    // tarjetas de estado, los chips de Prioridad y el formulario de filtro ya agregados
+    // arriba en esta misma funcion, dejando al usuario sin forma de sacar el filtro sin
+    // recargar la pagina (bug reportado 2026-07-20). Se le da un div aislado en su lugar.
+    const vacioWrap = rtEl('div');
+    host.appendChild(vacioWrap);
+    return rtEstado(vacioWrap, 'vacio', mensajeVacio);
   }
 
   // Tabla (desktop) -- columnas dependen del estado seleccionado (ver
