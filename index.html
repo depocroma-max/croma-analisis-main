@@ -176,6 +176,13 @@
     table.rt-oport-tabla thead th{position:sticky;top:0;background:var(--white);z-index:1}
     table.rt-oport-tabla td{padding:11px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     table.rt-oport-tabla td.rt-oport-num{text-align:right;font-variant-numeric:tabular-nums}
+    /* Estado va en badge (pill), no en texto plano -- con table-layout:fixed repartiendo
+       columnas por igual quedaba mas angosta que el texto mas largo ("Reposición o
+       compra urgente", "Reponer desde depósito (90)") y el badge se cortaba a mitad de
+       palabra sin elipsis visible (bug reportado 2026-07-20). Ancho fijo generoso para
+       que el badge siempre entre completo. */
+    table.rt-oport-tabla th.rt-col-estado, table.rt-oport-tabla td.rt-col-estado{width:220px;overflow:visible}
+    table.rt-oport-tabla td.rt-col-estado .badge{max-width:100%;overflow:hidden;text-overflow:ellipsis}
     table.rt-oport-tabla tr.rt-oport-fila{min-height:64px;cursor:pointer}
     table.rt-oport-tabla tr.rt-oport-fila:hover{background:var(--gray-50)}
     table.rt-oport-tabla tr.rt-oport-fila:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
@@ -2532,7 +2539,7 @@ function rtOportunidadesGrupoColumnas(estado, datos) {
   // "Todos" (sin filtro de estado) y los estados sin set propio (venta_destacada,
   // bien_vendido, seguimiento) usan el set generico con columna Estado.
   return [
-    { header:'Estado', render: f => rtBadgeEstado(f.estado_principal, f.texto_estado) },
+    { header:'Estado', className:'rt-col-estado', render: f => rtBadgeEstado(f.estado_principal, f.texto_estado) },
     rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
     { header:'Ventas', numeric:true, render: rtOportunidadesCeldaVentas },
     { header:'Stock operativo', numeric:true, render: f => nf.format(f.Stock_total) },
