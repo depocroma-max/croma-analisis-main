@@ -594,7 +594,7 @@ let RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', st
 let RT_OPORTUNIDADES_OFFSET = 0;
 const RT_OPORTUNIDADES_LIMITE = 50;
 const RT_ESTADO_CLS = {
-  reposicion_urgente: 'badge-danger', revisar_deposito: 'badge-danger', posible_rotacion: 'badge-danger',
+  revisar_devoluciones: 'badge-danger', reposicion_urgente: 'badge-danger', reponer_desde_deposito: 'badge-danger', posible_rotacion: 'badge-danger',
   reposicion_proxima: 'badge-warning', venta_destacada: 'badge-warning', bien_vendido: 'badge-warning',
   seguimiento: 'badge-neutral', posible_descuento: 'badge-neutral', stock_parado: 'badge-neutral',
 };
@@ -2240,10 +2240,13 @@ function rtOportunidadesAplicarRotacion() {
   rtCargarOportunidades();
 }
 
+// Mismo orden que PRIORIDAD_ORDEN en croma-api/config/oportunidades.js -- determina el
+// orden de las tarjetas de resumen. Los textos/umbrales de cada regla viven solo en el
+// backend (version_reglas); acá no se duplica ninguna lógica de clasificación.
 const RT_TEXTO_ESTADO = {
-  reposicion_urgente: 'Reposición urgente', revisar_deposito: 'Revisar depósito',
-  posible_rotacion: 'Posible rotación', reposicion_proxima: 'Reposición próxima',
-  venta_destacada: 'Venta destacada', bien_vendido: 'Bien vendido',
+  revisar_devoluciones: 'Revisar devoluciones', reposicion_urgente: 'Reposición urgente',
+  reponer_desde_deposito: 'Reponer desde depósito', posible_rotacion: 'Posible rotación',
+  reposicion_proxima: 'Reposición próxima', venta_destacada: 'Venta destacada', bien_vendido: 'Bien vendido',
   seguimiento: 'Seguimiento', posible_descuento: 'Posible descuento', stock_parado: 'Stock parado',
 };
 
@@ -2252,6 +2255,27 @@ function rtBadgesSecundarios(estadosSecundarios) {
   estadosSecundarios.forEach(e => {
     wrap.appendChild(rtEl('span', { className:'badge badge-neutral rt-badge-discreto', text: RT_TEXTO_ESTADO[e] || e }));
   });
+  return wrap;
+}
+
+// cantidad_sugerida de posible_rotacion: NUNCA como columna principal ni accion directa
+// (no verifica coincidencia de talle/color todavia) -- se muestra plegada, detras de un
+// toggle explicito, etiquetada como estimacion preliminar con su propia advertencia.
+// stopPropagation en el boton: la fila/card ya tiene su propio click (navega a
+// Productos filtrado por codigo) y no debe dispararse al abrir/cerrar esta estimacion.
+function rtOportunidadesEstimacionRotacion(cantidadSugerida) {
+  const wrap = rtEl('div');
+  const btn = rtEl('button', { className:'btn-sm', text:'Ver estimación preliminar' });
+  btn.type = 'button';
+  const detalle = rtEl('div', { className:'rt-note', text: 'Estimación preliminar: ' + cantidadSugerida + ' un. — Confirmar talle, color y stock remanente antes de realizar la rotación.' });
+  detalle.hidden = true;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    detalle.hidden = !detalle.hidden;
+    btn.textContent = detalle.hidden ? 'Ver estimación preliminar' : 'Ocultar estimación preliminar';
+  });
+  wrap.appendChild(btn);
+  wrap.appendChild(detalle);
   return wrap;
 }
 
@@ -2309,8 +2333,14 @@ function renderRTOportunidades(host) {
   // automaticamente a productos con diagnostico de rotacion (no hace falta elegir el estado a mano).
   if ((r.por_regla_cumplida.posible_rotacion || 0) > 0) {
     host.appendChild(rtEl('h4', { text:'Revisar posible rotación', className:'rt-subtitulo' }));
+    host.appendChild(rtEl('p', { className:'rt-note', text:'Las rotaciones requieren validación por talle y color.' }));
+    // Filtro "Alta confianza" oculto temporalmente (no eliminado del backend): desde
+    // v1.2.0 confianza_rotacion queda fija en "manual" porque el calculo no verifica
+    // coincidencia de talle/color -- mostrar una pestaña que siempre da 0 resultados
+    // confunde mas de lo que ayuda. Reactivar cuando exista esa validacion por variante
+    // (ver ADR-034 en docs/DECISIONS.md).
     const confRow = rtEl('div', { className:'rt-buscador-row' });
-    [['', 'Todos'], ['alta', 'Alta confianza'], ['manual', 'Revisión manual']].forEach(([valor, etiqueta]) => {
+    [['', 'Todos'], ['manual', 'Revisión manual']].forEach(([valor, etiqueta]) => {
       const btn = rtEl('button', { className:'btn-sm' + (RT_OPORTUNIDADES_CONFIANZA === valor && valor ? ' rt-kpi-activo' : (!valor && !RT_OPORTUNIDADES_CONFIANZA ? ' rt-kpi-activo' : '')), text: etiqueta });
       btn.type = 'button';
       btn.addEventListener('click', () => rtOportunidadesCambiarConfianza(valor || null));
@@ -2352,33 +2382,57 @@ function renderRTOportunidades(host) {
   }
 
   const datos = RT_OPORTUNIDADES.data;
-  if (!datos.length) return rtEstado(host, 'vacio', 'Sin oportunidades para este filtro y período.');
+  if (!datos.length) {
+    // Mensaje especifico cuando el filtro activo es reponer_desde_deposito: la regla
+    // se mantiene tal cual (no se relajan umbrales para forzar resultados) -- un
+    // resultado vacio es una respuesta valida, no un error ni una regla rota.
+    const mensajeVacio = RT_OPORTUNIDADES_ESTADO === 'reponer_desde_deposito'
+      ? 'No se encontraron productos que necesiten reposición desde Depósito 90 para este período.'
+      : 'Sin oportunidades para este filtro y período.';
+    return rtEstado(host, 'vacio', mensajeVacio);
+  }
 
-  // Tabla (desktop) -- reutiliza rtTabla()
+  // Tabla (desktop) -- reutiliza rtTabla(). Umbrales/logica de clasificacion viven solo
+  // en croma-api (config/oportunidades.js + motor/oportunidades.js) -- acá solo se
+  // muestran los campos que ya vienen calculados del backend.
+  const tdTextoDescuento = { sin_ventas: 'Sin ventas', rotacion_lenta: 'Rotación lenta' };
   const tablaWrap = rtEl('div', { className:'rt-oportunidades-tabla' });
   tablaWrap.appendChild(rtTabla(
-    ['Estado', 'Código', 'Producto', 'Marca', 'Ventas', 'Stock sucursales', 'Depósito 90', 'Fallados (93)', 'Cobertura (días)', 'Motivo'],
+    ['Estado', 'Código', 'Producto', 'Marca', 'Ventas', 'Stock sucursales', 'Depósito 90', 'Fallados (93)', 'Stock total', 'Días desde ingreso', 'Cobertura (días)', 'Motivo'],
     datos,
     (f) => {
       const tr = rtEl('tr', { className:'rt-row-click' });
       const tdEstado = rtEl('td');
       tdEstado.appendChild(rtBadgeEstado(f.estado_principal, f.texto_estado));
       if (f.estados_secundarios.length) tdEstado.appendChild(rtBadgesSecundarios(f.estados_secundarios));
+      if (f.confianza_rotacion) tdEstado.appendChild(rtEl('span', { className:'badge badge-neutral rt-badge-discreto', text: 'Rotación: confianza ' + f.confianza_rotacion }));
+      if (f.tipo_descuento) tdEstado.appendChild(rtEl('span', { className:'badge badge-neutral rt-badge-discreto', text: tdTextoDescuento[f.tipo_descuento] || f.tipo_descuento }));
       tr.appendChild(tdEstado);
       tr.appendChild(rtEl('td', { text: f.Codigo_producto }));
       tr.appendChild(rtEl('td', { className:'rt-td-truncate', text: f.Nombre_producto, attrs:{ title: f.Nombre_producto || '' } }));
       tr.appendChild(rtEl('td', { text: f.Nombre_marca }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.Ventas_total) + (f.devoluciones_netas ? ' (con devol.)' : '') }));
+      const tdVentas = rtEl('td', { text: nf.format(f.Ventas_total) + (f.devoluciones_netas ? ' (con devol.)' : '') });
+      if (f.ratio_confiable === false) tdVentas.appendChild(rtEl('div', { className:'rt-note', text: 'Muestra chica: ratio poco confiable' }));
+      tr.appendChild(tdVentas);
       tr.appendChild(rtEl('td', { text: nf.format(f.Stock_sucursales) }));
       tr.appendChild(rtEl('td', { text: nf.format(rtOportunidadesStockDeposito(f)) }));
-      // Fallados (93) es informativo -- nunca participa en ratio de venta, cobertura
-      // ni reposición (ver ADR correspondiente en docs/DECISIONS.md).
+      // Fallados (93) es informativo -- nunca participa en ratio de venta, cobertura,
+      // Stock_total ni reposición (ver ADR-032/033 en docs/DECISIONS.md).
       tr.appendChild(rtEl('td', { text: nf.format(f.Stock_fallados || 0) }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.Stock_total) }));
+      tr.appendChild(rtEl('td', { text: f.dias_desde_ultimo_ingreso == null ? '—' : nf.format(f.dias_desde_ultimo_ingreso) }));
       tr.appendChild(rtEl('td', { text: f.cobertura_estado === 'sin_ventas' ? 'sin ventas' : nf1.format(f.cobertura_dias) }));
       const tdMotivo = rtEl('td', { className:'rt-td-wrap', text: f.motivo || '—' });
       if (f.diagnostico_rotacion) {
         const ps = f.diagnostico_rotacion.par_sugerido;
-        tdMotivo.appendChild(rtEl('div', { className:'rt-note', text: 'Origen ' + ps.origen.sucursal + ' (stock ' + ps.origen.stock + ') → Destino ' + ps.destino.sucursal + ' (ventas ' + ps.destino.ventas + ')' + (ps.cantidad_sugerida ? ' · sugerido: ' + ps.cantidad_sugerida + ' un.' : '') }));
+        tdMotivo.appendChild(rtEl('div', { className:'rt-note', text: 'Origen ' + ps.origen.sucursal + ' (stock ' + ps.origen.stock + ') → Destino ' + ps.destino.sucursal + ' (ventas ' + ps.destino.ventas + ')' }));
+        // cantidad_sugerida NUNCA en la fila principal ni como accion directa -- solo
+        // dentro de un detalle plegado, etiquetada como estimacion preliminar (no una
+        // recomendacion operativa definitiva).
+        if (ps.cantidad_sugerida) tdMotivo.appendChild(rtOportunidadesEstimacionRotacion(ps.cantidad_sugerida));
+      }
+      if (f.advertencias && f.advertencias.length) {
+        tdMotivo.appendChild(rtEl('div', { className:'rt-note', text: f.advertencias.join(' ') }));
       }
       tr.appendChild(tdMotivo);
       tr.addEventListener('click', () => rtOportunidadesVerDetalle(f.Codigo_producto));
@@ -2396,11 +2450,18 @@ function renderRTOportunidades(host) {
     if (f.estados_secundarios.length) card.appendChild(rtBadgesSecundarios(f.estados_secundarios));
     card.appendChild(rtEl('div', { className:'rt-opp-card-titulo', text: f.Codigo_producto + ' · ' + f.Nombre_producto }));
     card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: f.Nombre_marca }));
-    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(rtOportunidadesStockDeposito(f)) + ' depósito 90' + (f.Stock_fallados ? ' · ' + nf.format(f.Stock_fallados) + ' fallados' : '') + ')' }));
+    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + (f.ratio_confiable === false ? ' (muestra chica)' : '') + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(rtOportunidadesStockDeposito(f)) + ' depósito 90' + (f.Stock_fallados ? ' · ' + nf.format(f.Stock_fallados) + ' fallados' : '') + ') · Total operativo ' + nf.format(f.Stock_total) }));
+    if (f.dias_desde_ultimo_ingreso != null) card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Último ingreso: hace ' + nf.format(f.dias_desde_ultimo_ingreso) + ' días' }));
+    if (f.confianza_rotacion) card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Rotación: confianza ' + f.confianza_rotacion }));
+    if (f.tipo_descuento) card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Tipo: ' + (tdTextoDescuento[f.tipo_descuento] || f.tipo_descuento) }));
     if (f.motivo) card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: f.motivo }));
     if (f.diagnostico_rotacion) {
       const ps = f.diagnostico_rotacion.par_sugerido;
-      card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: 'Origen ' + ps.origen.sucursal + ' (stock ' + ps.origen.stock + ') → Destino ' + ps.destino.sucursal + ' (ventas ' + ps.destino.ventas + ')' + (ps.cantidad_sugerida ? ' · sugerido: ' + ps.cantidad_sugerida + ' un.' : '') }));
+      card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: 'Origen ' + ps.origen.sucursal + ' (stock ' + ps.origen.stock + ') → Destino ' + ps.destino.sucursal + ' (ventas ' + ps.destino.ventas + ')' }));
+      if (ps.cantidad_sugerida) card.appendChild(rtOportunidadesEstimacionRotacion(ps.cantidad_sugerida));
+    }
+    if (f.advertencias && f.advertencias.length) {
+      card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: f.advertencias.join(' ') }));
     }
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => rtOportunidadesVerDetalle(f.Codigo_producto));
