@@ -150,9 +150,48 @@
     .rt-opp-card-motivo{font-size:12.5px;color:var(--gray-500);line-height:1.4}
     .rt-badges-secundarios{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
     .rt-badge-discreto{opacity:.65;font-size:10.5px;padding:2px 7px}
-    @media (max-width:640px){
+    /* Debajo de 700px se usan tarjetas (.rt-oportunidades-cards), nunca la tabla --
+       evita scroll horizontal en mobile (pedido explicito, 2026-07-20). */
+    @media (max-width:700px){
       .rt-oportunidades-tabla{display:none}
       .rt-oportunidades-cards{display:block}
+    }
+
+    /* Oportunidades v2: tabla compacta con fila expandible (2026-07-20). min-height en
+       vez de height fija -- una fila puede crecer si el navegador esta con zoom/fuente
+       grande, pero motivo/advertencias/etiquetas secundarias NUNCA la agrandan porque
+       viven solo en el detalle expandido, no en la fila. */
+    .rt-oport-wrap{max-height:72vh;overflow:auto}
+    table.rt-oport-tabla{table-layout:fixed;width:100%}
+    table.rt-oport-tabla thead th{position:sticky;top:0;background:var(--white);z-index:1}
+    table.rt-oport-tabla td{padding:11px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    table.rt-oport-tabla td.rt-oport-num{text-align:right;font-variant-numeric:tabular-nums}
+    table.rt-oport-tabla tr.rt-oport-fila{min-height:64px;cursor:pointer}
+    table.rt-oport-tabla tr.rt-oport-fila:hover{background:var(--gray-50)}
+    table.rt-oport-tabla tr.rt-oport-fila:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+    table.rt-oport-tabla tr.rt-oport-fila-activa{background:var(--accent-s)}
+    table.rt-oport-tabla tr.rt-oport-fila-activa:hover{background:var(--accent-s)}
+    .rt-oport-producto{display:flex;flex-direction:column;gap:2px;white-space:normal}
+    .rt-oport-producto-nombre{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+      overflow:hidden;font-weight:500;line-height:1.3;font-size:13px}
+    .rt-oport-marca-inline{display:none;font-size:11px;color:var(--gray-400)}
+    .rt-oport-chica{font-size:10px;font-weight:600;color:var(--gray-400);margin-left:4px;white-space:nowrap}
+    .rt-oport-ventas-neg{color:var(--danger);font-weight:700}
+    .rt-oport-fallado{color:var(--amber,var(--warning));font-weight:600}
+    tr.rt-oport-detalle-fila > td{background:var(--gray-50);white-space:normal;padding:16px 20px;
+      border-top:1px dashed var(--gray-200)}
+    .rt-oport-detalle{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 24px}
+    .rt-oport-detalle-bloque{display:flex;flex-direction:column;gap:4px}
+    .rt-oport-detalle-etiqueta{font-size:10px;font-weight:700;text-transform:uppercase;
+      letter-spacing:.06em;color:var(--gray-400)}
+    .rt-oport-detalle-valor{font-size:13px;color:var(--black)}
+    .rt-oport-detalle-acciones{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;
+      padding-top:8px;border-top:1px solid var(--gray-200)}
+    @media (max-width:1024px){
+      .rt-col-marca{display:none}
+      .rt-oport-marca-inline{display:block}
+      .rt-col-ultimo-ingreso{display:none}
+      .rt-col-secundaria{display:none}
     }
     .kl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:8px;line-height:1.3}
     .kv{font-family:var(--font-d);font-size:28px;letter-spacing:-.01em;line-height:1}
@@ -593,6 +632,8 @@ let RT_OPORTUNIDADES_CONFIANZA = null; // 'alta' | 'manual' | null (todos) -- so
 let RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
 let RT_OPORTUNIDADES_OFFSET = 0;
 const RT_OPORTUNIDADES_LIMITE = 50;
+// Codigo_producto de la unica fila expandida (o null) -- una sola a la vez (2026-07-20).
+let RT_OPORTUNIDADES_EXPANDIDO = null;
 const RT_ESTADO_CLS = {
   revisar_devoluciones: 'badge-danger', reposicion_urgente: 'badge-danger', reponer_desde_deposito: 'badge-danger', posible_rotacion: 'badge-danger',
   reposicion_proxima: 'badge-warning', venta_destacada: 'badge-warning', bien_vendido: 'badge-warning',
@@ -823,8 +864,23 @@ function rtAplicarFiltroYVer(filtro, origen) {
   RT_PRODUCTOS_PAGINA = 0; RT_PRODUCTOS_EXPANDIDO = null; RT_PRODUCTOS_BUSQUEDA = '';
   RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_PRIORIDAD = null;
   RT_OPORTUNIDADES_CONFIANZA = null; RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
+  RT_OPORTUNIDADES_EXPANDIDO = null;
   rtCambiarVista('productos');
   rtCargarCompleto();
+}
+
+// Analogo a rtAplicarFiltroYVer pero para Talles y colores (usado desde el detalle
+// expandido de Oportunidades, "Ver en Talles y colores"). renderRTTallesColores ya
+// dispara rtCargarCompleto() solo con detectar que RT_FILTRO cambio -- no hace falta
+// llamarlo aca.
+function rtAplicarFiltroYVerTallesColores(filtro) {
+  RT_FILTRO = filtro;
+  RT_PRODUCTOS_FILTRO_ORIGEN = null;
+  RT_COMPLETO = null;
+  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_PRIORIDAD = null;
+  RT_OPORTUNIDADES_CONFIANZA = null; RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
+  RT_OPORTUNIDADES_EXPANDIDO = null;
+  rtCambiarVista('talles-colores');
 }
 
 function rtQuitarFiltro() {
@@ -832,7 +888,7 @@ function rtQuitarFiltro() {
   RT_PRODUCTOS_FILTRO_ORIGEN = null;
   RT_COMPLETO = null;
   RT_PRODUCTOS_PAGINA = 0; RT_PRODUCTOS_EXPANDIDO = null; RT_PRODUCTOS_BUSQUEDA = '';
-  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0;
+  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_EXPANDIDO = null;
   rtRenderVistaActual();
 }
 
@@ -862,12 +918,19 @@ function rtRenderVistaActual() {
 }
 
 // ── Tabla genérica ───────────────────────────────────────────────────────────
+// headers: string[] o {text, className}[] (className opcional, para ocultar la columna
+// por breakpoint via CSS -- debe coincidir con el className usado en las celdas del
+// mismo indice). opts.wrapClassName/tableClassName: clases extra sobre el wrap/table
+// por defecto (compatibilidad con los 4 call-sites existentes que no pasan opts).
 function rtTabla(headers, filas, renderFila, opts) {
-  const wrap = rtEl('div', { className:'rt-table-wrap' });
-  const table = rtEl('table', { className:'rt-table' });
+  const wrap = rtEl('div', { className:'rt-table-wrap' + (opts && opts.wrapClassName ? ' ' + opts.wrapClassName : '') });
+  const table = rtEl('table', { className:'rt-table' + (opts && opts.tableClassName ? ' ' + opts.tableClassName : '') });
   const thead = rtEl('thead');
   const trh = rtEl('tr');
-  headers.forEach(h => trh.appendChild(rtEl('th', { text:h })));
+  headers.forEach(h => {
+    const esObjeto = h && typeof h === 'object';
+    trh.appendChild(rtEl('th', { className: esObjeto ? (h.className || '') : '', text: esObjeto ? h.text : h }));
+  });
   thead.appendChild(trh);
   table.appendChild(thead);
   const tbody = rtEl('tbody');
@@ -2200,6 +2263,7 @@ async function rtCargarOportunidades() {
 function rtOportunidadesCambiarEstado(estado) {
   RT_OPORTUNIDADES_ESTADO = (RT_OPORTUNIDADES_ESTADO === estado) ? null : estado;
   RT_OPORTUNIDADES_OFFSET = 0;
+  RT_OPORTUNIDADES_EXPANDIDO = null;
   rtCargarOportunidades();
 }
 
@@ -2208,11 +2272,22 @@ function rtOportunidadesPagina(delta) {
   const nuevoOffset = RT_OPORTUNIDADES_OFFSET + delta * RT_OPORTUNIDADES_LIMITE;
   if (nuevoOffset < 0 || nuevoOffset >= RT_OPORTUNIDADES.paginacion.total) return;
   RT_OPORTUNIDADES_OFFSET = nuevoOffset;
+  RT_OPORTUNIDADES_EXPANDIDO = null;
   rtCargarOportunidades();
 }
 
+// Navega a Productos filtrado por codigo -- solo se llama desde el boton "Ver producto"
+// dentro del detalle expandido, nunca desde el clic en la fila (2026-07-20: antes el
+// clic en cualquier parte de la fila navegaba directo, sin poder ver el detalle primero).
 function rtOportunidadesVerDetalle(codigo) {
   rtAplicarFiltroYVer({ codigo });
+}
+
+// Expande/colapsa el detalle de una fila -- una sola expandida a la vez. Es lo que
+// dispara el clic en la fila, Enter/Espacio con teclado, y el boton "Ver detalle".
+function rtOportunidadesToggleDetalle(codigo) {
+  RT_OPORTUNIDADES_EXPANDIDO = (RT_OPORTUNIDADES_EXPANDIDO === codigo) ? null : codigo;
+  rtRenderVistaActual();
 }
 
 function rtBadgeEstado(estadoPrincipal, texto) {
@@ -2232,11 +2307,13 @@ function rtTarjetaResumen(clave, etiqueta, valor, activo, onClick) {
 function rtOportunidadesCambiarConfianza(valor) {
   RT_OPORTUNIDADES_CONFIANZA = (RT_OPORTUNIDADES_CONFIANZA === valor) ? null : valor;
   RT_OPORTUNIDADES_OFFSET = 0;
+  RT_OPORTUNIDADES_EXPANDIDO = null;
   rtCargarOportunidades();
 }
 
 function rtOportunidadesAplicarRotacion() {
   RT_OPORTUNIDADES_OFFSET = 0;
+  RT_OPORTUNIDADES_EXPANDIDO = null;
   rtCargarOportunidades();
 }
 
@@ -2249,6 +2326,8 @@ const RT_TEXTO_ESTADO = {
   reposicion_proxima: 'Reposición próxima', venta_destacada: 'Venta destacada', bien_vendido: 'Bien vendido',
   seguimiento: 'Seguimiento', posible_descuento: 'Posible descuento', stock_parado: 'Stock parado',
 };
+
+const RT_TEXTO_TIPO_DESCUENTO = { sin_ventas: 'Sin ventas', rotacion_lenta: 'Rotación lenta' };
 
 function rtBadgesSecundarios(estadosSecundarios) {
   const wrap = rtEl('span', { className:'rt-badges-secundarios' });
@@ -2288,11 +2367,213 @@ function rtOportunidadesStockDeposito(f) {
   return f.Stock_deposito ?? f.Stock_ctro_0000 ?? 0;
 }
 
+// ── Oportunidades: celdas y columnas por estado (rediseño 2026-07-20) ──────────────
+// Ninguna de estas funciones calcula ni decide reglas de negocio -- solo formatean
+// campos que ya vienen resueltos del backend (ratio_confiable, tipo_descuento,
+// confianza_rotacion, etc.). Umbrales y logica de clasificacion viven exclusivamente
+// en croma-api (config/oportunidades.js + motor/oportunidades.js).
+function rtOportunidadesCeldaVentas(f) {
+  const wrap = rtEl('span');
+  wrap.appendChild(document.createTextNode(nf.format(f.Ventas_total)));
+  if (f.ratio_confiable === false) wrap.appendChild(rtEl('span', { className:'rt-oport-chica', text:'muestra chica' }));
+  return wrap;
+}
+function rtOportunidadesCeldaVentasNetas(f) {
+  return rtEl('span', { className: f.Ventas_total < 0 ? 'rt-oport-ventas-neg' : '', text: nf.format(f.Ventas_total) });
+}
+function rtOportunidadesCeldaFallados(f) {
+  const v = f.Stock_fallados || 0;
+  return rtEl('span', { className: v > 0 ? 'rt-oport-fallado' : '', text: nf.format(v) });
+}
+function rtOportunidadesCeldaCobertura(f) {
+  return f.cobertura_estado === 'sin_ventas' ? 'sin ventas' : nf1.format(f.cobertura_dias);
+}
+function rtOportunidadesPct(v) {
+  return (v * 100).toFixed(1) + '%';
+}
+function rtOportunidadesCeldaRatio(f) {
+  return f.ratio_venta == null ? '—' : rtOportunidadesPct(f.ratio_venta);
+}
+function rtOportunidadesCeldaDias(f) {
+  return f.dias_desde_ultimo_ingreso == null ? '—' : nf.format(f.dias_desde_ultimo_ingreso);
+}
+function rtOportunidadesColCodigo() {
+  return { header:'Código', render: f => f.Codigo_producto };
+}
+// Producto siempre incluye la marca como subtitulo (oculto en desktop ancho via CSS,
+// visible desde 1024px hacia abajo cuando la columna Marca se oculta -- ver
+// .rt-oport-marca-inline / .rt-col-marca en <style>).
+function rtOportunidadesColProducto() {
+  return { header:'Producto', render: f => {
+    const wrap = rtEl('div', { className:'rt-oport-producto' });
+    wrap.appendChild(rtEl('div', { className:'rt-oport-producto-nombre', text: f.Nombre_producto, attrs:{ title: f.Nombre_producto || '' } }));
+    wrap.appendChild(rtEl('div', { className:'rt-oport-marca-inline', text: f.Nombre_marca || '' }));
+    return wrap;
+  }};
+}
+function rtOportunidadesColMarca() {
+  return { header:'Marca', className:'rt-col-marca', render: f => f.Nombre_marca || '—' };
+}
+
+// Columnas por grupo de estado -- nunca las mismas 12 para todos los estados. "datos"
+// solo se usa para decidir si corresponde agregar la columna Fallados (revisar_devoluciones).
+function rtOportunidadesGrupoColumnas(estado, datos) {
+  if (estado === 'posible_rotacion') {
+    return [
+      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
+      { header:'Origen', render: f => { const o = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.origen; return o ? (RT_CENTRO_NOMBRE[o.sucursal] || o.sucursal) : '—'; } },
+      { header:'Destino', render: f => { const d = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.destino; return d ? (RT_CENTRO_NOMBRE[d.sucursal] || d.sucursal) : '—'; } },
+      { header:'Ventas destino', numeric:true, render: f => { const d = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.destino; return d ? nf.format(d.ventas) : '—'; } },
+      { header:'Stock origen', numeric:true, className:'rt-col-secundaria', render: f => { const o = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.origen; return o ? nf.format(o.stock) : '—'; } },
+      { header:'Cobertura origen', numeric:true, className:'rt-col-secundaria', render: f => {
+        const o = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.origen;
+        if (!o) return '—';
+        return o.cobertura_estado === 'sin_ventas' ? 'sin ventas' : nf1.format(o.cobertura_dias);
+      } },
+      { header:'Confianza', render: f => f.confianza_rotacion || '—' },
+    ];
+  }
+  if (estado === 'revisar_devoluciones') {
+    const mostrarFallados = datos.some(f => (f.Stock_fallados || 0) > 0);
+    const columnas = [
+      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
+      { header:'Ventas netas', numeric:true, render: rtOportunidadesCeldaVentasNetas },
+      { header:'Stock operativo', numeric:true, render: f => nf.format(f.Stock_total) },
+    ];
+    if (mostrarFallados) columnas.push({ header:'Fallados 93', numeric:true, render: rtOportunidadesCeldaFallados });
+    columnas.push({ header:'Último ingreso', numeric:true, className:'rt-col-ultimo-ingreso', render: rtOportunidadesCeldaDias });
+    return columnas;
+  }
+  if (estado === 'reposicion_urgente' || estado === 'reponer_desde_deposito' || estado === 'reposicion_proxima') {
+    return [
+      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
+      { header:'Ventas', numeric:true, render: rtOportunidadesCeldaVentas },
+      { header:'Stock sucursales', numeric:true, render: f => nf.format(f.Stock_sucursales) },
+      { header:'Depósito 90', numeric:true, render: f => nf.format(rtOportunidadesStockDeposito(f)) },
+      { header:'Cobertura', numeric:true, render: rtOportunidadesCeldaCobertura },
+      { header:'Ratio', numeric:true, className:'rt-col-secundaria', render: rtOportunidadesCeldaRatio },
+    ];
+  }
+  if (estado === 'stock_parado' || estado === 'posible_descuento') {
+    return [
+      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
+      { header:'Ventas', numeric:true, render: rtOportunidadesCeldaVentas },
+      { header:'Stock operativo', numeric:true, render: f => nf.format(f.Stock_total) },
+      { header:'Días desde ingreso', numeric:true, className:'rt-col-ultimo-ingreso', render: rtOportunidadesCeldaDias },
+      { header:'Cobertura', numeric:true, render: rtOportunidadesCeldaCobertura },
+      { header:'Tipo', className:'rt-col-secundaria', render: f => f.tipo_descuento ? (RT_TEXTO_TIPO_DESCUENTO[f.tipo_descuento] || f.tipo_descuento) : '—' },
+    ];
+  }
+  // "Todos" (sin filtro de estado) y los estados sin set propio (venta_destacada,
+  // bien_vendido, seguimiento) usan el set generico con columna Estado.
+  return [
+    { header:'Estado', render: f => rtBadgeEstado(f.estado_principal, f.texto_estado) },
+    rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
+    { header:'Ventas', numeric:true, render: rtOportunidadesCeldaVentas },
+    { header:'Stock operativo', numeric:true, render: f => nf.format(f.Stock_total) },
+    { header:'Cobertura', numeric:true, render: rtOportunidadesCeldaCobertura },
+    { header:'Último ingreso', numeric:true, className:'rt-col-ultimo-ingreso', render: rtOportunidadesCeldaDias },
+  ];
+}
+
+// Panel de detalle expandible -- toda la informacion extensa (motivo completo,
+// etiquetas secundarias, advertencias, ratio, stock por sucursal, diagnostico de
+// rotacion, estimacion preliminar) vive aca, nunca en la fila principal.
+function rtOportunidadesPanelDetalle(f) {
+  const panel = rtEl('div', { className:'rt-oport-detalle' });
+  const bloque = (etiqueta, valor) => {
+    const b = rtEl('div', { className:'rt-oport-detalle-bloque' });
+    b.appendChild(rtEl('div', { className:'rt-oport-detalle-etiqueta', text: etiqueta }));
+    const v = rtEl('div', { className:'rt-oport-detalle-valor' });
+    if (valor instanceof Node) v.appendChild(valor); else v.textContent = valor;
+    b.appendChild(v);
+    return b;
+  };
+
+  panel.appendChild(bloque('Motivo', f.motivo || '—'));
+  if (f.estados_secundarios && f.estados_secundarios.length) {
+    panel.appendChild(bloque('Etiquetas secundarias', rtBadgesSecundarios(f.estados_secundarios)));
+  }
+  if (f.advertencias && f.advertencias.length) {
+    panel.appendChild(bloque('Advertencias', f.advertencias.join(' ')));
+  }
+  panel.appendChild(bloque('Ratio y confiabilidad', (f.ratio_venta == null ? '—' : rtOportunidadesPct(f.ratio_venta)) + (f.ratio_confiable === false ? ' · muestra chica, poco confiable' : '')));
+  panel.appendChild(bloque('Ventas por semana', nf1.format(f.ventas_semana || 0)));
+
+  const filasSucursal = rtEl('div');
+  RT_CENTROS.forEach(c => {
+    const s = f.por_sucursal[c] || { ventas:0, stock:0 };
+    filasSucursal.appendChild(rtEl('div', { text: RT_CENTRO_NOMBRE[c] + ': ventas ' + nf.format(s.ventas) + ' · stock ' + nf.format(s.stock) }));
+  });
+  panel.appendChild(bloque('Stock por sucursal', filasSucursal));
+  panel.appendChild(bloque('Depósito 90 / Fallados 93', nf.format(rtOportunidadesStockDeposito(f)) + ' / ' + nf.format(f.Stock_fallados || 0)));
+
+  if (f.diagnostico_rotacion) {
+    const ps = f.diagnostico_rotacion.par_sugerido;
+    const rotWrap = rtEl('div');
+    rotWrap.appendChild(rtEl('div', { text: 'Origen ' + (RT_CENTRO_NOMBRE[ps.origen.sucursal] || ps.origen.sucursal) + ' (stock ' + ps.origen.stock + ') → Destino ' + (RT_CENTRO_NOMBRE[ps.destino.sucursal] || ps.destino.sucursal) + ' (ventas ' + ps.destino.ventas + ')' }));
+    if (ps.cantidad_sugerida) rotWrap.appendChild(rtOportunidadesEstimacionRotacion(ps.cantidad_sugerida));
+    panel.appendChild(bloque('Diagnóstico de rotación', rotWrap));
+  }
+
+  const acciones = rtEl('div', { className:'rt-oport-detalle-acciones' });
+  const btnProducto = rtEl('button', { className:'btn-sm', text:'Ver producto' });
+  btnProducto.type = 'button';
+  btnProducto.addEventListener('click', e => { e.stopPropagation(); rtOportunidadesVerDetalle(f.Codigo_producto); });
+  acciones.appendChild(btnProducto);
+  const btnTalles = rtEl('button', { className:'btn-sm', text:'Ver en Talles y colores' });
+  btnTalles.type = 'button';
+  btnTalles.addEventListener('click', e => { e.stopPropagation(); rtAplicarFiltroYVerTallesColores({ codigo: f.Codigo_producto }); });
+  acciones.appendChild(btnTalles);
+  panel.appendChild(acciones);
+
+  return panel;
+}
+
+// Una fila (mas la fila de detalle si esta expandida) -- devuelve un DocumentFragment
+// para que rtTabla() pueda insertar ambos <tr> con un solo appendChild.
+function rtOportunidadesFila(f, columnas) {
+  const expandido = RT_OPORTUNIDADES_EXPANDIDO === f.Codigo_producto;
+  const tr = rtEl('tr', { className:'rt-oport-fila' + (expandido ? ' rt-oport-fila-activa' : '') });
+  tr.setAttribute('tabindex', '0');
+  tr.setAttribute('role', 'button');
+  tr.setAttribute('aria-expanded', expandido ? 'true' : 'false');
+  tr.setAttribute('aria-label', 'Ver detalle de ' + f.Codigo_producto);
+  tr.addEventListener('click', () => rtOportunidadesToggleDetalle(f.Codigo_producto));
+  tr.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rtOportunidadesToggleDetalle(f.Codigo_producto); }
+  });
+  columnas.forEach(col => {
+    const td = rtEl('td', { className: (col.className || '') + (col.numeric ? ' rt-oport-num' : '') });
+    const val = col.render(f);
+    if (val instanceof Node) td.appendChild(val); else td.textContent = val;
+    tr.appendChild(td);
+  });
+  const tdAccion = rtEl('td');
+  const btnDetalle = rtEl('button', { className:'btn-sm', text: expandido ? 'Ocultar' : 'Ver detalle' });
+  btnDetalle.type = 'button';
+  btnDetalle.setAttribute('aria-expanded', expandido ? 'true' : 'false');
+  btnDetalle.addEventListener('click', e => { e.stopPropagation(); rtOportunidadesToggleDetalle(f.Codigo_producto); });
+  tdAccion.appendChild(btnDetalle);
+  tr.appendChild(tdAccion);
+
+  const frag = document.createDocumentFragment();
+  frag.appendChild(tr);
+  if (expandido) {
+    const trDetalle = rtEl('tr', { className:'rt-oport-detalle-fila' });
+    const tdDetalle = rtEl('td', { attrs:{ colspan: String(columnas.length + 1) } });
+    tdDetalle.appendChild(rtOportunidadesPanelDetalle(f));
+    trDetalle.appendChild(tdDetalle);
+    frag.appendChild(trDetalle);
+  }
+  return frag;
+}
+
 function renderRTOportunidades(host) {
   host.appendChild(rtEl('h3', { text:'Oportunidades', className:'rt-subtitulo' }));
 
   rtFormularioFiltro(host, () => {
-    RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0;
+    RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_EXPANDIDO = null;
     rtCargarOportunidades();
   });
 
@@ -2323,15 +2604,19 @@ function renderRTOportunidades(host) {
   ['alta', 'media', 'baja'].forEach(p => {
     const btn = rtEl('button', { className:'btn-sm' + (RT_OPORTUNIDADES_PRIORIDAD === p ? ' rt-kpi-activo' : ''), text: 'Prioridad ' + p });
     btn.type = 'button';
-    btn.addEventListener('click', () => { RT_OPORTUNIDADES_PRIORIDAD = (RT_OPORTUNIDADES_PRIORIDAD === p) ? null : p; RT_OPORTUNIDADES_OFFSET = 0; rtCargarOportunidades(); });
+    btn.addEventListener('click', () => { RT_OPORTUNIDADES_PRIORIDAD = (RT_OPORTUNIDADES_PRIORIDAD === p) ? null : p; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_EXPANDIDO = null; rtCargarOportunidades(); });
     prioRow.appendChild(btn);
   });
   host.appendChild(prioRow);
 
-  // Revision de posible_rotacion: confianza + filtros derivados (§4). Se muestra siempre
-  // que haya casos de rotacion en el resumen -- aplicar cualquiera de estos filtros acota
-  // automaticamente a productos con diagnostico de rotacion (no hace falta elegir el estado a mano).
-  if ((r.por_regla_cumplida.posible_rotacion || 0) > 0) {
+  // Revision de posible_rotacion: confianza + filtros derivados (§4). Bug corregido
+  // 2026-07-20: antes se mostraba con solo chequear que hubiera ALGUN caso de rotacion
+  // en todo el periodo (r.por_regla_cumplida.posible_rotacion > 0), sin importar que
+  // tarjeta de estado estuviera seleccionada -- el titulo y los filtros de origen/
+  // destino quedaban pegados arriba de la tabla de CUALQUIER otro estado (ej. "Revisar
+  // devoluciones"), dando la impresion de que esas filas eran de rotacion. Ahora solo
+  // se muestra cuando el estado activo es realmente posible_rotacion.
+  if (RT_OPORTUNIDADES_ESTADO === 'posible_rotacion' && (r.por_regla_cumplida.posible_rotacion || 0) > 0) {
     host.appendChild(rtEl('h4', { text:'Revisar posible rotación', className:'rt-subtitulo' }));
     host.appendChild(rtEl('p', { className:'rt-note', text:'Las rotaciones requieren validación por talle y color.' }));
     // Filtro "Alta confianza" oculto temporalmente (no eliminado del backend): desde
@@ -2392,79 +2677,40 @@ function renderRTOportunidades(host) {
     return rtEstado(host, 'vacio', mensajeVacio);
   }
 
-  // Tabla (desktop) -- reutiliza rtTabla(). Umbrales/logica de clasificacion viven solo
-  // en croma-api (config/oportunidades.js + motor/oportunidades.js) -- acá solo se
+  // Tabla (desktop) -- columnas dependen del estado seleccionado (ver
+  // rtOportunidadesGrupoColumnas). Umbrales/logica de clasificacion viven solo en
+  // croma-api (config/oportunidades.js + motor/oportunidades.js) -- acá solo se
   // muestran los campos que ya vienen calculados del backend.
-  const tdTextoDescuento = { sin_ventas: 'Sin ventas', rotacion_lenta: 'Rotación lenta' };
+  const columnas = rtOportunidadesGrupoColumnas(RT_OPORTUNIDADES_ESTADO, datos);
+  const headers = columnas.map(c => c.className ? { text: c.header, className: c.className } : c.header);
+  headers.push('Acción');
   const tablaWrap = rtEl('div', { className:'rt-oportunidades-tabla' });
   tablaWrap.appendChild(rtTabla(
-    ['Estado', 'Código', 'Producto', 'Marca', 'Ventas', 'Stock sucursales', 'Depósito 90', 'Fallados (93)', 'Stock total', 'Días desde ingreso', 'Cobertura (días)', 'Motivo'],
+    headers,
     datos,
-    (f) => {
-      const tr = rtEl('tr', { className:'rt-row-click' });
-      const tdEstado = rtEl('td');
-      tdEstado.appendChild(rtBadgeEstado(f.estado_principal, f.texto_estado));
-      if (f.estados_secundarios.length) tdEstado.appendChild(rtBadgesSecundarios(f.estados_secundarios));
-      if (f.confianza_rotacion) tdEstado.appendChild(rtEl('span', { className:'badge badge-neutral rt-badge-discreto', text: 'Rotación: confianza ' + f.confianza_rotacion }));
-      if (f.tipo_descuento) tdEstado.appendChild(rtEl('span', { className:'badge badge-neutral rt-badge-discreto', text: tdTextoDescuento[f.tipo_descuento] || f.tipo_descuento }));
-      tr.appendChild(tdEstado);
-      tr.appendChild(rtEl('td', { text: f.Codigo_producto }));
-      tr.appendChild(rtEl('td', { className:'rt-td-truncate', text: f.Nombre_producto, attrs:{ title: f.Nombre_producto || '' } }));
-      tr.appendChild(rtEl('td', { text: f.Nombre_marca }));
-      const tdVentas = rtEl('td', { text: nf.format(f.Ventas_total) + (f.devoluciones_netas ? ' (con devol.)' : '') });
-      if (f.ratio_confiable === false) tdVentas.appendChild(rtEl('div', { className:'rt-note', text: 'Muestra chica: ratio poco confiable' }));
-      tr.appendChild(tdVentas);
-      tr.appendChild(rtEl('td', { text: nf.format(f.Stock_sucursales) }));
-      tr.appendChild(rtEl('td', { text: nf.format(rtOportunidadesStockDeposito(f)) }));
-      // Fallados (93) es informativo -- nunca participa en ratio de venta, cobertura,
-      // Stock_total ni reposición (ver ADR-032/033 en docs/DECISIONS.md).
-      tr.appendChild(rtEl('td', { text: nf.format(f.Stock_fallados || 0) }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.Stock_total) }));
-      tr.appendChild(rtEl('td', { text: f.dias_desde_ultimo_ingreso == null ? '—' : nf.format(f.dias_desde_ultimo_ingreso) }));
-      tr.appendChild(rtEl('td', { text: f.cobertura_estado === 'sin_ventas' ? 'sin ventas' : nf1.format(f.cobertura_dias) }));
-      const tdMotivo = rtEl('td', { className:'rt-td-wrap', text: f.motivo || '—' });
-      if (f.diagnostico_rotacion) {
-        const ps = f.diagnostico_rotacion.par_sugerido;
-        tdMotivo.appendChild(rtEl('div', { className:'rt-note', text: 'Origen ' + ps.origen.sucursal + ' (stock ' + ps.origen.stock + ') → Destino ' + ps.destino.sucursal + ' (ventas ' + ps.destino.ventas + ')' }));
-        // cantidad_sugerida NUNCA en la fila principal ni como accion directa -- solo
-        // dentro de un detalle plegado, etiquetada como estimacion preliminar (no una
-        // recomendacion operativa definitiva).
-        if (ps.cantidad_sugerida) tdMotivo.appendChild(rtOportunidadesEstimacionRotacion(ps.cantidad_sugerida));
-      }
-      if (f.advertencias && f.advertencias.length) {
-        tdMotivo.appendChild(rtEl('div', { className:'rt-note', text: f.advertencias.join(' ') }));
-      }
-      tr.appendChild(tdMotivo);
-      tr.addEventListener('click', () => rtOportunidadesVerDetalle(f.Codigo_producto));
-      return tr;
-    }
+    (f) => rtOportunidadesFila(f, columnas),
+    { wrapClassName:'rt-oport-wrap', tableClassName:'rt-oport-tabla' }
   ));
   host.appendChild(tablaWrap);
 
   // Tarjetas (mobile) -- mismo dato, distinta presentacion, activada por CSS (.rt-oportunidades-tabla se
-  // oculta y .rt-oportunidades-cards se muestra por debajo de 640px, ver <style>)
+  // oculta y .rt-oportunidades-cards se muestra por debajo de 700px, ver <style>). Sin
+  // click-to-navigate en toda la tarjeta -- "Ver detalle" explicito, igual que en desktop.
   const cardsWrap = rtEl('div', { className:'rt-oportunidades-cards' });
   datos.forEach(f => {
+    const expandido = RT_OPORTUNIDADES_EXPANDIDO === f.Codigo_producto;
     const card = rtEl('div', { className:'card rt-opp-card' });
     card.appendChild(rtBadgeEstado(f.estado_principal, f.texto_estado));
     if (f.estados_secundarios.length) card.appendChild(rtBadgesSecundarios(f.estados_secundarios));
     card.appendChild(rtEl('div', { className:'rt-opp-card-titulo', text: f.Codigo_producto + ' · ' + f.Nombre_producto }));
     card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: f.Nombre_marca }));
     card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + (f.ratio_confiable === false ? ' (muestra chica)' : '') + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(rtOportunidadesStockDeposito(f)) + ' depósito 90' + (f.Stock_fallados ? ' · ' + nf.format(f.Stock_fallados) + ' fallados' : '') + ') · Total operativo ' + nf.format(f.Stock_total) }));
-    if (f.dias_desde_ultimo_ingreso != null) card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Último ingreso: hace ' + nf.format(f.dias_desde_ultimo_ingreso) + ' días' }));
-    if (f.confianza_rotacion) card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Rotación: confianza ' + f.confianza_rotacion }));
-    if (f.tipo_descuento) card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Tipo: ' + (tdTextoDescuento[f.tipo_descuento] || f.tipo_descuento) }));
-    if (f.motivo) card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: f.motivo }));
-    if (f.diagnostico_rotacion) {
-      const ps = f.diagnostico_rotacion.par_sugerido;
-      card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: 'Origen ' + ps.origen.sucursal + ' (stock ' + ps.origen.stock + ') → Destino ' + ps.destino.sucursal + ' (ventas ' + ps.destino.ventas + ')' }));
-      if (ps.cantidad_sugerida) card.appendChild(rtOportunidadesEstimacionRotacion(ps.cantidad_sugerida));
-    }
-    if (f.advertencias && f.advertencias.length) {
-      card.appendChild(rtEl('div', { className:'rt-opp-card-motivo', text: f.advertencias.join(' ') }));
-    }
-    card.style.cursor = 'pointer';
-    card.addEventListener('click', () => rtOportunidadesVerDetalle(f.Codigo_producto));
+    const btnDetalle = rtEl('button', { className:'btn-sm', text: expandido ? 'Ocultar' : 'Ver detalle' });
+    btnDetalle.type = 'button';
+    btnDetalle.setAttribute('aria-expanded', expandido ? 'true' : 'false');
+    btnDetalle.addEventListener('click', () => rtOportunidadesToggleDetalle(f.Codigo_producto));
+    card.appendChild(btnDetalle);
+    if (expandido) card.appendChild(rtOportunidadesPanelDetalle(f));
     cardsWrap.appendChild(card);
   });
   host.appendChild(cardsWrap);
