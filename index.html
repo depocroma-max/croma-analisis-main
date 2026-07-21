@@ -896,6 +896,24 @@ function renderRTInsumos(host) {
       return tr;
     }
   ));
+
+  // Reglas del calculo, a la vista -- la cobertura estimada no es obvia (no es "dias
+  // de stock del periodo elegido", se basa en el ultimo ingreso real), mismo criterio de
+  // transparencia que ya usa Oportunidades para mostrar el "por que" al lado de los numeros.
+  const reglas = rtEl('div', { className:'rt-insumos-reglas' });
+  reglas.appendChild(rtEl('h4', { text:'Cómo se calcula', className:'rt-subtitulo' }));
+  const lista = rtEl('ul', { className:'rt-note' });
+  [
+    'Universo: rubros INSUMOS / ART REGALOS Y PROMOS, solo productos con "BOLSA" en el nombre.',
+    'Stock: sucursales + depósito 90 (fuente confiable centro=0000, no la tabla de Sysneo que puede estar desactualizada).',
+    'Consumo diario estimado = (cantidad recibida en el último ingreso real − stock actual) ÷ días desde ese ingreso.',
+    'Cobertura estimada = stock actual ÷ consumo diario estimado.',
+    'Umbral de aviso: ' + RT_INSUMOS.umbral_cobertura_dias + ' días de cobertura o menos → "Revisar para reponer".',
+    '"Sin ingreso registrado": nunca se cargó una compra a proveedor para ese código.',
+    '"Sin datos suficientes": el stock actual es mayor o igual a lo recibido en el último ingreso (probable ingreso no registrado) -- nunca se inventa un consumo negativo.',
+  ].forEach(texto => lista.appendChild(rtEl('li', { text: texto })));
+  reglas.appendChild(lista);
+  host.appendChild(reglas);
 }
 
 async function rtCargarResumen() {
