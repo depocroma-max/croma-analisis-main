@@ -489,6 +489,7 @@
         <button class="tab" data-view="productos">Productos</button>
         <button class="tab" data-view="talles-colores">Talles y colores</button>
         <button class="tab" data-view="oportunidades">Oportunidades</button>
+        <button class="tab" data-view="insumos">Insumos</button>
       </div>
       <div id="rtPanelHost"></div>
     </div>
@@ -601,6 +602,18 @@ function rtSucursalColorVar(centro) {
 
 let RT_DESDE = null, RT_HASTA = null;
 let RT_VIEW = 'dashboard';
+// Catalogo completo (marcas/rubros/subrubros DISTINCT, sin filtrar por actividad en el
+// periodo) -- alimenta los <datalist> de autocompletar de los filtros. Independiente del
+// periodo elegido y del RT_RESUMEN (que solo trae el TOP 100 por ventas, insuficiente
+// para autocompletar: un rubro sin ventas en el periodo no aparecia como sugerencia
+// aunque el filtro funcionara bien si se tipeaba a mano -- bug 2026-07-21). Se pide una
+// sola vez por sesion (el catalogo cambia con poca frecuencia).
+let RT_CATALOGO = null, RT_CATALOGO_LOADING = false;
+// Pestaña Insumos (/analisis/insumos) -- independiente de RT_DESDE/RT_HASTA, ver
+// comentario del endpoint en croma-api. Se pide una vez y se reutiliza (cache de 15 min
+// ya la tiene el backend); "Actualizar" del header no la refresca a proposito, tiene su
+// propio boton dentro de la vista.
+let RT_INSUMOS = null, RT_INSUMOS_LOADING = false, RT_INSUMOS_ERROR = null;
 let RT_RESUMEN = null, RT_RESUMEN_LOADING = false, RT_RESUMEN_ERROR = null, RT_RESUMEN_ABORT = null;
 // Resumen del "mismo periodo, año anterior" (mismas fechas de RT_DESDE/RT_HASTA, un año
 // antes) -- solo alimenta los deltas de comparacion del dashboard. Se pide en paralelo a
@@ -796,6 +809,95 @@ function rtCambiarPeriodo() {
   rtCargarResumenAnterior(); // en paralelo, nunca bloquea el dashboard principal
 }
 
+// Se llama de forma "fire and forget" desde rtFormularioFiltro() -- no bloquea el render
+// del formulario ni de ninguna otra vista. Si falla, los campos de filtro simplemente
+// quedan sin autocompletar (se puede seguir tipeando a mano), mismo criterio que
+// RT_RESUMEN cuando todavia no cargo.
+async function rtCargarCatalogo() {
+  if (RT_CATALOGO || RT_CATALOGO_LOADING) return;
+  RT_CATALOGO_LOADING = true;
+  try {
+    const resp = await fetch(STOCK_API_URL + '/analisis/catalogo');
+    const data = await resp.json();
+    if (resp.ok && data.ok) {
+      RT_CATALOGO = data;
+      rtRenderVistaActual();
+    }
+  } catch (err) {
+    // silencioso a proposito -- ver comentario de la funcion
+  } finally {
+    RT_CATALOGO_LOADING = false;
+  }
+}
+
+async function rtCargarInsumos() {
+  RT_INSUMOS_LOADING = true; RT_INSUMOS_ERROR = null;
+  rtRenderVistaActual();
+  try {
+    const resp = await fetch(STOCK_API_URL + '/analisis/insumos');
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    RT_INSUMOS = data;
+  } catch (err) {
+    RT_INSUMOS_ERROR = err.message;
+  } finally {
+    RT_INSUMOS_LOADING = false;
+    rtRenderVistaActual();
+  }
+}
+
+function rtInsumosCeldaCobertura(f) {
+  if (f.cobertura_estado === 'sin_ingreso_registrado') return 'sin ingreso registrado';
+  if (f.cobertura_estado === 'sin_consumo_medible') return 'sin datos suficientes';
+  return nf1.format(f.cobertura_dias) + ' días';
+}
+
+function renderRTInsumos(host) {
+  host.appendChild(rtEl('h3', { text:'Insumos', className:'rt-subtitulo' }));
+  host.appendChild(rtEl('p', { className:'rt-note', text:'Bolsas de entrega (rubros INSUMOS / ART REGALOS Y PROMOS) -- independiente del período elegido arriba, usa el historial completo de ingresos para estimar cuándo reponer.' }));
+
+  const btnActualizar = rtEl('button', { className:'btn-sm', text:'Actualizar' });
+  btnActualizar.type = 'button';
+  btnActualizar.addEventListener('click', () => { RT_INSUMOS = null; rtCargarInsumos(); });
+  host.appendChild(btnActualizar);
+
+  if (!RT_INSUMOS && !RT_INSUMOS_LOADING) rtCargarInsumos();
+  if (RT_INSUMOS_LOADING && !RT_INSUMOS) return rtEstado(host, 'loading', 'Calculando cobertura de insumos...');
+  if (RT_INSUMOS_ERROR) return rtEstado(host, 'error', 'No se pudo calcular. ' + RT_INSUMOS_ERROR, rtCargarInsumos);
+  if (!RT_INSUMOS) return rtEstado(host, 'loading', 'Calculando...');
+
+  const datos = RT_INSUMOS.data;
+  if (!datos.length) return rtEstado(host, 'vacio', 'Sin bolsas con actividad para mostrar.');
+
+  const aRevisar = datos.filter(f => f.revisar_reposicion);
+  if (aRevisar.length) {
+    const nota = rtEl('p', { className:'rt-note rt-oport-ventas-neg' });
+    nota.textContent = aRevisar.length === 1
+      ? aRevisar[0].producto + ' (' + aRevisar[0].codigo + '): revisar para reponer -- cobertura estimada ' + nf1.format(aRevisar[0].cobertura_dias) + ' días.'
+      : aRevisar.length + ' insumos con cobertura por debajo de ' + RT_INSUMOS.umbral_cobertura_dias + ' días: revisar para reponer.';
+    host.appendChild(nota);
+  }
+
+  host.appendChild(rtTabla(
+    ['Código', 'Producto', 'Stock total', 'Stock sucursales', 'Depósito 90', 'Último ingreso', 'Cantidad recibida', 'Consumo diario est.', 'Cobertura estimada', 'Estado'],
+    datos,
+    (f) => {
+      const tr = rtEl('tr');
+      tr.appendChild(rtEl('td', { text: f.codigo }));
+      tr.appendChild(rtEl('td', { text: f.producto || '—' }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.stock) }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.stock_sucursales || 0) }));
+      tr.appendChild(rtEl('td', { text: nf.format(f.stock_deposito || 0) }));
+      tr.appendChild(rtEl('td', { text: f.ultimo_ingreso ? new Date(f.ultimo_ingreso).toLocaleDateString('es-AR') : '—' }));
+      tr.appendChild(rtEl('td', { text: f.cantidad_ultimo_ingreso != null ? nf.format(f.cantidad_ultimo_ingreso) : '—' }));
+      tr.appendChild(rtEl('td', { text: f.consumo_diario_estimado != null ? nf1.format(f.consumo_diario_estimado) : '—' }));
+      tr.appendChild(rtEl('td', { text: rtInsumosCeldaCobertura(f) }));
+      tr.appendChild(rtEl('td', { className: f.revisar_reposicion ? 'rt-oport-ventas-neg' : '', text: f.revisar_reposicion ? 'Revisar para reponer' : (f.cobertura_estado === 'calculada' ? 'OK' : '—') }));
+      return tr;
+    }
+  ));
+}
+
 async function rtCargarResumen() {
   if (RT_RESUMEN_ABORT) RT_RESUMEN_ABORT.abort();
   const controller = new AbortController();
@@ -954,6 +1056,7 @@ function rtRenderVistaActual() {
   else if (RT_VIEW === 'productos') renderRTProductos(host);
   else if (RT_VIEW === 'talles-colores') renderRTTallesColores(host);
   else if (RT_VIEW === 'oportunidades') renderRTOportunidades(host);
+  else if (RT_VIEW === 'insumos') renderRTInsumos(host);
 }
 
 // ── Tabla genérica ───────────────────────────────────────────────────────────
@@ -1032,6 +1135,7 @@ function renderRTDashboard(host) {
     { label:'Stock total', valor:t.Stock_total, icon:'package', deltaActual:t.Stock_total, deltaAnterior: tAnterior && tAnterior.Stock_total },
     { label:'Depósito Central (90)', valor:t.Stock_deposito_90, icon:'warehouse', cls:'amber' },
     { label:'Fallados (93)', valor:t.Stock_deposito_93, icon:'warehouse', cls:'danger' },
+    { label:'Insumos', valor:t.Stock_insumos, icon:'shoppingBag', cls:'violet' },
     { label:'Productos base', valor:t.productos_base, icon:'shirt' },
     { label:'Variantes con actividad', valor:t.variantes, icon:'barChart3' },
     { label:'Variantes con stock', valor:t.variantes_con_stock, icon:'circleCheck' },
@@ -1211,6 +1315,26 @@ function renderRTInsights(host, t, tAnterior) {
   } else if (RT_INSIGHT_OPP_ALTA != null) {
     lista.appendChild(rtInsightFila('alertTriangle', RT_INSIGHT_OPP_ALTA > 0 ? 'down' : '',
       '<b>' + esc(nf.format(RT_INSIGHT_OPP_ALTA)) + '</b> oportunidades de prioridad alta requieren atención.'));
+  }
+
+  // 6) Insumos a reponer (reusa el mismo estado/fetch que la pestaña Insumos -- el
+  // endpoint ya cachea 15 min del lado del servidor, no hace falta un cache propio aca).
+  if (!RT_INSUMOS && !RT_INSUMOS_LOADING) rtCargarInsumos();
+  if (RT_INSUMOS_LOADING && !RT_INSUMOS) {
+    lista.appendChild(rtInsightFila('shoppingBag', '', 'Calculando cobertura de insumos…'));
+  } else if (RT_INSUMOS_ERROR) {
+    lista.appendChild(rtInsightFila('shoppingBag', 'down', 'No se pudo calcular la cobertura de insumos.'));
+  } else if (RT_INSUMOS) {
+    const aRevisar = RT_INSUMOS.data.filter(f => f.revisar_reposicion);
+    if (aRevisar.length) {
+      const peor = aRevisar.slice().sort((a, b) => a.cobertura_dias - b.cobertura_dias)[0];
+      const texto = aRevisar.length === 1
+        ? 'Sería bueno revisar <b>' + esc(peor.producto || peor.codigo) + '</b> para reponer (~' + esc(nf1.format(peor.cobertura_dias)) + ' días de cobertura estimada).'
+        : '<b>' + esc(nf.format(aRevisar.length)) + ' insumos</b> están por debajo del umbral de reposición -- el más urgente es ' + esc(peor.producto || peor.codigo) + '.';
+      lista.appendChild(rtInsightFila('shoppingBag', 'down', texto));
+    } else {
+      lista.appendChild(rtInsightFila('shoppingBag', '', 'Los insumos tienen cobertura estimada suficiente por ahora.'));
+    }
   }
 
   panel.appendChild(lista);
@@ -1699,6 +1823,7 @@ function rtProductosNormalizarCodigo(valor) {
 // (reset de pagina/expandido de Productos + rtCargarCompleto()) -- Oportunidades pasa
 // el suyo propio (reset de offset + rtCargarOportunidades()), ya que no usa RT_COMPLETO.
 function rtFormularioFiltro(host, alAplicar) {
+  if (!RT_CATALOGO && !RT_CATALOGO_LOADING) rtCargarCatalogo();
   if (RT_PRODUCTOS_FILTRO_ORIGEN) {
     const badge = rtEl('div', { className:'rt-productos-origen' });
     badge.innerHTML = icon('info', ''); // icono estatico del helper
@@ -1732,9 +1857,14 @@ function rtFormularioFiltro(host, alAplicar) {
   // duplicados. Si RT_RESUMEN todavia no cargo, el campo queda sin <datalist> (se
   // sigue pudiendo tipear el filtro a mano, solo no autocompleta).
   const sugerenciasUnicas = valores => Array.from(new Set(valores.filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
-  const sugerenciasMarca = RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_marca.map(m => m.marca)) : null;
-  const sugerenciasRubro = RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_rubro.map(r => r.rubro)) : null;
-  const sugerenciasSubrubro = RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_subrubro.map(s => s.subrubro)) : null;
+  // RT_CATALOGO (todo el catalogo) es la fuente preferida -- RT_RESUMEN (TOP 100 por
+  // ventas del periodo) queda solo como respaldo mientras RT_CATALOGO todavia no cargo.
+  const sugerenciasMarca = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.marcas)
+    : (RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_marca.map(m => m.marca)) : null);
+  const sugerenciasRubro = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.rubros)
+    : (RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_rubro.map(r => r.rubro)) : null);
+  const sugerenciasSubrubro = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.subrubros)
+    : (RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_subrubro.map(s => s.subrubro)) : null);
 
   const inCodigo = campo('rtProdCodigo', 'Código exacto', RT_FILTRO && RT_FILTRO.codigo);
   const inMarca = campo('rtProdMarca', 'Marca', RT_FILTRO && RT_FILTRO.marca, sugerenciasMarca);
