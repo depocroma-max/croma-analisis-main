@@ -2394,7 +2394,8 @@ function rtOportunidadesAplicarRotacion() {
 // backend (version_reglas); acá no se duplica ninguna lógica de clasificación.
 const RT_TEXTO_ESTADO = {
   revisar_devoluciones: 'Revisar devoluciones', reposicion_urgente: 'Reposición urgente',
-  reponer_desde_deposito: 'Reponer desde depósito', posible_rotacion: 'Posible rotación',
+  reponer_desde_deposito: 'Reponer desde depósito', reposicion_a_evaluar: 'Reposición a evaluar',
+  posible_rotacion: 'Posible rotación',
   reposicion_proxima: 'Reposición próxima', venta_destacada: 'Venta destacada', bien_vendido: 'Bien vendido',
   seguimiento: 'Seguimiento', posible_descuento: 'Posible descuento', stock_parado: 'Stock parado',
 };
@@ -2469,6 +2470,15 @@ function rtOportunidadesCeldaRatio(f) {
 function rtOportunidadesCeldaDias(f) {
   return f.dias_desde_ultimo_ingreso == null ? '—' : nf.format(f.dias_desde_ultimo_ingreso);
 }
+function rtOportunidadesCeldaDiasUltimaVenta(f) {
+  return f.dias_desde_ultima_venta == null ? 'sin ventas' : nf.format(f.dias_desde_ultima_venta);
+}
+const RT_TEXTO_MOTIVO_EVALUACION = {
+  ultima_venta_antigua: 'Última venta hace más de 30 días',
+  ventas_recientes_insuficientes: 'Pocas ventas en los últimos 30 días',
+  ritmo_inferior_al_grupo: 'Ritmo reciente por debajo del grupo',
+  muestra_insuficiente: 'Evidencia histórica todavía chica',
+};
 function rtOportunidadesColCodigo() {
   return { header:'Código', render: f => f.Codigo_producto };
 }
@@ -2516,7 +2526,7 @@ function rtOportunidadesGrupoColumnas(estado, datos) {
     columnas.push({ header:'Último ingreso', numeric:true, className:'rt-col-ultimo-ingreso', render: rtOportunidadesCeldaDias });
     return columnas;
   }
-  if (estado === 'reposicion_urgente' || estado === 'reponer_desde_deposito' || estado === 'reposicion_proxima') {
+  if (estado === 'reponer_desde_deposito' || estado === 'reposicion_proxima') {
     return [
       rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
       { header:'Ventas', numeric:true, render: rtOportunidadesCeldaVentas },
@@ -2524,6 +2534,29 @@ function rtOportunidadesGrupoColumnas(estado, datos) {
       { header:'Depósito 90', numeric:true, render: f => nf.format(rtOportunidadesStockDeposito(f)) },
       { header:'Cobertura', numeric:true, render: rtOportunidadesCeldaCobertura },
       { header:'Ratio', numeric:true, className:'rt-col-secundaria', render: rtOportunidadesCeldaRatio },
+    ];
+  }
+  // reposicion_urgente/reposicion_a_evaluar (v1.3.0): stock operativo siempre 0 en las
+  // dos -- lo que las distingue es la demanda RECIENTE (ultimos 30 dias respecto de
+  // "hasta"), no cobertura_dias (que da 0 apenas el stock llega a cero, sin importar si
+  // el producto se agoto rapido o tardo meses). "Últimos 30 días" es relativo al "hasta"
+  // elegido, no a hoy -- ver nota en el panel de detalle.
+  if (estado === 'reposicion_urgente') {
+    return [
+      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
+      { header:'Ventas período', numeric:true, render: rtOportunidadesCeldaVentas },
+      { header:'Ventas 30 días', numeric:true, render: f => nf.format(f.Ventas_ultimos_30_dias || 0) },
+      { header:'Última venta (días)', numeric:true, render: rtOportunidadesCeldaDiasUltimaVenta },
+      { header:'Último ingreso', numeric:true, className:'rt-col-secundaria', render: rtOportunidadesCeldaDias },
+    ];
+  }
+  if (estado === 'reposicion_a_evaluar') {
+    return [
+      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
+      { header:'Ventas período', numeric:true, render: rtOportunidadesCeldaVentas },
+      { header:'Ventas 30 días', numeric:true, render: f => nf.format(f.Ventas_ultimos_30_dias || 0) },
+      { header:'Última venta (días)', numeric:true, render: rtOportunidadesCeldaDiasUltimaVenta },
+      { header:'Motivo', className:'rt-col-secundaria', render: f => f.motivo_evaluacion ? (RT_TEXTO_MOTIVO_EVALUACION[f.motivo_evaluacion] || f.motivo_evaluacion) : '—' },
     ];
   }
   if (estado === 'stock_parado' || estado === 'posible_descuento') {
@@ -2582,6 +2615,24 @@ function rtOportunidadesPanelDetalle(f) {
   });
   panel.appendChild(bloque('Stock por sucursal', filasSucursal));
   panel.appendChild(bloque('Depósito 90 / Fallados 93', nf.format(rtOportunidadesStockDeposito(f)) + ' / ' + nf.format(f.Stock_fallados || 0)));
+
+  // Demanda reciente (v1.3.0): solo tiene sentido mostrarla cuando el motor la calculo
+  // (estado_principal o secundario reposicion_urgente/reposicion_a_evaluar) -- "últimos
+  // 30 días" es relativo a la fecha "hasta" elegida en el filtro, no a hoy.
+  if (f.estado_principal === 'reposicion_urgente' || f.estado_principal === 'reposicion_a_evaluar'
+    || (f.estados_secundarios && (f.estados_secundarios.includes('reposicion_urgente') || f.estados_secundarios.includes('reposicion_a_evaluar')))) {
+    const stockOperativo = (f.Stock_sucursales || 0) + rtOportunidadesStockDeposito(f);
+    panel.appendChild(bloque('Stock operativo', nf.format(stockOperativo)));
+    panel.appendChild(bloque('Ventas últimos 30 días (respecto de "hasta")',
+      nf.format(f.Ventas_ultimos_30_dias || 0) + ' · última venta: ' + (f.dias_desde_ultima_venta == null ? 'sin ventas registradas' : 'hace ' + nf.format(f.dias_desde_ultima_venta) + ' días')));
+    const umbralTexto = f.comparacion_reciente_relativa
+      ? 'umbral del grupo: ' + nf.format(f.umbral_demanda_reciente) + ' (mediana de ' + esc(f.grupo_comparacion) + ': ' + nf.format(f.mediana_ventas_30d_grupo) + ', ' + nf.format(f.cantidad_productos_comparados_30d) + ' productos comparados)'
+      : 'umbral fijo: ' + nf.format(f.umbral_demanda_reciente) + ' (grupo con menos de 5 productos con ventas recientes, sin exigir mediana)';
+    panel.appendChild(bloque('Demanda reciente', (f.demanda_reciente ? 'Cumple' : 'No cumple') + ' — ' + umbralTexto));
+    if (f.motivo_evaluacion) {
+      panel.appendChild(bloque('Motivo de evaluación', RT_TEXTO_MOTIVO_EVALUACION[f.motivo_evaluacion] || f.motivo_evaluacion));
+    }
+  }
 
   if (f.diagnostico_rotacion) {
     const ps = f.diagnostico_rotacion.par_sugerido;
