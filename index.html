@@ -1157,43 +1157,94 @@ function rtRotacionesFilaLinea(item) {
   return tr;
 }
 
+// Mismo patron visual/interaccion que rtFormularioFiltro (Productos/Talles y colores/
+// Oportunidades): <form class="rt-productos-filtros"> con campos ".fc", Enter o
+// "Filtrar" aplican, "Limpiar filtros" resetea -- nunca se filtra en cada tecleo. No
+// reutiliza rtFormularioFiltro tal cual porque Rotaciones filtra por dimensiones
+// distintas (origen/destino/confianza, sin subrubro) y, a diferencia de Productos, NO
+// exige al menos un filtro para mostrar datos (el plan global ya se muestra completo
+// por defecto -- los filtros solo ocultan filas de ese plan ya calculado, ver
+// coincideFiltroRotacion en croma-api).
+function rtRotacionesFormularioFiltro(host) {
+  if (!RT_CATALOGO && !RT_CATALOGO_LOADING) rtCargarCatalogo();
+
+  const form = rtEl('form', { className:'rt-productos-filtros' });
+  form.setAttribute('novalidate', 'novalidate');
+
+  const campoSelect = (id, label, valorActual, opciones) => {
+    const fc = rtEl('div', { className:'fc' });
+    fc.appendChild(rtEl('label', { text:label, attrs:{ for:id } }));
+    const sel = rtEl('select', { attrs:{ id, name:id } });
+    opciones.forEach(([v, t]) => sel.appendChild(rtEl('option', { attrs:{ value:v }, text:t })));
+    sel.value = valorActual || '';
+    fc.appendChild(sel);
+    form.appendChild(fc);
+    return sel;
+  };
+  const campoTexto = (id, label, valorActual, listaSugerencias) => {
+    const fc = rtEl('div', { className:'fc' });
+    fc.appendChild(rtEl('label', { text:label, attrs:{ for:id } }));
+    const attrs = { type:'text', id, name:id, autocomplete:'off' };
+    if (listaSugerencias) attrs.list = id + 'Lista';
+    const inp = rtEl('input', { attrs });
+    inp.value = valorActual || '';
+    fc.appendChild(inp);
+    if (listaSugerencias) {
+      const datalist = rtEl('datalist', { attrs:{ id: id + 'Lista' } });
+      listaSugerencias.forEach(v => datalist.appendChild(rtEl('option', { attrs:{ value:v } })));
+      fc.appendChild(datalist);
+    }
+    form.appendChild(fc);
+    return inp;
+  };
+
+  const sugerenciasUnicas = valores => Array.from(new Set((valores || []).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
+  const sugerenciasMarca = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.marcas) : null;
+  const sugerenciasRubro = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.rubros) : null;
+
+  const centrosOpciones = c => [['', c], ...RT_CENTROS.map(cc => [cc, RT_CENTRO_NOMBRE[cc]])];
+  const selOrigen = campoSelect('rtRotOrigen', 'Origen', RT_ROTACIONES_FILTRO.origen, centrosOpciones('Todas'));
+  const selDestino = campoSelect('rtRotDestino', 'Destino', RT_ROTACIONES_FILTRO.destino, centrosOpciones('Todas'));
+  const inMarca = campoTexto('rtRotMarca', 'Marca', RT_ROTACIONES_FILTRO.marca, sugerenciasMarca);
+  const inRubro = campoTexto('rtRotRubro', 'Rubro', RT_ROTACIONES_FILTRO.rubro, sugerenciasRubro);
+  const inCodigo = campoTexto('rtRotCodigo', 'Código exacto', RT_ROTACIONES_FILTRO.codigo);
+  const selConfianza = campoSelect('rtRotConfianza', 'Confianza', RT_ROTACIONES_FILTRO.confianza, [['', 'Todas'], ['alta', 'Alta'], ['manual', 'Manual']]);
+
+  const acciones = rtEl('div', { className:'rt-productos-filtros-acciones' });
+  const btnFiltrar = rtBotonIcono('btn-sm', 'filter', 'Filtrar');
+  btnFiltrar.type = 'submit';
+  const hayFiltroActivo = Object.values(RT_ROTACIONES_FILTRO).some(v => v);
+  const btnLimpiar = rtEl('button', { className:'btn-sm', text:'Limpiar filtros' });
+  btnLimpiar.type = 'button';
+  btnLimpiar.disabled = !hayFiltroActivo;
+  btnLimpiar.addEventListener('click', () => {
+    RT_ROTACIONES_FILTRO = { origen:'', destino:'', marca:'', rubro:'', codigo:'', confianza:'' };
+    rtCargarRotaciones();
+  });
+  acciones.appendChild(btnFiltrar); acciones.appendChild(btnLimpiar);
+  form.appendChild(acciones);
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    RT_ROTACIONES_FILTRO = {
+      origen: selOrigen.value, destino: selDestino.value,
+      marca: inMarca.value.trim(), rubro: inRubro.value.trim(),
+      codigo: rtProductosNormalizarCodigo(inCodigo.value),
+      confianza: selConfianza.value,
+    };
+    rtCargarRotaciones();
+  });
+
+  host.appendChild(form);
+}
+
 function renderRTRotaciones(host) {
   host.appendChild(rtEl('h3', { text:'Rotaciones', className:'rt-subtitulo' }));
   host.appendChild(rtEl('p', { className:'rt-note', text:'Sugerencias de traslado de stock entre sucursales a nivel código+talle+color, calculadas sobre el período elegido arriba. Las cantidades son estimaciones preliminares -- siempre verificar talle, color y cantidad real antes de confirmar el envío.' }));
 
   if (!RT_ROTACIONES && !RT_ROTACIONES_LOADING) rtCargarRotaciones();
 
-  // ── Filtros ──
-  const filtros = rtEl('div', { className:'fbar' });
-  const selOrigen = rtEl('select', { className:'form-control' });
-  selOrigen.appendChild(rtEl('option', { attrs:{value:''}, text:'Origen (todas)' }));
-  RT_CENTROS.forEach(c => selOrigen.appendChild(rtEl('option', { attrs:{value:c}, text: RT_CENTRO_NOMBRE[c] })));
-  selOrigen.value = RT_ROTACIONES_FILTRO.origen;
-  selOrigen.addEventListener('change', () => { RT_ROTACIONES_FILTRO.origen = selOrigen.value; rtCargarRotaciones(); });
-  filtros.appendChild(selOrigen);
-
-  const selDestino = rtEl('select', { className:'form-control' });
-  selDestino.appendChild(rtEl('option', { attrs:{value:''}, text:'Destino (todas)' }));
-  RT_CENTROS.forEach(c => selDestino.appendChild(rtEl('option', { attrs:{value:c}, text: RT_CENTRO_NOMBRE[c] })));
-  selDestino.value = RT_ROTACIONES_FILTRO.destino;
-  selDestino.addEventListener('change', () => { RT_ROTACIONES_FILTRO.destino = selDestino.value; rtCargarRotaciones(); });
-  filtros.appendChild(selDestino);
-
-  const selConfianza = rtEl('select', { className:'form-control' });
-  [['','Confianza (todas)'], ['alta','Alta'], ['manual','Manual']].forEach(([v, t]) => selConfianza.appendChild(rtEl('option', { attrs:{value:v}, text:t })));
-  selConfianza.value = RT_ROTACIONES_FILTRO.confianza;
-  selConfianza.addEventListener('change', () => { RT_ROTACIONES_FILTRO.confianza = selConfianza.value; rtCargarRotaciones(); });
-  filtros.appendChild(selConfianza);
-
-  ['marca', 'rubro', 'codigo'].forEach(campo => {
-    const input = rtEl('input', { className:'form-control' });
-    input.type = 'text';
-    input.placeholder = campo[0].toUpperCase() + campo.slice(1);
-    input.value = RT_ROTACIONES_FILTRO[campo];
-    input.addEventListener('change', () => { RT_ROTACIONES_FILTRO[campo] = input.value.trim(); rtCargarRotaciones(); });
-    filtros.appendChild(input);
-  });
-  host.appendChild(filtros);
+  rtRotacionesFormularioFiltro(host);
 
   // ── Acciones ──
   const acciones = rtEl('div', { className:'fbar' });
