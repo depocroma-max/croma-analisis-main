@@ -131,7 +131,7 @@
     .rt-insumos-reglas ul{margin:6px 0 0;padding-left:1.1em}
     .rt-insumos-reglas li{margin-bottom:4px}
     .rt-rot-card{padding:16px}
-    .rt-rot-cantidad{width:56px;padding:4px 6px}
+    .rt-rot-cantidad{width:100%;max-width:60px;padding:4px 6px;box-sizing:border-box}
     .rt-rot-cantidad-alerta{border-color:var(--warning,#c77700);background:color-mix(in srgb, var(--warning,#c77700) 12%, transparent)}
     /* table-layout:fixed + columnas con ancho fijo (todas menos Producto, que se lleva
        el resto del espacio) -- evita el scroll horizontal del .rt-table-wrap en desktop.
@@ -154,18 +154,28 @@
     .rt-rot-item-linea{font-size:12px;color:var(--gray-400);line-height:1.5}
     .rt-rot-item-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
     table.rt-rot-tabla{table-layout:fixed;width:100%}
-    table.rt-rot-tabla th, table.rt-rot-tabla td{padding:8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    table.rt-rot-tabla th.rt-rot-col-check, table.rt-rot-tabla td.rt-rot-col-check{width:26px}
-    table.rt-rot-tabla th.rt-rot-col-codigo, table.rt-rot-tabla td.rt-rot-col-codigo{width:56px}
-    table.rt-rot-tabla th.rt-rot-col-talle, table.rt-rot-tabla td.rt-rot-col-talle{width:44px}
-    table.rt-rot-tabla th.rt-rot-col-color, table.rt-rot-tabla td.rt-rot-col-color{width:96px}
-    table.rt-rot-tabla th.rt-rot-col-vtas30d, table.rt-rot-tabla td.rt-rot-col-vtas30d{width:52px;text-align:right}
-    table.rt-rot-tabla th.rt-rot-col-stockdest, table.rt-rot-tabla td.rt-rot-col-stockdest{width:52px;text-align:right}
-    table.rt-rot-tabla th.rt-rot-col-stockorigen, table.rt-rot-tabla td.rt-rot-col-stockorigen{width:52px;text-align:right}
-    table.rt-rot-tabla th.rt-rot-col-reserva, table.rt-rot-tabla td.rt-rot-col-reserva{width:56px;text-align:right}
-    table.rt-rot-tabla th.rt-rot-col-cantidad, table.rt-rot-tabla td.rt-rot-col-cantidad{width:64px}
-    table.rt-rot-tabla th.rt-rot-col-confianza, table.rt-rot-tabla td.rt-rot-col-confianza{width:60px}
-    table.rt-rot-tabla th.rt-rot-col-accion, table.rt-rot-tabla td.rt-rot-col-accion{width:32px}
+    /* th y td se tratan distinto a proposito: los headers son mas largos que el dato
+       que encabezan ("Vtas 30d dest." vs. "3") -- si se les aplica el mismo
+       white-space:nowrap que a las celdas quedan truncados a 2-3 letras e ilegibles
+       (bug reportado 2026-07-22). Los headers envuelven en 2 lineas en vez de eso; las
+       celdas de datos (numericas/codigo/talle/color) siguen en una linea con elipsis,
+       salvo Producto que ya envolvia. Anchos de columna recalculados con margen real
+       para el contenido mas largo esperado (ej. "04235" en Codigo, "105" en Talle) --
+       antes estaban ajustados solo al header abreviado, no al dato mas largo.
+    */
+    table.rt-rot-tabla th{padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9.5px}
+    table.rt-rot-tabla td{padding:8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    table.rt-rot-tabla th.rt-rot-col-check, table.rt-rot-tabla td.rt-rot-col-check{width:28px}
+    table.rt-rot-tabla th.rt-rot-col-codigo, table.rt-rot-tabla td.rt-rot-col-codigo{width:76px}
+    table.rt-rot-tabla th.rt-rot-col-talle, table.rt-rot-tabla td.rt-rot-col-talle{width:60px}
+    table.rt-rot-tabla th.rt-rot-col-color, table.rt-rot-tabla td.rt-rot-col-color{width:120px}
+    table.rt-rot-tabla th.rt-rot-col-vtas30d, table.rt-rot-tabla td.rt-rot-col-vtas30d{width:64px;text-align:right}
+    table.rt-rot-tabla th.rt-rot-col-stockdest, table.rt-rot-tabla td.rt-rot-col-stockdest{width:78px;text-align:right}
+    table.rt-rot-tabla th.rt-rot-col-stockorigen, table.rt-rot-tabla td.rt-rot-col-stockorigen{width:78px;text-align:right}
+    table.rt-rot-tabla th.rt-rot-col-reserva, table.rt-rot-tabla td.rt-rot-col-reserva{width:76px;text-align:right}
+    table.rt-rot-tabla th.rt-rot-col-cantidad, table.rt-rot-tabla td.rt-rot-col-cantidad{width:80px}
+    table.rt-rot-tabla th.rt-rot-col-confianza, table.rt-rot-tabla td.rt-rot-col-confianza{width:76px}
+    table.rt-rot-tabla th.rt-rot-col-accion, table.rt-rot-tabla td.rt-rot-col-accion{width:34px}
     table.rt-rot-tabla td.rt-rot-col-producto{white-space:normal;line-height:1.3}
     .rt-rot-accion-icono{background:none;border:none;cursor:pointer;color:var(--gray-400);
       display:inline-flex;padding:4px;border-radius:6px}
@@ -1411,12 +1421,12 @@ function renderRTRotaciones(host) {
         { text:'Producto', className:'rt-rot-col-producto' },
         { text:'Talle', className:'rt-rot-col-talle' },
         { text:'Color', className:'rt-rot-col-color' },
-        { text:'Vtas 30d dest.', className:'rt-rot-col-vtas30d' },
-        { text:'St. destino', className:'rt-rot-col-stockdest' },
-        { text:'St. origen', className:'rt-rot-col-stockorigen' },
-        { text:'Reserva', className:'rt-rot-col-reserva' },
-        { text:'Cantidad', className:'rt-rot-col-cantidad' },
-        { text:'Confianza', className:'rt-rot-col-confianza' },
+        { text:'V. 30d', className:'rt-rot-col-vtas30d', title:'Ventas de los últimos 30 días en la sucursal destino' },
+        { text:'St. dest.', className:'rt-rot-col-stockdest', title:'Stock actual en la sucursal destino' },
+        { text:'St. orig.', className:'rt-rot-col-stockorigen', title:'Stock actual en la sucursal origen' },
+        { text:'Reserva', className:'rt-rot-col-reserva', title:'Reserva mínima que se deja en el origen' },
+        { text:'Cant.', className:'rt-rot-col-cantidad', title:'Cantidad a enviar' },
+        { text:'Conf.', className:'rt-rot-col-confianza', title:'Confianza de la sugerencia' },
         { text:'', className:'rt-rot-col-accion' },
       ],
       par.items,
@@ -1619,7 +1629,9 @@ function rtTabla(headers, filas, renderFila, opts) {
   const trh = rtEl('tr');
   headers.forEach(h => {
     const esObjeto = h && typeof h === 'object';
-    trh.appendChild(rtEl('th', { className: esObjeto ? (h.className || '') : '', text: esObjeto ? h.text : h }));
+    const th = rtEl('th', { className: esObjeto ? (h.className || '') : '', text: esObjeto ? h.text : h });
+    if (esObjeto && h.title) th.title = h.title;
+    trh.appendChild(th);
   });
   thead.appendChild(trh);
   table.appendChild(thead);
