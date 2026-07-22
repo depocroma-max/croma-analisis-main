@@ -131,8 +131,46 @@
     .rt-insumos-reglas ul{margin:6px 0 0;padding-left:1.1em}
     .rt-insumos-reglas li{margin-bottom:4px}
     .rt-rot-card{padding:16px}
-    .rt-rot-cantidad{width:64px;padding:4px 6px}
+    .rt-rot-cantidad{width:56px;padding:4px 6px}
     .rt-rot-cantidad-alerta{border-color:var(--warning,#c77700);background:color-mix(in srgb, var(--warning,#c77700) 12%, transparent)}
+    /* table-layout:fixed + columnas con ancho fijo (todas menos Producto, que se lleva
+       el resto del espacio) -- evita el scroll horizontal del .rt-table-wrap en desktop.
+       Con 12 columnas la tabla no entra en una pantalla angosta angostando columnas
+       nada mas (quedan ilegibles) -- por eso, igual que Oportunidades desde 2026-07-20,
+       debajo de 700px se muestran tarjetas apiladas (.rt-rot-cards-mobile) en vez de la
+       tabla (.rt-rot-tabla-desktop), nunca las dos a la vez (pedido explicito 2026-07-22).
+    */
+    .rt-rot-cards-mobile{display:none}
+    @media (max-width:700px){
+      .rt-rot-tabla-desktop{display:none}
+      .rt-rot-cards-mobile{display:flex;flex-direction:column;gap:10px}
+    }
+    .rt-rot-item-card{border:1px solid var(--gray-100);border-radius:10px;padding:12px;
+      display:flex;flex-direction:column;gap:8px}
+    .rt-rot-item-cabecera{display:flex;align-items:flex-start;gap:8px}
+    .rt-rot-item-titulo{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+    .rt-rot-item-codigo{font-size:11px;font-weight:700;color:var(--gray-400)}
+    .rt-rot-item-producto{font-size:13px;font-weight:600;line-height:1.3}
+    .rt-rot-item-linea{font-size:12px;color:var(--gray-400);line-height:1.5}
+    .rt-rot-item-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    table.rt-rot-tabla{table-layout:fixed;width:100%}
+    table.rt-rot-tabla th, table.rt-rot-tabla td{padding:8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    table.rt-rot-tabla th.rt-rot-col-check, table.rt-rot-tabla td.rt-rot-col-check{width:26px}
+    table.rt-rot-tabla th.rt-rot-col-codigo, table.rt-rot-tabla td.rt-rot-col-codigo{width:56px}
+    table.rt-rot-tabla th.rt-rot-col-talle, table.rt-rot-tabla td.rt-rot-col-talle{width:44px}
+    table.rt-rot-tabla th.rt-rot-col-color, table.rt-rot-tabla td.rt-rot-col-color{width:96px}
+    table.rt-rot-tabla th.rt-rot-col-vtas30d, table.rt-rot-tabla td.rt-rot-col-vtas30d{width:52px;text-align:right}
+    table.rt-rot-tabla th.rt-rot-col-stockdest, table.rt-rot-tabla td.rt-rot-col-stockdest{width:52px;text-align:right}
+    table.rt-rot-tabla th.rt-rot-col-stockorigen, table.rt-rot-tabla td.rt-rot-col-stockorigen{width:52px;text-align:right}
+    table.rt-rot-tabla th.rt-rot-col-reserva, table.rt-rot-tabla td.rt-rot-col-reserva{width:56px;text-align:right}
+    table.rt-rot-tabla th.rt-rot-col-cantidad, table.rt-rot-tabla td.rt-rot-col-cantidad{width:64px}
+    table.rt-rot-tabla th.rt-rot-col-confianza, table.rt-rot-tabla td.rt-rot-col-confianza{width:60px}
+    table.rt-rot-tabla th.rt-rot-col-accion, table.rt-rot-tabla td.rt-rot-col-accion{width:32px}
+    table.rt-rot-tabla td.rt-rot-col-producto{white-space:normal;line-height:1.3}
+    .rt-rot-accion-icono{background:none;border:none;cursor:pointer;color:var(--gray-400);
+      display:inline-flex;padding:4px;border-radius:6px}
+    .rt-rot-accion-icono:hover{color:var(--black);background:var(--gray-100)}
+    .rt-rot-accion-icono svg{width:15px;height:15px}
     .rt-rot-textarea{width:100%;min-height:160px;font-family:monospace;font-size:12px;white-space:pre;padding:10px}
     table.rt-table{width:100%;border-collapse:collapse;font-size:13px}
     table.rt-table th{text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
@@ -1086,11 +1124,10 @@ async function rtCopiarTextoRotaciones() {
   }
 }
 
-function rtRotacionesFilaLinea(item) {
-  const tr = rtEl('tr', { className:'rt-rot-fila' });
-  tr.dataset.rotacionId = item.rotacion_id;
-
-  const tdCheck = rtEl('td');
+// Builders reutilizados por la fila de tabla (desktop) Y la tarjeta (mobile, <700px) --
+// mismo elemento real (checkbox/input/badge/boton), nunca dos implementaciones
+// distintas del mismo control para no duplicar la logica de clamp/seleccion.
+function rtRotacionesCheckbox(item) {
   const check = rtEl('input');
   check.type = 'checkbox';
   check.checked = !!RT_ROTACIONES_SELECCION.get(item.rotacion_id);
@@ -1098,20 +1135,10 @@ function rtRotacionesFilaLinea(item) {
     if (check.checked) RT_ROTACIONES_SELECCION.set(item.rotacion_id, true);
     else RT_ROTACIONES_SELECCION.delete(item.rotacion_id);
   });
-  tdCheck.appendChild(check);
-  tr.appendChild(tdCheck);
+  return check;
+}
 
-  tr.appendChild(rtEl('td', { text: item.Codigo_producto }));
-  const tdProd = rtEl('td', { text: item.Nombre_producto || '—' });
-  tr.appendChild(tdProd);
-  tr.appendChild(rtEl('td', { text: item.Codigo_talle }));
-  tr.appendChild(rtEl('td', { text: item.Codigo_color + ' · ' + (item.color_no_mapeado ? 'COLOR NO MAPEADO' : item.Nombre_color) }));
-  tr.appendChild(rtEl('td', { text: nf.format(item.ventas_30d_destino) }));
-  tr.appendChild(rtEl('td', { text: nf.format(item.stock_destino) }));
-  tr.appendChild(rtEl('td', { text: nf.format(item.stock_origen) }));
-  tr.appendChild(rtEl('td', { text: nf.format(item.reserva_origen) }));
-
-  const tdCant = rtEl('td');
+function rtRotacionesInputCantidad(item) {
   const inputCant = rtEl('input');
   inputCant.type = 'number';
   inputCant.min = '1';
@@ -1138,23 +1165,92 @@ function rtRotacionesFilaLinea(item) {
     marcarSiSuperaSugerida(v);
     RT_ROTACIONES_CANTIDADES.set(item.rotacion_id, v);
   });
-  tdCant.appendChild(inputCant);
-  tr.appendChild(tdCant);
+  return inputCant;
+}
 
-  const tdConf = rtEl('td');
+function rtRotacionesBadgeConfianza(item) {
   const badgeConf = rtEl('span', { className:'badge ' + (item.confianza === 'alta' ? 'badge-warning' : 'badge-neutral'), text: item.confianza === 'alta' ? 'Alta' : 'Manual' });
   badgeConf.title = item.motivo || '';
-  tdConf.appendChild(badgeConf);
+  return badgeConf;
+}
+
+function rtRotacionesBotonVer(item) {
+  const btnVer = rtEl('button', { className:'rt-rot-accion-icono' });
+  btnVer.type = 'button';
+  btnVer.title = 'Ver en Talles y colores';
+  btnVer.setAttribute('aria-label', 'Ver en Talles y colores');
+  btnVer.innerHTML = icon('chevronRight', ''); // icono estatico del helper
+  btnVer.addEventListener('click', () => rtAplicarFiltroYVerTallesColores({ codigo: item.Codigo_producto }));
+  return btnVer;
+}
+
+function rtRotacionesFilaLinea(item) {
+  const tr = rtEl('tr', { className:'rt-rot-fila' });
+  tr.dataset.rotacionId = item.rotacion_id;
+
+  const tdCheck = rtEl('td', { className:'rt-rot-col-check' });
+  tdCheck.appendChild(rtRotacionesCheckbox(item));
+  tr.appendChild(tdCheck);
+
+  tr.appendChild(rtEl('td', { className:'rt-rot-col-codigo', text: item.Codigo_producto }));
+  const tdProd = rtEl('td', { className:'rt-rot-col-producto', text: item.Nombre_producto || '—' });
+  tdProd.title = item.Nombre_producto || '';
+  tr.appendChild(tdProd);
+  tr.appendChild(rtEl('td', { className:'rt-rot-col-talle', text: item.Codigo_talle }));
+  const tdColor = rtEl('td', { className:'rt-rot-col-color', text: item.Codigo_color + ' · ' + (item.color_no_mapeado ? 'COLOR NO MAPEADO' : item.Nombre_color) });
+  tdColor.title = tdColor.textContent;
+  tr.appendChild(tdColor);
+  tr.appendChild(rtEl('td', { className:'rt-rot-col-vtas30d', text: nf.format(item.ventas_30d_destino) }));
+  tr.appendChild(rtEl('td', { className:'rt-rot-col-stockdest', text: nf.format(item.stock_destino) }));
+  tr.appendChild(rtEl('td', { className:'rt-rot-col-stockorigen', text: nf.format(item.stock_origen) }));
+  tr.appendChild(rtEl('td', { className:'rt-rot-col-reserva', text: nf.format(item.reserva_origen) }));
+
+  const tdCant = rtEl('td', { className:'rt-rot-col-cantidad' });
+  tdCant.appendChild(rtRotacionesInputCantidad(item));
+  tr.appendChild(tdCant);
+
+  const tdConf = rtEl('td', { className:'rt-rot-col-confianza' });
+  tdConf.appendChild(rtRotacionesBadgeConfianza(item));
   tr.appendChild(tdConf);
 
-  const tdVer = rtEl('td');
-  const btnVer = rtEl('button', { className:'btn-sm', text:'Talles y colores' });
-  btnVer.type = 'button';
-  btnVer.addEventListener('click', () => rtAplicarFiltroYVerTallesColores({ codigo: item.Codigo_producto }));
-  tdVer.appendChild(btnVer);
+  // Icono en vez de boton con texto ("Talles y colores") -- ahorra ancho de columna,
+  // necesario para que la tabla entre sin scroll horizontal (pedido 2026-07-22).
+  const tdVer = rtEl('td', { className:'rt-rot-col-accion' });
+  tdVer.appendChild(rtRotacionesBotonVer(item));
   tr.appendChild(tdVer);
 
   return tr;
+}
+
+// Tarjeta compacta para mobile (<700px, ver @media en <style>) -- misma info que la
+// fila de tabla pero apilada, mismo criterio que .rt-oportunidades-cards: evita el
+// scroll horizontal que una tabla de 12 columnas siempre va a tener en una pantalla
+// angosta, en vez de seguir angostando columnas hasta volverlas ilegibles.
+function rtRotacionesTarjetaLinea(item) {
+  const card = rtEl('div', { className:'card rt-rot-item-card' });
+  card.dataset.rotacionId = item.rotacion_id;
+
+  const cabecera = rtEl('div', { className:'rt-rot-item-cabecera' });
+  cabecera.appendChild(rtRotacionesCheckbox(item));
+  const titulo = rtEl('div', { className:'rt-rot-item-titulo' });
+  titulo.appendChild(rtEl('span', { className:'rt-rot-item-codigo', text: item.Codigo_producto }));
+  titulo.appendChild(rtEl('span', { className:'rt-rot-item-producto', text: item.Nombre_producto || '—' }));
+  cabecera.appendChild(titulo);
+  cabecera.appendChild(rtRotacionesBotonVer(item));
+  card.appendChild(cabecera);
+
+  card.appendChild(rtEl('div', { className:'rt-rot-item-linea', text:
+    'Talle ' + item.Codigo_talle + ' · Color ' + item.Codigo_color + ' · ' + (item.color_no_mapeado ? 'COLOR NO MAPEADO' : item.Nombre_color) }));
+  card.appendChild(rtEl('div', { className:'rt-rot-item-linea', text:
+    'Ventas 30d destino ' + nf.format(item.ventas_30d_destino) + ' · Stock destino ' + nf.format(item.stock_destino)
+    + ' · Stock origen ' + nf.format(item.stock_origen) + ' · Reserva ' + nf.format(item.reserva_origen) }));
+
+  const pie = rtEl('div', { className:'rt-rot-item-pie' });
+  pie.appendChild(rtRotacionesInputCantidad(item));
+  pie.appendChild(rtRotacionesBadgeConfianza(item));
+  card.appendChild(pie);
+
+  return card;
 }
 
 // Mismo patron visual/interaccion que rtFormularioFiltro (Productos/Talles y colores/
@@ -1278,9 +1374,13 @@ function renderRTRotaciones(host) {
   acciones.appendChild(btnCopiar);
   host.appendChild(acciones);
 
-  if (RT_ROTACIONES_LOADING && !RT_ROTACIONES) return rtEstado(host, 'loading', 'Calculando rotaciones...');
-  if (RT_ROTACIONES_ERROR) return rtEstado(host, 'error', 'No se pudo calcular. ' + RT_ROTACIONES_ERROR, () => rtCargarRotaciones());
-  if (!RT_ROTACIONES) return rtEstado(host, 'loading', 'Calculando...');
+  // rtEstado() hace container.replaceChildren() -- pasarle "host" directo borraria el
+  // formulario de filtros y los botones de accion ya agregados arriba, dejando al
+  // usuario sin forma de sacar un filtro sin recargar la pagina (mismo bug ya corregido
+  // en Oportunidades 2026-07-20). Se le da un div aislado en su lugar.
+  if (RT_ROTACIONES_LOADING && !RT_ROTACIONES) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'loading', 'Calculando rotaciones...'); }
+  if (RT_ROTACIONES_ERROR) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'error', 'No se pudo calcular. ' + RT_ROTACIONES_ERROR, () => rtCargarRotaciones()); }
+  if (!RT_ROTACIONES) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'loading', 'Calculando...'); }
 
   const stockConsultadoMs = RT_ROTACIONES.stock_consultado ? new Date(RT_ROTACIONES.stock_consultado).getTime() : 0;
   const desactualizado = stockConsultadoMs && (Date.now() - stockConsultadoMs) > 3 * 60 * 1000;
@@ -1291,7 +1391,7 @@ function renderRTRotaciones(host) {
       + (RT_ROTACIONES.total_variantes !== RT_ROTACIONES.total_variantes_global ? ' (mostrando ' + nf.format(RT_ROTACIONES.total_variantes) + ' filtradas)' : '') });
   host.appendChild(infoStock);
 
-  if (!RT_ROTACIONES.pares.length) return rtEstado(host, 'vacio', 'Sin sugerencias de rotación para este período/filtro.');
+  if (!RT_ROTACIONES.pares.length) { const vacioWrap = rtEl('div'); host.appendChild(vacioWrap); return rtEstado(vacioWrap, 'vacio', 'Sin sugerencias de rotación para este período/filtro.'); }
 
   RT_ROTACIONES.pares.forEach(par => {
     const card = rtEl('div', { className:'card rt-rot-card' });
@@ -1299,11 +1399,36 @@ function renderRTRotaciones(host) {
     head.appendChild(rtEl('h4', { className:'rt-subtitulo', text: rtCentroNombreCorto(par.origen) + ' → ' + rtCentroNombreCorto(par.destino) }));
     head.appendChild(rtEl('span', { className:'rt-note', text: par.items.length + ' variante(s), ' + nf.format(par.items.reduce((a, i) => a + i.cantidad_sugerida, 0)) + ' unidades sugeridas' }));
     card.appendChild(head);
-    card.appendChild(rtTabla(
-      ['', 'Código', 'Producto', 'Talle', 'Color', 'Ventas 30d destino', 'Stock destino', 'Stock origen', 'Reserva origen', 'Cantidad', 'Confianza', ''],
+
+    // Tabla (desktop) y tarjetas (mobile, <700px) conviven en el DOM -- CSS decide cual
+    // se ve segun el ancho de pantalla (mismo patron que .rt-oportunidades-tabla/
+    // .rt-oportunidades-cards, ver <style>), nunca las dos a la vez.
+    const tablaDesktop = rtEl('div', { className:'rt-rot-tabla-desktop' });
+    tablaDesktop.appendChild(rtTabla(
+      [
+        { text:'', className:'rt-rot-col-check' },
+        { text:'Código', className:'rt-rot-col-codigo' },
+        { text:'Producto', className:'rt-rot-col-producto' },
+        { text:'Talle', className:'rt-rot-col-talle' },
+        { text:'Color', className:'rt-rot-col-color' },
+        { text:'Vtas 30d dest.', className:'rt-rot-col-vtas30d' },
+        { text:'St. destino', className:'rt-rot-col-stockdest' },
+        { text:'St. origen', className:'rt-rot-col-stockorigen' },
+        { text:'Reserva', className:'rt-rot-col-reserva' },
+        { text:'Cantidad', className:'rt-rot-col-cantidad' },
+        { text:'Confianza', className:'rt-rot-col-confianza' },
+        { text:'', className:'rt-rot-col-accion' },
+      ],
       par.items,
-      rtRotacionesFilaLinea
+      rtRotacionesFilaLinea,
+      { tableClassName:'rt-rot-tabla' }
     ));
+    card.appendChild(tablaDesktop);
+
+    const cardsMobile = rtEl('div', { className:'rt-rot-cards-mobile' });
+    par.items.forEach(item => cardsMobile.appendChild(rtRotacionesTarjetaLinea(item)));
+    card.appendChild(cardsMobile);
+
     host.appendChild(card);
   });
 
