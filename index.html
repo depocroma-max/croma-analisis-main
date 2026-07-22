@@ -128,6 +128,9 @@
     #rtPanelHost > * + *{margin-top:1.5rem}
     .rt-insumos-reglas ul{margin:6px 0 0;padding-left:1.1em}
     .rt-insumos-reglas li{margin-bottom:4px}
+    .rt-rot-card{padding:16px}
+    .rt-rot-cantidad{width:64px;padding:4px 6px}
+    .rt-rot-textarea{width:100%;min-height:160px;font-family:monospace;font-size:12px;white-space:pre;padding:10px}
     table.rt-table{width:100%;border-collapse:collapse;font-size:13px}
     table.rt-table th{text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
       color:var(--gray-400);padding:9px 12px;border-bottom:1px solid var(--gray-100);white-space:nowrap}
@@ -497,6 +500,7 @@
         <button class="tab" data-view="talles-colores">Talles y colores</button>
         <button class="tab" data-view="oportunidades">Oportunidades</button>
         <button class="tab" data-view="insumos">Insumos</button>
+        <button class="tab" data-view="rotaciones">Rotaciones</button>
       </div>
       <div id="rtPanelHost"></div>
     </div>
@@ -621,6 +625,20 @@ let RT_CATALOGO = null, RT_CATALOGO_LOADING = false;
 // ya la tiene el backend); "Actualizar" del header no la refresca a proposito, tiene su
 // propio boton dentro de la vista.
 let RT_INSUMOS = null, RT_INSUMOS_LOADING = false, RT_INSUMOS_ERROR = null;
+// Pestaña Rotaciones (/analisis/rotaciones) -- SI depende de RT_DESDE/RT_HASTA (a
+// diferencia de Insumos). RT_ROTACIONES guarda la respuesta completa del backend (plan
+// global ya armado); los filtros de la UI se mandan como query params y el backend
+// devuelve "pares" ya filtrados + los totales _global sin filtrar (ver
+// coincideFiltroRotacion en croma-api) -- el frontend nunca recalcula el reparto.
+// RT_ROTACIONES_SELECCION/CANTIDADES usan rotacion_id (no el indice del array) como
+// clave, para que la seleccion/cantidad editada de una linea nunca "salte" a otra tras
+// un refresh que reordene o cambie el array (pedido explicito del usuario, frontend sin
+// React).
+let RT_ROTACIONES = null, RT_ROTACIONES_LOADING = false, RT_ROTACIONES_ERROR = null, RT_ROTACIONES_ABORT = null;
+let RT_ROTACIONES_FILTRO = { origen:'', destino:'', marca:'', rubro:'', codigo:'', confianza:'' };
+let RT_ROTACIONES_SELECCION = new Map(); // rotacion_id -> true
+let RT_ROTACIONES_CANTIDADES = new Map(); // rotacion_id -> cantidad editada (numero)
+let RT_ROTACIONES_EXPANDIDO = null; // rotacion_id de la fila con detalle abierto
 let RT_RESUMEN = null, RT_RESUMEN_LOADING = false, RT_RESUMEN_ERROR = null, RT_RESUMEN_ABORT = null;
 // Resumen del "mismo periodo, año anterior" (mismas fechas de RT_DESDE/RT_HASTA, un año
 // antes) -- solo alimenta los deltas de comparacion del dashboard. Se pide en paralelo a
@@ -806,6 +824,9 @@ function rtCambiarPeriodo() {
   RT_COMPLETO = null; RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0;
   if (RT_COMPLETO_ABORT) { RT_COMPLETO_ABORT.abort(); RT_COMPLETO_ABORT = null; }
   if (RT_OPORTUNIDADES_ABORT) { RT_OPORTUNIDADES_ABORT.abort(); RT_OPORTUNIDADES_ABORT = null; }
+  RT_ROTACIONES = null; RT_ROTACIONES_ERROR = null;
+  RT_ROTACIONES_SELECCION = new Map(); RT_ROTACIONES_CANTIDADES = new Map(); RT_ROTACIONES_EXPANDIDO = null;
+  if (RT_ROTACIONES_ABORT) { RT_ROTACIONES_ABORT.abort(); RT_ROTACIONES_ABORT = null; }
   // orden/busqueda/filas-por-pagina son preferencia del usuario y persisten; pagina y
   // seleccion se resetean porque la lista de marcas/productos del nuevo periodo puede ser otra.
   RT_MARCAS_PAGINA = 0; RT_MARCAS_SELECCIONADA = null;
@@ -921,6 +942,293 @@ function renderRTInsumos(host) {
   ].forEach(texto => lista.appendChild(rtEl('li', { text: texto })));
   reglas.appendChild(lista);
   host.appendChild(reglas);
+}
+
+// ── Rotaciones ───────────────────────────────────────────────────────────────
+// Sugerencias de rotacion de stock a nivel VARIANTE (Codigo_producto+Codigo_talle+
+// Codigo_color) entre las 6 sucursales comerciales. El backend calcula UN plan global
+// por periodo (ver GET /analisis/rotaciones en croma-api) y aplica los filtros de la UI
+// sobre ese plan ya fijo -- el frontend nunca recalcula el reparto, solo muestra/oculta.
+let RT_ROTACIONES_TEXTO = '';
+
+function rtRotacionesQueryParams() {
+  const params = new URLSearchParams();
+  params.set('desde', RT_DESDE); params.set('hasta', RT_HASTA);
+  const f = RT_ROTACIONES_FILTRO;
+  if (f.origen) params.set('origen', f.origen);
+  if (f.destino) params.set('destino', f.destino);
+  if (f.marca) params.set('marca', f.marca);
+  if (f.rubro) params.set('rubro', f.rubro);
+  if (f.codigo) params.set('codigo', f.codigo);
+  if (f.confianza) params.set('confianza', f.confianza);
+  return params;
+}
+
+async function rtCargarRotaciones(opts) {
+  const refresh = !!(opts && opts.refresh);
+  if (RT_ROTACIONES_ABORT) RT_ROTACIONES_ABORT.abort();
+  const controller = new AbortController();
+  RT_ROTACIONES_ABORT = controller;
+  RT_ROTACIONES_LOADING = true; RT_ROTACIONES_ERROR = null;
+  if (refresh) {
+    // "Actualizar stock": nunca conservar seleccion/cantidades editadas sobre un stock
+    // que ya puede haber cambiado (pedido explicito del usuario).
+    RT_ROTACIONES_SELECCION = new Map(); RT_ROTACIONES_CANTIDADES = new Map();
+    RT_ROTACIONES_EXPANDIDO = null; RT_ROTACIONES_TEXTO = '';
+  }
+  rtRenderVistaActual();
+  try {
+    const params = rtRotacionesQueryParams();
+    if (refresh) params.set('refresh', '1');
+    const resp = await fetch(STOCK_API_URL + '/analisis/rotaciones?' + params.toString(), { signal: controller.signal });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    RT_ROTACIONES = data;
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    RT_ROTACIONES_ERROR = err.message;
+  } finally {
+    RT_ROTACIONES_LOADING = false;
+    rtRenderVistaActual();
+  }
+}
+
+function rtCentroNombreCorto(centro) {
+  return (RT_CENTRO_NOMBRE[centro] || centro).replace(/^\d+\s+/, '').toUpperCase();
+}
+
+function rtRotacionesCantidadDe(item) {
+  const editada = RT_ROTACIONES_CANTIDADES.get(item.rotacion_id);
+  if (editada == null) return item.cantidad_sugerida;
+  return editada;
+}
+
+// Genera el texto (uno o mas bloques, uno por cada par origen->destino con al menos una
+// linea seleccionada valida) usando SOLO las lineas seleccionadas y los datos del ultimo
+// fetch -- nunca vuelve a pedir stock. Cantidades invalidas (vacias, decimales, <1 o
+// >cantidad_sugerida) se excluyen linea por linea, nunca abortan todo el bloque. Un par
+// sin ninguna linea valida no genera bloque vacio.
+function rtGenerarTextoRotaciones() {
+  if (!RT_ROTACIONES) return '';
+  const todosLosItems = RT_ROTACIONES.pares.flatMap(p => p.items);
+  const seleccionados = todosLosItems.filter(it => RT_ROTACIONES_SELECCION.get(it.rotacion_id));
+
+  const porPar = new Map();
+  seleccionados.forEach(it => {
+    const cantidad = rtRotacionesCantidadDe(it);
+    const valida = Number.isInteger(cantidad) && cantidad >= 1 && cantidad <= it.cantidad_sugerida;
+    if (!valida) return;
+    const key = it.origen + '|' + it.destino;
+    if (!porPar.has(key)) porPar.set(key, { origen: it.origen, destino: it.destino, lineas: [] });
+    porPar.get(key).lineas.push({ item: it, cantidad });
+  });
+
+  const stockConsultadoTexto = RT_ROTACIONES.stock_consultado ? new Date(RT_ROTACIONES.stock_consultado).toLocaleString('es-AR') : '—';
+
+  const bloques = [...porPar.values()]
+    .sort((a, b) => rtCentroNombreCorto(a.origen).localeCompare(rtCentroNombreCorto(b.origen)) || rtCentroNombreCorto(a.destino).localeCompare(rtCentroNombreCorto(b.destino)))
+    .map(par => {
+      par.lineas.sort((a, b) =>
+        a.item.Codigo_producto.localeCompare(b.item.Codigo_producto) ||
+        String(a.item.Codigo_talle).localeCompare(String(b.item.Codigo_talle)) ||
+        String(a.item.Codigo_color).localeCompare(String(b.item.Codigo_color)));
+      const total = par.lineas.reduce((acc, l) => acc + l.cantidad, 0);
+      const encabezado = rtCentroNombreCorto(par.origen) + ' A ' + rtCentroNombreCorto(par.destino);
+      const detalle = par.lineas.map(l =>
+        [l.item.Codigo_producto, l.item.Codigo_talle, l.item.Codigo_color, l.item.Nombre_color, l.item.Nombre_producto, 'x' + l.cantidad].join('\t')
+      ).join('\n');
+      return [
+        encabezado,
+        detalle,
+        'TOTAL: ' + total + ' UNIDADES',
+        'Stock consultado: ' + stockConsultadoTexto,
+        'Verificar talle, color y cantidad antes de confirmar.',
+      ].join('\n');
+    });
+
+  return bloques.join('\n\n');
+}
+
+async function rtCopiarTextoRotaciones() {
+  if (!RT_ROTACIONES_TEXTO) return;
+  try {
+    await navigator.clipboard.writeText(RT_ROTACIONES_TEXTO);
+  } catch (err) {
+    // Fallback silencioso: el textarea ya muestra el texto seleccionable a mano.
+  }
+}
+
+function rtRotacionesFilaLinea(item) {
+  const tr = rtEl('tr', { className:'rt-rot-fila' });
+  tr.dataset.rotacionId = item.rotacion_id;
+
+  const tdCheck = rtEl('td');
+  const check = rtEl('input');
+  check.type = 'checkbox';
+  check.checked = !!RT_ROTACIONES_SELECCION.get(item.rotacion_id);
+  check.addEventListener('change', () => {
+    if (check.checked) RT_ROTACIONES_SELECCION.set(item.rotacion_id, true);
+    else RT_ROTACIONES_SELECCION.delete(item.rotacion_id);
+  });
+  tdCheck.appendChild(check);
+  tr.appendChild(tdCheck);
+
+  tr.appendChild(rtEl('td', { text: item.Codigo_producto }));
+  const tdProd = rtEl('td', { text: item.Nombre_producto || '—' });
+  tr.appendChild(tdProd);
+  tr.appendChild(rtEl('td', { text: item.Codigo_talle }));
+  tr.appendChild(rtEl('td', { text: item.Codigo_color + ' · ' + (item.color_no_mapeado ? 'COLOR NO MAPEADO' : item.Nombre_color) }));
+  tr.appendChild(rtEl('td', { text: nf.format(item.ventas_30d_destino) }));
+  tr.appendChild(rtEl('td', { text: nf.format(item.stock_destino) }));
+  tr.appendChild(rtEl('td', { text: nf.format(item.stock_origen) }));
+  tr.appendChild(rtEl('td', { text: nf.format(item.reserva_origen) }));
+
+  const tdCant = rtEl('td');
+  const inputCant = rtEl('input');
+  inputCant.type = 'number';
+  inputCant.min = '1';
+  inputCant.max = String(item.cantidad_sugerida);
+  inputCant.step = '1';
+  inputCant.className = 'form-control rt-rot-cantidad';
+  inputCant.value = String(rtRotacionesCantidadDe(item));
+  inputCant.addEventListener('change', () => {
+    // Nunca permitir superar cantidad_sugerida (garantia de no doble asignacion) ni
+    // bajar de 1 -- clampear en vez de rechazar silenciosamente.
+    let v = parseInt(inputCant.value, 10);
+    if (!Number.isFinite(v)) v = item.cantidad_sugerida;
+    v = Math.max(1, Math.min(item.cantidad_sugerida, v));
+    inputCant.value = String(v);
+    RT_ROTACIONES_CANTIDADES.set(item.rotacion_id, v);
+  });
+  tdCant.appendChild(inputCant);
+  tr.appendChild(tdCant);
+
+  const tdConf = rtEl('td');
+  const badgeConf = rtEl('span', { className:'badge ' + (item.confianza === 'alta' ? 'badge-warning' : 'badge-neutral'), text: item.confianza === 'alta' ? 'Alta' : 'Manual' });
+  badgeConf.title = item.motivo || '';
+  tdConf.appendChild(badgeConf);
+  tr.appendChild(tdConf);
+
+  const tdVer = rtEl('td');
+  const btnVer = rtEl('button', { className:'btn-sm', text:'Talles y colores' });
+  btnVer.type = 'button';
+  btnVer.addEventListener('click', () => rtAplicarFiltroYVerTallesColores({ codigo: item.Codigo_producto }));
+  tdVer.appendChild(btnVer);
+  tr.appendChild(tdVer);
+
+  return tr;
+}
+
+function renderRTRotaciones(host) {
+  host.appendChild(rtEl('h3', { text:'Rotaciones', className:'rt-subtitulo' }));
+  host.appendChild(rtEl('p', { className:'rt-note', text:'Sugerencias de traslado de stock entre sucursales a nivel código+talle+color, calculadas sobre el período elegido arriba. Las cantidades son estimaciones preliminares -- siempre verificar talle, color y cantidad real antes de confirmar el envío.' }));
+
+  if (!RT_ROTACIONES && !RT_ROTACIONES_LOADING) rtCargarRotaciones();
+
+  // ── Filtros ──
+  const filtros = rtEl('div', { className:'fbar' });
+  const selOrigen = rtEl('select', { className:'form-control' });
+  selOrigen.appendChild(rtEl('option', { attrs:{value:''}, text:'Origen (todas)' }));
+  RT_CENTROS.forEach(c => selOrigen.appendChild(rtEl('option', { attrs:{value:c}, text: RT_CENTRO_NOMBRE[c] })));
+  selOrigen.value = RT_ROTACIONES_FILTRO.origen;
+  selOrigen.addEventListener('change', () => { RT_ROTACIONES_FILTRO.origen = selOrigen.value; rtCargarRotaciones(); });
+  filtros.appendChild(selOrigen);
+
+  const selDestino = rtEl('select', { className:'form-control' });
+  selDestino.appendChild(rtEl('option', { attrs:{value:''}, text:'Destino (todas)' }));
+  RT_CENTROS.forEach(c => selDestino.appendChild(rtEl('option', { attrs:{value:c}, text: RT_CENTRO_NOMBRE[c] })));
+  selDestino.value = RT_ROTACIONES_FILTRO.destino;
+  selDestino.addEventListener('change', () => { RT_ROTACIONES_FILTRO.destino = selDestino.value; rtCargarRotaciones(); });
+  filtros.appendChild(selDestino);
+
+  const selConfianza = rtEl('select', { className:'form-control' });
+  [['','Confianza (todas)'], ['alta','Alta'], ['manual','Manual']].forEach(([v, t]) => selConfianza.appendChild(rtEl('option', { attrs:{value:v}, text:t })));
+  selConfianza.value = RT_ROTACIONES_FILTRO.confianza;
+  selConfianza.addEventListener('change', () => { RT_ROTACIONES_FILTRO.confianza = selConfianza.value; rtCargarRotaciones(); });
+  filtros.appendChild(selConfianza);
+
+  ['marca', 'rubro', 'codigo'].forEach(campo => {
+    const input = rtEl('input', { className:'form-control' });
+    input.type = 'text';
+    input.placeholder = campo[0].toUpperCase() + campo.slice(1);
+    input.value = RT_ROTACIONES_FILTRO[campo];
+    input.addEventListener('change', () => { RT_ROTACIONES_FILTRO[campo] = input.value.trim(); rtCargarRotaciones(); });
+    filtros.appendChild(input);
+  });
+  host.appendChild(filtros);
+
+  // ── Acciones ──
+  const acciones = rtEl('div', { className:'fbar' });
+  const btnActualizar = rtEl('button', { className:'btn-sm', text:'Actualizar stock' });
+  btnActualizar.type = 'button';
+  btnActualizar.addEventListener('click', () => rtCargarRotaciones({ refresh:true }));
+  acciones.appendChild(btnActualizar);
+
+  const btnSelTodo = rtEl('button', { className:'btn-sm', text:'Seleccionar todo' });
+  btnSelTodo.type = 'button';
+  btnSelTodo.addEventListener('click', () => {
+    if (!RT_ROTACIONES) return;
+    RT_ROTACIONES.pares.flatMap(p => p.items).forEach(it => RT_ROTACIONES_SELECCION.set(it.rotacion_id, true));
+    rtRenderVistaActual();
+  });
+  acciones.appendChild(btnSelTodo);
+
+  const btnLimpiar = rtEl('button', { className:'btn-sm', text:'Limpiar selección' });
+  btnLimpiar.type = 'button';
+  btnLimpiar.addEventListener('click', () => { RT_ROTACIONES_SELECCION = new Map(); rtRenderVistaActual(); });
+  acciones.appendChild(btnLimpiar);
+
+  const btnGenerar = rtEl('button', { className:'btn-sm', text:'Generar texto' });
+  btnGenerar.type = 'button';
+  btnGenerar.addEventListener('click', () => { RT_ROTACIONES_TEXTO = rtGenerarTextoRotaciones(); rtRenderVistaActual(); });
+  acciones.appendChild(btnGenerar);
+
+  const btnCopiar = rtEl('button', { className:'btn-sm', text:'Copiar texto' });
+  btnCopiar.type = 'button';
+  btnCopiar.addEventListener('click', rtCopiarTextoRotaciones);
+  acciones.appendChild(btnCopiar);
+  host.appendChild(acciones);
+
+  if (RT_ROTACIONES_LOADING && !RT_ROTACIONES) return rtEstado(host, 'loading', 'Calculando rotaciones...');
+  if (RT_ROTACIONES_ERROR) return rtEstado(host, 'error', 'No se pudo calcular. ' + RT_ROTACIONES_ERROR, () => rtCargarRotaciones());
+  if (!RT_ROTACIONES) return rtEstado(host, 'loading', 'Calculando...');
+
+  const stockConsultadoMs = RT_ROTACIONES.stock_consultado ? new Date(RT_ROTACIONES.stock_consultado).getTime() : 0;
+  const desactualizado = stockConsultadoMs && (Date.now() - stockConsultadoMs) > 3 * 60 * 1000;
+  const infoStock = rtEl('p', { className:'rt-note' + (desactualizado ? ' rt-oport-ventas-neg' : ''),
+    text: 'Stock consultado: ' + (RT_ROTACIONES.stock_consultado ? new Date(RT_ROTACIONES.stock_consultado).toLocaleString('es-AR') : '—')
+      + (desactualizado ? ' — Los datos pueden haber cambiado. Actualizá el stock antes de confirmar.' : '')
+      + ' · Total del plan: ' + nf.format(RT_ROTACIONES.total_variantes_global) + ' variantes, ' + nf.format(RT_ROTACIONES.total_unidades_global) + ' unidades en ' + nf.format(RT_ROTACIONES.total_pares_global) + ' pares'
+      + (RT_ROTACIONES.total_variantes !== RT_ROTACIONES.total_variantes_global ? ' (mostrando ' + nf.format(RT_ROTACIONES.total_variantes) + ' filtradas)' : '') });
+  host.appendChild(infoStock);
+
+  if (!RT_ROTACIONES.pares.length) return rtEstado(host, 'vacio', 'Sin sugerencias de rotación para este período/filtro.');
+
+  RT_ROTACIONES.pares.forEach(par => {
+    const card = rtEl('div', { className:'card rt-rot-card' });
+    const head = rtEl('div', { className:'rt-panel-head' });
+    head.appendChild(rtEl('h4', { className:'rt-subtitulo', text: rtCentroNombreCorto(par.origen) + ' → ' + rtCentroNombreCorto(par.destino) }));
+    head.appendChild(rtEl('span', { className:'rt-note', text: par.items.length + ' variante(s), ' + nf.format(par.items.reduce((a, i) => a + i.cantidad_sugerida, 0)) + ' unidades sugeridas' }));
+    card.appendChild(head);
+    card.appendChild(rtTabla(
+      ['', 'Código', 'Producto', 'Talle', 'Color', 'Ventas 30d destino', 'Stock destino', 'Stock origen', 'Reserva origen', 'Cantidad', 'Confianza', ''],
+      par.items,
+      rtRotacionesFilaLinea
+    ));
+    host.appendChild(card);
+  });
+
+  if (RT_ROTACIONES_TEXTO) {
+    const bloqueTexto = rtEl('div', { className:'card rt-rot-texto' });
+    bloqueTexto.appendChild(rtEl('h4', { className:'rt-subtitulo', text:'Texto generado' }));
+    const textarea = rtEl('textarea', { className:'form-control rt-rot-textarea' });
+    textarea.readOnly = true;
+    textarea.value = RT_ROTACIONES_TEXTO;
+    bloqueTexto.appendChild(textarea);
+    host.appendChild(bloqueTexto);
+  }
+
+  host.appendChild(rtEl('p', { className:'rt-note', text:'Versión de reglas: ' + (RT_ROTACIONES.version_rotaciones || '—') }));
 }
 
 async function rtCargarResumen() {
@@ -1082,6 +1390,7 @@ function rtRenderVistaActual() {
   else if (RT_VIEW === 'talles-colores') renderRTTallesColores(host);
   else if (RT_VIEW === 'oportunidades') renderRTOportunidades(host);
   else if (RT_VIEW === 'insumos') renderRTInsumos(host);
+  else if (RT_VIEW === 'rotaciones') renderRTRotaciones(host);
 }
 
 // ── Tabla genérica ───────────────────────────────────────────────────────────
