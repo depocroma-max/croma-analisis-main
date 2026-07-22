@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Croma · Análisis</title>
+  <link rel="icon" type="image/png" href="tridente_solo.png">
+  <link rel="apple-touch-icon" href="tridente_solo.png">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src https://stock-api.croma-app.com.ar;">
   <meta name="referrer" content="no-referrer">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -450,9 +452,21 @@
       .top-actions{gap:6px}
     }
     @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+    /* ===== SPLASH SCREEN ===== */
+    #splashScreen{position:fixed;inset:0;background:#0d0d0d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:99999;transition:opacity .6s ease}
+    #splashScreen.splash-hide{opacity:0;pointer-events:none}
+    #splashLogo{width:80px;height:80px;object-fit:contain;animation:splashLogoIn .7s cubic-bezier(0.390,0.575,0.565,1.000) both}
+    #splashText{font-family:var(--font-display);font-size:36px;letter-spacing:6px;color:#fff;animation:splashLogoIn .7s .15s cubic-bezier(0.390,0.575,0.565,1.000) both}
+    @keyframes splashLogoIn{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:scale(1)}}
   </style>
 </head>
 <body>
+
+<div id="splashScreen">
+  <img src="tridente_solo.png" alt="Croma" id="splashLogo">
+  <span id="splashText">CROMA</span>
+</div>
 
 <div id="authCheck">
   <div class="spinner" id="authSpinner"></div>
@@ -466,7 +480,7 @@
 <div id="app" hidden>
   <header class="topbar">
     <div class="brand">
-      <img src="https://horarios.croma-app.com.ar/tridente_solo.png" class="brand-tridente" alt="Croma" onerror="this.style.display='none'">
+      <img src="tridente_solo.png" class="brand-tridente" alt="Croma" onerror="this.style.display='none'">
       <span class="brand-logo">CROMA</span>
       <span class="brand-divider">|</span>
       <span class="brand-section">ANÁLISIS</span>
@@ -3349,6 +3363,16 @@ function renderRTOportunidades(host) {
   host.appendChild(pag);
 }
 
+</script>
+<script>
+  window.addEventListener('load', function() {
+    var splash = document.getElementById('splashScreen');
+    if (!splash) return;
+    setTimeout(function() {
+      splash.classList.add('splash-hide');
+      setTimeout(function() { splash.remove(); }, 600);
+    }, 1200);
+  });
 </script>
 </body>
 </html>
