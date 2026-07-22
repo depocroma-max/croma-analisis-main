@@ -451,7 +451,11 @@
       .brand-divider,.brand-section{display:none}
       .top-actions{gap:6px}
     }
-    @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}
+      #splashScreen{transition:opacity .6s ease!important}
+      #splashLogo,#splashText{animation:splashLogoIn .7s cubic-bezier(0.390,0.575,0.565,1.000) both!important}
+      #splashText{animation-delay:.15s!important}
+    }
 
     /* ===== SPLASH SCREEN ===== */
     #splashScreen{position:fixed;inset:0;background:#0d0d0d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:99999;transition:opacity .6s ease}
