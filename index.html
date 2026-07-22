@@ -130,6 +130,7 @@
     .rt-insumos-reglas li{margin-bottom:4px}
     .rt-rot-card{padding:16px}
     .rt-rot-cantidad{width:64px;padding:4px 6px}
+    .rt-rot-cantidad-alerta{border-color:var(--warning,#c77700);background:color-mix(in srgb, var(--warning,#c77700) 12%, transparent)}
     .rt-rot-textarea{width:100%;min-height:160px;font-family:monospace;font-size:12px;white-space:pre;padding:10px}
     table.rt-table{width:100%;border-collapse:collapse;font-size:13px}
     table.rt-table th{text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
@@ -1006,8 +1007,17 @@ function rtRotacionesCantidadDe(item) {
 // Genera el texto (uno o mas bloques, uno por cada par origen->destino con al menos una
 // linea seleccionada valida) usando SOLO las lineas seleccionadas y los datos del ultimo
 // fetch -- nunca vuelve a pedir stock. Cantidades invalidas (vacias, decimales, <1 o
-// >cantidad_sugerida) se excluyen linea por linea, nunca abortan todo el bloque. Un par
+// >stock_origen) se excluyen linea por linea, nunca abortan todo el bloque. Un par
 // sin ninguna linea valida no genera bloque vacio.
+//
+// Tope de edicion manual = stock_origen (pedido explicito del usuario 2026-07-22), NO
+// cantidad_sugerida -- cantidad_sugerida sigue siendo el default y el numero que el
+// algoritmo valido contra el excedente/reserva de esa linea especifica, pero el usuario
+// puede subir hasta el stock real de Sysneo en esa sucursal si a mano confirmo que hay
+// mas disponible de lo que el sistema calculo. Si varias lineas seleccionadas comparten
+// el mismo origen y se editan por encima de lo sugerido, la suma puede superar el
+// excedente real de ese origen -- el riesgo queda en manos de quien confirma el envio,
+// no del algoritmo (a diferencia de cantidad_sugerida, que si esta garantizada).
 function rtGenerarTextoRotaciones() {
   if (!RT_ROTACIONES) return '';
   const todosLosItems = RT_ROTACIONES.pares.flatMap(p => p.items);
@@ -1016,7 +1026,7 @@ function rtGenerarTextoRotaciones() {
   const porPar = new Map();
   seleccionados.forEach(it => {
     const cantidad = rtRotacionesCantidadDe(it);
-    const valida = Number.isInteger(cantidad) && cantidad >= 1 && cantidad <= it.cantidad_sugerida;
+    const valida = Number.isInteger(cantidad) && cantidad >= 1 && cantidad <= it.stock_origen;
     if (!valida) return;
     const key = it.origen + '|' + it.destino;
     if (!porPar.has(key)) porPar.set(key, { origen: it.origen, destino: it.destino, lineas: [] });
@@ -1087,17 +1097,27 @@ function rtRotacionesFilaLinea(item) {
   const inputCant = rtEl('input');
   inputCant.type = 'number';
   inputCant.min = '1';
-  inputCant.max = String(item.cantidad_sugerida);
+  // Tope = stock_origen (dato duro de Sysneo), no cantidad_sugerida -- ver comentario
+  // en rtGenerarTextoRotaciones. cantidad_sugerida sigue siendo el valor por defecto y
+  // el unico que el algoritmo garantiza contra el excedente real de esa linea puntual.
+  inputCant.max = String(item.stock_origen);
   inputCant.step = '1';
   inputCant.className = 'form-control rt-rot-cantidad';
-  inputCant.value = String(rtRotacionesCantidadDe(item));
+  inputCant.title = 'Sugerido: ' + item.cantidad_sugerida + ' · Stock en origen: ' + item.stock_origen;
+  const marcarSiSuperaSugerida = (v) => inputCant.classList.toggle('rt-rot-cantidad-alerta', v > item.cantidad_sugerida);
+  const valorInicial = rtRotacionesCantidadDe(item);
+  inputCant.value = String(valorInicial);
+  marcarSiSuperaSugerida(valorInicial);
   inputCant.addEventListener('change', () => {
-    // Nunca permitir superar cantidad_sugerida (garantia de no doble asignacion) ni
-    // bajar de 1 -- clampear en vez de rechazar silenciosamente.
+    // Nunca bajar de 1 ni superar el stock real del origen -- clampear en vez de
+    // rechazar silenciosamente. Por encima de cantidad_sugerida SI se permite (pedido
+    // explicito del usuario), pero queda marcado visualmente como una anulacion manual
+    // del calculo del algoritmo.
     let v = parseInt(inputCant.value, 10);
     if (!Number.isFinite(v)) v = item.cantidad_sugerida;
-    v = Math.max(1, Math.min(item.cantidad_sugerida, v));
+    v = Math.max(1, Math.min(item.stock_origen, v));
     inputCant.value = String(v);
+    marcarSiSuperaSugerida(v);
     RT_ROTACIONES_CANTIDADES.set(item.rotacion_id, v);
   });
   tdCant.appendChild(inputCant);
