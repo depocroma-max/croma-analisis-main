@@ -153,6 +153,21 @@
     .rt-rot-item-producto{font-size:13px;font-weight:600;line-height:1.3}
     .rt-rot-item-linea{font-size:12px;color:var(--gray-400);line-height:1.5}
     .rt-rot-item-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    /* Subpestañas Sugeridas/Enviadas/Historial (persistencia de envios, 2026-07-23) --
+       reutiliza .tabs/.tab (mismo look que la nav principal) pero mas angosto, no
+       necesita scroll horizontal propio como la nav de arriba. */
+    .rt-rot-subtabs{margin:0 0 14px}
+    .rt-rot-envio-card{padding:16px}
+    /* Modal de confirmacion de envio -- overlay fijo, fuera de #rtPanelHost a
+       proposito (se agrega a document.body) para sobrevivir cualquier re-render del
+       panel de atras mientras esta abierto. */
+    .rt-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
+      display:flex;align-items:center;justify-content:center;padding:20px}
+    .rt-modal-box{max-width:480px;width:100%;max-height:80vh;overflow-y:auto;padding:20px}
+    .rt-modal-box ul{margin:8px 0;padding-left:1.2em}
+    .rt-modal-acciones{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+    .rt-modal-confirmar{background:var(--black);color:#fff;border-color:var(--black)}
+    .rt-modal-confirmar:hover{opacity:.9}
     table.rt-rot-tabla{table-layout:fixed;width:100%}
     /* th y td se tratan distinto a proposito: los headers son mas largos que el dato
        que encabezan ("Vtas 30d dest." vs. "3") -- si se les aplica el mismo
@@ -606,6 +621,13 @@ const esc    = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').r
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 function getToken() { return sessionStorage.getItem('croma_token') || localStorage.getItem('croma_token'); }
+// Rotaciones es hoy la unica seccion de Tiempo real que manda el token a croma-api --
+// el resto de los endpoints de /analisis/* siguen sin exigir auth (alcance acotado,
+// pedido explicito del usuario 2026-07-23, ver docs/DECISIONS.md).
+function rtRotAuthHeaders() {
+  const t = getToken();
+  return t ? { Authorization: 'Bearer ' + t } : {};
+}
 function getUser() {
   const t = getToken(); if (!t) return null;
   try {
@@ -706,6 +728,15 @@ let RT_ROTACIONES_FILTRO = { origen:'', destino:'', marca:'', rubro:'', codigo:'
 let RT_ROTACIONES_SELECCION = new Map(); // rotacion_id -> true
 let RT_ROTACIONES_CANTIDADES = new Map(); // rotacion_id -> cantidad editada (numero)
 let RT_ROTACIONES_EXPANDIDO = null; // rotacion_id de la fila con detalle abierto
+// Subpestañas Sugeridas/Enviadas/Historial (persistencia de envios, 2026-07-23) -- las
+// tres viven bajo la misma pestaña principal "Rotaciones".
+let RT_ROTACIONES_SUBVISTA = 'sugeridas';
+let RT_ROTACIONES_ENVIADOS = null, RT_ROTACIONES_ENVIADOS_LOADING = false, RT_ROTACIONES_ENVIADOS_ERROR = null;
+let RT_ROTACIONES_HISTORIAL = null, RT_ROTACIONES_HISTORIAL_LOADING = false, RT_ROTACIONES_HISTORIAL_ERROR = null;
+let RT_ROTACIONES_HISTORIAL_FILTRO = { estado:'', desde:'', hasta:'', origen:'', destino:'', usuario:'', codigo:'' };
+let RT_ROTACIONES_HISTORIAL_OFFSET = 0;
+const RT_ROTACIONES_HISTORIAL_LIMIT = 50;
+let RT_ROTACIONES_ENVIANDO = false; // evita doble click mientras el POST esta en curso
 let RT_RESUMEN = null, RT_RESUMEN_LOADING = false, RT_RESUMEN_ERROR = null, RT_RESUMEN_ABORT = null;
 // Resumen del "mismo periodo, año anterior" (mismas fechas de RT_DESDE/RT_HASTA, un año
 // antes) -- solo alimenta los deltas de comparacion del dashboard. Se pide en paralelo a
@@ -1046,7 +1077,7 @@ async function rtCargarRotaciones(opts) {
   try {
     const params = rtRotacionesQueryParams();
     if (refresh) params.set('refresh', '1');
-    const resp = await fetch(STOCK_API_URL + '/analisis/rotaciones?' + params.toString(), { signal: controller.signal });
+    const resp = await fetch(STOCK_API_URL + '/analisis/rotaciones?' + params.toString(), { headers: rtRotAuthHeaders(), signal: controller.signal });
     const data = await resp.json();
     if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
     RT_ROTACIONES = data;
@@ -1083,30 +1114,52 @@ function rtRotacionesCantidadDe(item) {
 // el mismo origen y se editan por encima de lo sugerido, la suma puede superar el
 // excedente real de ese origen -- el riesgo queda en manos de quien confirma el envio,
 // no del algoritmo (a diferencia de cantidad_sugerida, que si esta garantizada).
-function rtGenerarTextoRotaciones() {
-  if (!RT_ROTACIONES) return '';
+// Agrupa las lineas SELECCIONADAS por par origen-destino, con la cantidad editada
+// vigente -- reutilizado por el texto generado (limite permisivo, hasta stock_origen)
+// y por "Marcar como enviado" (limite estricto, hasta cantidad_sugerida -- el backend
+// rechaza cantidad_enviada > cantidad_sugerida_snapshot, ver routes/rotaciones-envios.js).
+// limiteMax: 'stock_origen' | 'cantidad_sugerida'.
+function rtRotacionesLineasSeleccionadasPorPar(limiteMax) {
+  if (!RT_ROTACIONES) return new Map();
   const todosLosItems = RT_ROTACIONES.pares.flatMap(p => p.items);
   const seleccionados = todosLosItems.filter(it => RT_ROTACIONES_SELECCION.get(it.rotacion_id));
 
   const porPar = new Map();
   seleccionados.forEach(it => {
     const cantidad = rtRotacionesCantidadDe(it);
-    const valida = Number.isInteger(cantidad) && cantidad >= 1 && cantidad <= it.stock_origen;
+    const tope = limiteMax === 'cantidad_sugerida' ? it.cantidad_sugerida : it.stock_origen;
+    const valida = Number.isInteger(cantidad) && cantidad >= 1 && cantidad <= tope;
     if (!valida) return;
     const key = it.origen + '|' + it.destino;
     if (!porPar.has(key)) porPar.set(key, { origen: it.origen, destino: it.destino, lineas: [] });
     porPar.get(key).lineas.push({ item: it, cantidad });
   });
+  porPar.forEach(par => par.lineas.sort((a, b) =>
+    a.item.Codigo_producto.localeCompare(b.item.Codigo_producto) ||
+    String(a.item.Codigo_talle).localeCompare(String(b.item.Codigo_talle)) ||
+    String(a.item.Codigo_color).localeCompare(String(b.item.Codigo_color))));
+  return porPar;
+}
+
+// Tope de edicion manual = stock_origen (pedido explicito del usuario 2026-07-22), NO
+// cantidad_sugerida -- cantidad_sugerida sigue siendo el default y el numero que el
+// algoritmo valido contra el excedente/reserva de esa linea especifica, pero el usuario
+// puede subir hasta el stock real de Sysneo en esa sucursal si a mano confirmo que hay
+// mas disponible de lo que el sistema calculo. Si varias lineas seleccionadas comparten
+// el mismo origen y se editan por encima de lo sugerido, la suma puede superar el
+// excedente real de ese origen -- el riesgo queda en manos de quien confirma el envio,
+// no del algoritmo (a diferencia de cantidad_sugerida, que si esta garantizada). El
+// TEXTO puede reflejar esa cantidad libre; el ENVIO PERSISTIDO (Marcar como enviado) es
+// mas estricto y solo acepta hasta cantidad_sugerida, ver rtRotacionesArmarGruposEnvio.
+function rtGenerarTextoRotaciones() {
+  if (!RT_ROTACIONES) return '';
+  const porPar = rtRotacionesLineasSeleccionadasPorPar('stock_origen');
 
   const stockConsultadoTexto = RT_ROTACIONES.stock_consultado ? new Date(RT_ROTACIONES.stock_consultado).toLocaleString('es-AR') : '—';
 
   const bloques = [...porPar.values()]
     .sort((a, b) => rtCentroNombreCorto(a.origen).localeCompare(rtCentroNombreCorto(b.origen)) || rtCentroNombreCorto(a.destino).localeCompare(rtCentroNombreCorto(b.destino)))
     .map(par => {
-      par.lineas.sort((a, b) =>
-        a.item.Codigo_producto.localeCompare(b.item.Codigo_producto) ||
-        String(a.item.Codigo_talle).localeCompare(String(b.item.Codigo_talle)) ||
-        String(a.item.Codigo_color).localeCompare(String(b.item.Codigo_color)));
       const total = par.lineas.reduce((acc, l) => acc + l.cantidad, 0);
       const encabezado = rtCentroNombreCorto(par.origen) + ' A ' + rtCentroNombreCorto(par.destino);
       const detalle = par.lineas.map(l =>
@@ -1131,6 +1184,371 @@ async function rtCopiarTextoRotaciones() {
   } catch (err) {
     // Fallback silencioso: el textarea ya muestra el texto seleccionable a mano.
   }
+}
+
+// ── Persistencia de envios (Sugeridas -> Enviadas -> Historial, 2026-07-23) ─────
+// Arma los grupos que el backend espera para POST /analisis/rotaciones/envios --
+// misma agrupacion por par que el texto, pero con tope ESTRICTO en cantidad_sugerida
+// (el backend rechaza cantidad_enviada > cantidad_sugerida_snapshot, a diferencia del
+// texto que permite hasta stock_origen). Devuelve tambien las lineas seleccionadas que
+// quedan excluidas por superar ese tope, para avisar en el modal de confirmacion.
+function rtRotacionesPrepararEnvio() {
+  if (!RT_ROTACIONES) return { grupos: [], excluidas: [] };
+  const todosLosItems = RT_ROTACIONES.pares.flatMap(p => p.items);
+  const seleccionados = todosLosItems.filter(it => RT_ROTACIONES_SELECCION.get(it.rotacion_id));
+
+  const porPar = new Map();
+  const excluidas = [];
+  seleccionados.forEach(it => {
+    const cantidad = rtRotacionesCantidadDe(it);
+    const valida = Number.isInteger(cantidad) && cantidad >= 1 && cantidad <= it.cantidad_sugerida;
+    if (!valida) { excluidas.push(it); return; }
+    const key = it.origen + '|' + it.destino;
+    if (!porPar.has(key)) porPar.set(key, { origen: it.origen, destino: it.destino, lineas: [] });
+    porPar.get(key).lineas.push({ item: it, cantidad });
+  });
+
+  const stockConsultadoTexto = RT_ROTACIONES.stock_consultado ? new Date(RT_ROTACIONES.stock_consultado).toLocaleString('es-AR') : '—';
+
+  const grupos = [...porPar.values()]
+    .sort((a, b) => rtCentroNombreCorto(a.origen).localeCompare(rtCentroNombreCorto(b.origen)) || rtCentroNombreCorto(a.destino).localeCompare(rtCentroNombreCorto(b.destino)))
+    .map(par => {
+      par.lineas.sort((a, b) =>
+        a.item.Codigo_producto.localeCompare(b.item.Codigo_producto) ||
+        String(a.item.Codigo_talle).localeCompare(String(b.item.Codigo_talle)) ||
+        String(a.item.Codigo_color).localeCompare(String(b.item.Codigo_color)));
+      const total = par.lineas.reduce((acc, l) => acc + l.cantidad, 0);
+      const encabezado = rtCentroNombreCorto(par.origen) + ' A ' + rtCentroNombreCorto(par.destino);
+      const detalle = par.lineas.map(l =>
+        [l.item.Codigo_producto, l.item.Codigo_talle, l.item.Codigo_color, l.item.Nombre_color, l.item.Nombre_producto, 'x' + l.cantidad].join('\t')
+      ).join('\n');
+      const texto_generado = [
+        encabezado, detalle, 'TOTAL: ' + total + ' UNIDADES',
+        'Stock consultado: ' + stockConsultadoTexto,
+        'Verificar talle, color y cantidad antes de confirmar.',
+      ].join('\n');
+      return {
+        origen: par.origen, destino: par.destino, texto_generado,
+        variantes: par.lineas.length, unidades: total,
+        items: par.lineas.map(l => ({
+          rotacion_id_original: l.item.rotacion_id,
+          Codigo_producto: l.item.Codigo_producto,
+          Nombre_producto: l.item.Nombre_producto,
+          Codigo_talle: l.item.Codigo_talle,
+          Codigo_color: l.item.Codigo_color,
+          Nombre_color: l.item.Nombre_color,
+          cantidad_sugerida_snapshot: l.item.cantidad_sugerida,
+          cantidad_enviada: l.cantidad,
+          stock_origen_snapshot: l.item.stock_origen,
+          stock_destino_snapshot: l.item.stock_destino,
+          ventas_30d_destino_snapshot: l.item.ventas_30d_destino,
+          confianza: l.item.confianza,
+        })),
+      };
+    });
+
+  return { grupos, excluidas };
+}
+
+async function rtEnviarOperacionRotaciones(grupos) {
+  if (RT_ROTACIONES_ENVIANDO) return;
+  RT_ROTACIONES_ENVIANDO = true;
+  try {
+    const body = {
+      periodo_desde: RT_DESDE, periodo_hasta: RT_HASTA,
+      stock_consultado: RT_ROTACIONES.stock_consultado,
+      grupos: grupos.map(g => ({ origen: g.origen, destino: g.destino, texto_generado: g.texto_generado, items: g.items })),
+    };
+    const resp = await fetch(STOCK_API_URL + '/analisis/rotaciones/envios', {
+      method: 'POST',
+      headers: { ...rtRotAuthHeaders(), 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    // Exito: nunca conservar seleccion/cantidades/texto de una operacion ya persistida
+    // -- mismo criterio que "Actualizar stock". El backend ya invalido su propio cache
+    // (invalidarCacheRotaciones), asi que un refetch normal (sin refresh=1) ya trae el
+    // plan actualizado sin pedirle a Sysneo de nuevo.
+    RT_ROTACIONES_SELECCION = new Map(); RT_ROTACIONES_CANTIDADES = new Map(); RT_ROTACIONES_TEXTO = '';
+    await rtCargarRotaciones();
+  } catch (err) {
+    alert('No se pudo registrar el envío: ' + err.message);
+  } finally {
+    RT_ROTACIONES_ENVIANDO = false;
+    rtRenderVistaActual();
+  }
+}
+
+function rtCerrarModalRotaciones() {
+  const overlay = document.querySelector('.rt-modal-overlay');
+  if (overlay) overlay.remove();
+}
+
+// Modal de confirmacion antes de persistir -- pedido explicito del usuario: mostrar
+// origen, destino, cantidad de variantes, cantidad total de unidades, stock consultado
+// y el usuario actual (del JWT, no editable). Se agrega document.body directo (no a
+// #rtPanelHost) para que sobreviva cualquier re-render del panel de atras.
+function rtMostrarModalConfirmarEnvio(grupos, excluidas) {
+  rtCerrarModalRotaciones();
+  const usuario = getUser();
+  const totalVariantes = grupos.reduce((a, g) => a + g.variantes, 0);
+  const totalUnidades = grupos.reduce((a, g) => a + g.unidades, 0);
+
+  const overlay = rtEl('div', { className: 'rt-modal-overlay' });
+  const box = rtEl('div', { className: 'card rt-modal-box' });
+  box.appendChild(rtEl('h3', { className: 'rt-subtitulo', text: 'Confirmar envío' }));
+
+  if (excluidas.length) {
+    box.appendChild(rtEl('p', { className: 'rt-note rt-oport-ventas-neg',
+      text: excluidas.length + ' línea(s) seleccionada(s) quedan afuera porque la cantidad editada supera lo sugerido -- bajá la cantidad si querés incluirlas.' }));
+  }
+
+  const lista = rtEl('ul', { className: 'rt-note' });
+  grupos.forEach(g => {
+    lista.appendChild(rtEl('li', { text: rtCentroNombreCorto(g.origen) + ' → ' + rtCentroNombreCorto(g.destino) + ': ' + g.variantes + ' variante(s), ' + nf.format(g.unidades) + ' unidad(es)' }));
+  });
+  box.appendChild(lista);
+
+  box.appendChild(rtEl('p', { text: 'Total: ' + nf.format(totalVariantes) + ' variantes, ' + nf.format(totalUnidades) + ' unidades' }));
+  box.appendChild(rtEl('p', { className: 'rt-note', text: 'Stock consultado: ' + (RT_ROTACIONES.stock_consultado ? new Date(RT_ROTACIONES.stock_consultado).toLocaleString('es-AR') : '—') }));
+  box.appendChild(rtEl('p', { className: 'rt-note', text: 'Usuario: ' + (usuario ? usuario.usuario : '—') }));
+
+  const acciones = rtEl('div', { className: 'rt-modal-acciones' });
+  const btnCancelar = rtEl('button', { className: 'btn-sm', text: 'Cancelar' });
+  btnCancelar.type = 'button';
+  btnCancelar.addEventListener('click', rtCerrarModalRotaciones);
+  const btnConfirmar = rtEl('button', { className: 'btn-sm rt-modal-confirmar', text: 'Confirmar envío' });
+  btnConfirmar.type = 'button';
+  btnConfirmar.addEventListener('click', async () => {
+    btnConfirmar.disabled = true; btnCancelar.disabled = true;
+    btnConfirmar.textContent = 'Enviando...';
+    await rtEnviarOperacionRotaciones(grupos);
+    rtCerrarModalRotaciones();
+  });
+  acciones.appendChild(btnCancelar); acciones.appendChild(btnConfirmar);
+  box.appendChild(acciones);
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+function rtRotacionesAbrirConfirmarEnvio() {
+  const { grupos, excluidas } = rtRotacionesPrepararEnvio();
+  if (!grupos.length) {
+    alert(excluidas.length
+      ? 'Las cantidades editadas superan lo sugerido en todas las líneas seleccionadas -- ajustalas para poder enviar.'
+      : 'Seleccioná al menos una línea válida para marcar como enviada.');
+    return;
+  }
+  rtMostrarModalConfirmarEnvio(grupos, excluidas);
+}
+
+// ── Enviadas ──
+async function rtCargarEnviados() {
+  RT_ROTACIONES_ENVIADOS_LOADING = true; RT_ROTACIONES_ENVIADOS_ERROR = null;
+  rtRenderVistaActual();
+  try {
+    const resp = await fetch(STOCK_API_URL + '/analisis/rotaciones/envios?estado=enviada', { headers: rtRotAuthHeaders() });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    RT_ROTACIONES_ENVIADOS = data;
+  } catch (err) {
+    RT_ROTACIONES_ENVIADOS_ERROR = err.message;
+  } finally {
+    RT_ROTACIONES_ENVIADOS_LOADING = false;
+    rtRenderVistaActual();
+  }
+}
+
+// accion: 'completar' | 'cancelar' | 'reactivar'. mensajeConfirmar: null para no pedir
+// confirmacion (no se usa hoy, todas las transiciones la piden).
+async function rtRotacionesTransicion(envioId, accion, mensajeConfirmar) {
+  if (mensajeConfirmar && !confirm(mensajeConfirmar)) return;
+  try {
+    const resp = await fetch(STOCK_API_URL + '/analisis/rotaciones/envios/' + envioId + '/' + accion, {
+      method: 'PATCH', headers: rtRotAuthHeaders(),
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      const detalle = data && data.invalidos ? '\n' + data.invalidos.map(i => i.Codigo_producto + ' ' + i.Codigo_talle + ' ' + i.Codigo_color + ': ' + i.motivo).join('\n') : '';
+      throw new Error((data && data.error || ('HTTP ' + resp.status)) + detalle);
+    }
+    RT_ROTACIONES_ENVIADOS = null; RT_ROTACIONES_HISTORIAL = null;
+    await rtCargarEnviados();
+    if (RT_ROTACIONES_SUBVISTA === 'historial') await rtCargarHistorial();
+  } catch (err) {
+    alert('No se pudo completar la acción:\n' + err.message);
+  }
+}
+
+async function rtRotacionesCopiarTextoEnvio(envio) {
+  try { await navigator.clipboard.writeText(envio.texto_generado); } catch (err) { /* fallback silencioso */ }
+}
+
+function renderRTRotacionesEnviadas(host) {
+  if (!RT_ROTACIONES_ENVIADOS && !RT_ROTACIONES_ENVIADOS_LOADING) rtCargarEnviados();
+
+  const btnActualizar = rtEl('button', { className: 'btn-sm', text: 'Actualizar' });
+  btnActualizar.type = 'button';
+  btnActualizar.addEventListener('click', () => { RT_ROTACIONES_ENVIADOS = null; rtCargarEnviados(); });
+  host.appendChild(btnActualizar);
+
+  if (RT_ROTACIONES_ENVIADOS_LOADING && !RT_ROTACIONES_ENVIADOS) return rtEstado(host, 'loading', 'Cargando envíos...');
+  if (RT_ROTACIONES_ENVIADOS_ERROR) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'error', RT_ROTACIONES_ENVIADOS_ERROR, () => rtCargarEnviados()); }
+  if (!RT_ROTACIONES_ENVIADOS) return rtEstado(host, 'loading', 'Cargando...');
+  if (!RT_ROTACIONES_ENVIADOS.envios.length) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'vacio', 'Sin envíos pendientes.'); }
+
+  RT_ROTACIONES_ENVIADOS.envios.forEach(env => {
+    const card = rtEl('div', { className: 'card rt-rot-envio-card' });
+    card.appendChild(rtEl('h4', { className: 'rt-subtitulo', text: rtCentroNombreCorto(env.origen) + ' → ' + rtCentroNombreCorto(env.destino) }));
+    card.appendChild(rtEl('p', { className: 'rt-note',
+      text: 'Enviado ' + new Date(env.fecha_envio).toLocaleString('es-AR') + ' por ' + env.usuario_nombre + ' · ' + nf.format(env.variantes) + ' variantes, ' + nf.format(env.unidades) + ' unidades' }));
+    card.appendChild(rtEl('p', { className: 'rt-note', text: 'Stock consultado: ' + new Date(env.stock_consultado).toLocaleString('es-AR') }));
+
+    const acciones = rtEl('div', { className: 'fbar' });
+    const btnCompletar = rtEl('button', { className: 'btn-sm', text: 'Marcar completada' });
+    btnCompletar.type = 'button';
+    btnCompletar.addEventListener('click', () => rtRotacionesTransicion(env.envio_id, 'completar',
+      'Confirmá esta acción solamente cuando el movimiento ya haya sido realizado o registrado. Si Sysneo todavía no refleja el cambio, la sugerencia podría reaparecer.\n\n¿Marcar este envío como completado?'));
+    const btnCancelar = rtEl('button', { className: 'btn-sm', text: 'Cancelar' });
+    btnCancelar.type = 'button';
+    btnCancelar.addEventListener('click', () => rtRotacionesTransicion(env.envio_id, 'cancelar',
+      '¿Cancelar este envío? Las unidades vuelven a estar disponibles para sugerirse.'));
+    const btnCopiar = rtEl('button', { className: 'btn-sm', text: 'Copiar texto de nuevo' });
+    btnCopiar.type = 'button';
+    btnCopiar.addEventListener('click', () => rtRotacionesCopiarTextoEnvio(env));
+    acciones.appendChild(btnCompletar); acciones.appendChild(btnCancelar); acciones.appendChild(btnCopiar);
+    card.appendChild(acciones);
+
+    host.appendChild(card);
+  });
+}
+
+// ── Historial ──
+async function rtCargarHistorial() {
+  RT_ROTACIONES_HISTORIAL_LOADING = true; RT_ROTACIONES_HISTORIAL_ERROR = null;
+  rtRenderVistaActual();
+  try {
+    const params = new URLSearchParams();
+    const f = RT_ROTACIONES_HISTORIAL_FILTRO;
+    params.set('estado', f.estado || 'completada,cancelada');
+    if (f.desde) params.set('desde', f.desde);
+    if (f.hasta) params.set('hasta', f.hasta);
+    if (f.origen) params.set('origen', f.origen);
+    if (f.destino) params.set('destino', f.destino);
+    if (f.usuario) params.set('usuario', f.usuario);
+    if (f.codigo) params.set('codigo', f.codigo);
+    params.set('limit', String(RT_ROTACIONES_HISTORIAL_LIMIT));
+    params.set('offset', String(RT_ROTACIONES_HISTORIAL_OFFSET));
+    const resp = await fetch(STOCK_API_URL + '/analisis/rotaciones/envios?' + params.toString(), { headers: rtRotAuthHeaders() });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    RT_ROTACIONES_HISTORIAL = data;
+  } catch (err) {
+    RT_ROTACIONES_HISTORIAL_ERROR = err.message;
+  } finally {
+    RT_ROTACIONES_HISTORIAL_LOADING = false;
+    rtRenderVistaActual();
+  }
+}
+
+function rtRotacionesHistorialFormularioFiltro(host) {
+  const form = rtEl('form', { className: 'rt-productos-filtros' });
+  form.setAttribute('novalidate', 'novalidate');
+
+  const campoTexto = (id, label, valor) => {
+    const fc = rtEl('div', { className: 'fc' });
+    fc.appendChild(rtEl('label', { text: label, attrs: { for: id } }));
+    const inp = rtEl('input', { attrs: { type: 'text', id, name: id, autocomplete: 'off' } });
+    inp.value = valor || '';
+    fc.appendChild(inp); form.appendChild(fc); return inp;
+  };
+  const campoFecha = (id, label, valor) => {
+    const fc = rtEl('div', { className: 'fc' });
+    fc.appendChild(rtEl('label', { text: label, attrs: { for: id } }));
+    const inp = rtEl('input', { attrs: { type: 'date', id, name: id } });
+    inp.value = valor || '';
+    fc.appendChild(inp); form.appendChild(fc); return inp;
+  };
+  const campoSelect = (id, label, valor, opciones) => {
+    const fc = rtEl('div', { className: 'fc' });
+    fc.appendChild(rtEl('label', { text: label, attrs: { for: id } }));
+    const sel = rtEl('select', { attrs: { id, name: id } });
+    opciones.forEach(([v, t]) => sel.appendChild(rtEl('option', { attrs: { value: v }, text: t })));
+    sel.value = valor || '';
+    fc.appendChild(sel); form.appendChild(fc); return sel;
+  };
+
+  const f = RT_ROTACIONES_HISTORIAL_FILTRO;
+  const inDesde = campoFecha('rtHistDesde', 'Desde', f.desde);
+  const inHasta = campoFecha('rtHistHasta', 'Hasta', f.hasta);
+  const selOrigen = campoSelect('rtHistOrigen', 'Origen', f.origen, [['', 'Todas'], ...RT_CENTROS.map(c => [c, RT_CENTRO_NOMBRE[c]])]);
+  const selDestino = campoSelect('rtHistDestino', 'Destino', f.destino, [['', 'Todas'], ...RT_CENTROS.map(c => [c, RT_CENTRO_NOMBRE[c]])]);
+  const inUsuario = campoTexto('rtHistUsuario', 'Usuario', f.usuario);
+  const inCodigo = campoTexto('rtHistCodigo', 'Código exacto', f.codigo);
+  const selEstado = campoSelect('rtHistEstado', 'Estado', f.estado, [['', 'Todos'], ['completada', 'Completada'], ['cancelada', 'Cancelada']]);
+
+  const acciones = rtEl('div', { className: 'rt-productos-filtros-acciones' });
+  const btnFiltrar = rtBotonIcono('btn-sm', 'filter', 'Filtrar');
+  btnFiltrar.type = 'submit';
+  const btnLimpiar = rtEl('button', { className: 'btn-sm', text: 'Limpiar filtros' });
+  btnLimpiar.type = 'button';
+  btnLimpiar.addEventListener('click', () => {
+    RT_ROTACIONES_HISTORIAL_FILTRO = { estado: '', desde: '', hasta: '', origen: '', destino: '', usuario: '', codigo: '' };
+    RT_ROTACIONES_HISTORIAL_OFFSET = 0;
+    rtCargarHistorial();
+  });
+  acciones.appendChild(btnFiltrar); acciones.appendChild(btnLimpiar);
+  form.appendChild(acciones);
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    RT_ROTACIONES_HISTORIAL_FILTRO = {
+      estado: selEstado.value, desde: inDesde.value, hasta: inHasta.value,
+      origen: selOrigen.value, destino: selDestino.value,
+      usuario: inUsuario.value.trim(), codigo: rtProductosNormalizarCodigo(inCodigo.value),
+    };
+    RT_ROTACIONES_HISTORIAL_OFFSET = 0;
+    rtCargarHistorial();
+  });
+  host.appendChild(form);
+}
+
+function renderRTRotacionesHistorial(host) {
+  rtRotacionesHistorialFormularioFiltro(host);
+
+  if (!RT_ROTACIONES_HISTORIAL && !RT_ROTACIONES_HISTORIAL_LOADING) rtCargarHistorial();
+  if (RT_ROTACIONES_HISTORIAL_LOADING && !RT_ROTACIONES_HISTORIAL) return rtEstado(host, 'loading', 'Cargando historial...');
+  if (RT_ROTACIONES_HISTORIAL_ERROR) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'error', RT_ROTACIONES_HISTORIAL_ERROR, () => rtCargarHistorial()); }
+  if (!RT_ROTACIONES_HISTORIAL) return rtEstado(host, 'loading', 'Cargando...');
+  if (!RT_ROTACIONES_HISTORIAL.envios.length) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'vacio', 'Sin resultados para este filtro.'); }
+
+  host.appendChild(rtTabla(
+    ['Origen → Destino', 'Estado', 'Fecha', 'Usuario', 'Variantes', 'Unidades'],
+    RT_ROTACIONES_HISTORIAL.envios,
+    (env) => {
+      const tr = rtEl('tr');
+      tr.appendChild(rtEl('td', { text: rtCentroNombreCorto(env.origen) + ' → ' + rtCentroNombreCorto(env.destino) }));
+      tr.appendChild(rtEl('td', { text: env.estado === 'completada' ? 'Completada' : 'Cancelada' }));
+      tr.appendChild(rtEl('td', { text: new Date(env.fecha_actualizacion).toLocaleString('es-AR') }));
+      tr.appendChild(rtEl('td', { text: env.usuario_nombre }));
+      tr.appendChild(rtEl('td', { text: nf.format(env.variantes) }));
+      tr.appendChild(rtEl('td', { text: nf.format(env.unidades) }));
+      return tr;
+    }
+  ));
+
+  const pag = rtEl('div', { className: 'rt-pagination' });
+  pag.appendChild(rtEl('span', { text: 'Mostrando ' + (RT_ROTACIONES_HISTORIAL_OFFSET + 1) + '–' + (RT_ROTACIONES_HISTORIAL_OFFSET + RT_ROTACIONES_HISTORIAL.envios.length) + ' de ' + nf.format(RT_ROTACIONES_HISTORIAL.total) }));
+  const btnAnt = rtEl('button', { className: 'btn-sm', text: '← Anterior' });
+  btnAnt.type = 'button'; btnAnt.disabled = RT_ROTACIONES_HISTORIAL_OFFSET === 0;
+  btnAnt.addEventListener('click', () => { RT_ROTACIONES_HISTORIAL_OFFSET = Math.max(0, RT_ROTACIONES_HISTORIAL_OFFSET - RT_ROTACIONES_HISTORIAL_LIMIT); rtCargarHistorial(); });
+  const btnSig = rtEl('button', { className: 'btn-sm', text: 'Siguiente →' });
+  btnSig.type = 'button'; btnSig.disabled = (RT_ROTACIONES_HISTORIAL_OFFSET + RT_ROTACIONES_HISTORIAL.envios.length) >= RT_ROTACIONES_HISTORIAL.total;
+  btnSig.addEventListener('click', () => { RT_ROTACIONES_HISTORIAL_OFFSET += RT_ROTACIONES_HISTORIAL_LIMIT; rtCargarHistorial(); });
+  pag.appendChild(btnAnt); pag.appendChild(btnSig);
+  host.appendChild(pag);
 }
 
 // Builders reutilizados por la fila de tabla (desktop) Y la tarjeta (mobile, <700px) --
@@ -1343,8 +1761,7 @@ function rtRotacionesFormularioFiltro(host) {
   host.appendChild(form);
 }
 
-function renderRTRotaciones(host) {
-  host.appendChild(rtEl('h3', { text:'Rotaciones', className:'rt-subtitulo' }));
+function renderRTRotacionesSugeridas(host) {
   host.appendChild(rtEl('p', { className:'rt-note', text:'Sugerencias de traslado de stock entre sucursales a nivel código+talle+color, calculadas sobre el período elegido arriba. Las cantidades son estimaciones preliminares -- siempre verificar talle, color y cantidad real antes de confirmar el envío.' }));
 
   if (!RT_ROTACIONES && !RT_ROTACIONES_LOADING) rtCargarRotaciones();
@@ -1381,6 +1798,16 @@ function renderRTRotaciones(host) {
   btnCopiar.type = 'button';
   btnCopiar.addEventListener('click', rtCopiarTextoRotaciones);
   acciones.appendChild(btnCopiar);
+
+  // "Marcar como enviado" aparece solo con seleccion activa -- evita el click en vacio
+  // y deja claro que la accion opera sobre lo tildado, no sobre todo el plan.
+  if (RT_ROTACIONES_SELECCION.size) {
+    const btnMarcarEnviado = rtEl('button', { className:'btn-sm rt-modal-confirmar', text:'Marcar como enviado' });
+    btnMarcarEnviado.type = 'button';
+    btnMarcarEnviado.disabled = RT_ROTACIONES_ENVIANDO;
+    btnMarcarEnviado.addEventListener('click', rtRotacionesAbrirConfirmarEnvio);
+    acciones.appendChild(btnMarcarEnviado);
+  }
   host.appendChild(acciones);
 
   // rtEstado() hace container.replaceChildren() -- pasarle "host" directo borraria el
@@ -1452,6 +1879,31 @@ function renderRTRotaciones(host) {
   }
 
   host.appendChild(rtEl('p', { className:'rt-note', text:'Versión de reglas: ' + (RT_ROTACIONES.version_rotaciones || '—') }));
+}
+
+function rtRotacionesCambiarSubvista(sub) {
+  RT_ROTACIONES_SUBVISTA = sub;
+  rtRenderVistaActual();
+}
+
+// Dispatcher de la pestaña principal "Rotaciones" -- subpestañas Sugeridas/Enviadas/
+// Historial (persistencia de envios, 2026-07-23). Sugeridas es el plan calculado en
+// vivo (lo que ya existia); Enviadas/Historial leen de la SQLite propia de croma-api.
+function renderRTRotaciones(host) {
+  host.appendChild(rtEl('h3', { text:'Rotaciones', className:'rt-subtitulo' }));
+
+  const subtabs = rtEl('div', { className:'tabs rt-rot-subtabs' });
+  [['sugeridas', 'Sugeridas'], ['enviadas', 'Enviadas'], ['historial', 'Historial']].forEach(([v, t]) => {
+    const btn = rtEl('button', { className: 'tab' + (RT_ROTACIONES_SUBVISTA === v ? ' active' : ''), text: t });
+    btn.type = 'button';
+    btn.addEventListener('click', () => rtRotacionesCambiarSubvista(v));
+    subtabs.appendChild(btn);
+  });
+  host.appendChild(subtabs);
+
+  if (RT_ROTACIONES_SUBVISTA === 'enviadas') return renderRTRotacionesEnviadas(host);
+  if (RT_ROTACIONES_SUBVISTA === 'historial') return renderRTRotacionesHistorial(host);
+  return renderRTRotacionesSugeridas(host);
 }
 
 async function rtCargarResumen() {
