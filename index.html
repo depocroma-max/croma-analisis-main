@@ -516,6 +516,18 @@
     .rt-stockventas-tabla th.rt-sv-suc, .rt-stockventas-tabla td.rt-sv-suc{
       width:47px;min-width:47px;max-width:47px;text-align:center;padding:4px 2px}
     .rt-stockventas-tabla th.rt-sv-suc{white-space:normal;line-height:1.25;font-size:9.5px;vertical-align:bottom}
+    /* Filtros de Talle/Color -- <details>/<summary> nativo, sin JS de posicionamiento. */
+    .rt-sv-filtro{position:relative}
+    .rt-sv-filtro-btn{cursor:pointer;list-style:none;user-select:none}
+    .rt-sv-filtro-btn::-webkit-details-marker{display:none}
+    .rt-sv-filtro-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:20;background:var(--white);
+      border:1px solid var(--gray-100);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);
+      padding:8px;min-width:170px;max-height:280px;overflow-y:auto}
+    .rt-sv-filtro-opcion{display:flex;align-items:center;gap:6px;padding:4px 4px;font-size:13px;white-space:nowrap;cursor:pointer}
+    .rt-sv-filtro-opcion:hover{background:var(--gray-50);border-radius:4px}
+    .rt-sv-filtro-limpiar{display:block;width:100%;text-align:left;margin-bottom:4px;background:none;
+      border:none;border-bottom:1px solid var(--gray-100);color:var(--accent);font-size:12px;
+      cursor:pointer;padding:2px 4px 6px}
 
     @media(max-width:640px){
       .wrap{padding:14px 14px 60px}
@@ -814,6 +826,14 @@ let RT_STOCKVENTAS_ORDEN = { campo:'ventas', dir:-1 };
 let RT_STOCKVENTAS_BUSQUEDA = '';
 let RT_STOCKVENTAS_PAGINA = 0;
 let RT_STOCKVENTAS_FILAS_POR_PAGINA = 25;
+// Filtros por talle/color -- client-side sobre RT_COMPLETO.filas (la API de /stock-ventas
+// no acepta talle/color como parametro, solo rubro/subrubro/marca/codigo). Multiples
+// valores seleccionados se acumulan (OR entre si), y se combinan (AND) con el resto de
+// los filtros -- mismo criterio "combinable" que ya usa el resto de esta vista.
+let RT_STOCKVENTAS_TALLES = new Set();
+let RT_STOCKVENTAS_COLORES = new Set();
+let RT_STOCKVENTAS_TALLE_ABIERTO = false;
+let RT_STOCKVENTAS_COLOR_ABIERTO = false;
 
 // Oportunidades -- endpoint propio (agregado a nivel producto, no variante), no usa
 // RT_COMPLETO/rtCargarCompleto (eso ahora es de Productos y Talles y colores).
@@ -3512,6 +3532,72 @@ function rtStockVentasBuscar(valor) {
   rtRenderVistaActual();
 }
 
+function rtStockVentasToggleTalle(valor, marcado) {
+  if (marcado) RT_STOCKVENTAS_TALLES.add(valor); else RT_STOCKVENTAS_TALLES.delete(valor);
+  RT_STOCKVENTAS_PAGINA = 0;
+  rtRenderVistaActual();
+}
+function rtStockVentasLimpiarTalles() {
+  RT_STOCKVENTAS_TALLES = new Set();
+  RT_STOCKVENTAS_PAGINA = 0;
+  rtRenderVistaActual();
+}
+function rtStockVentasToggleColor(valor, marcado) {
+  if (marcado) RT_STOCKVENTAS_COLORES.add(valor); else RT_STOCKVENTAS_COLORES.delete(valor);
+  RT_STOCKVENTAS_PAGINA = 0;
+  rtRenderVistaActual();
+}
+function rtStockVentasLimpiarColores() {
+  RT_STOCKVENTAS_COLORES = new Set();
+  RT_STOCKVENTAS_PAGINA = 0;
+  rtRenderVistaActual();
+}
+
+// Aplica busqueda de texto libre + los checkboxes de talle/color, en ese orden (da lo
+// mismo, son AND) -- unico punto donde se combinan los 3 filtros client-side de esta vista.
+function rtStockVentasAplicarFiltrosCliente(filas) {
+  let r = rtStockVentasAplicarBusqueda(filas);
+  if (RT_STOCKVENTAS_TALLES.size) r = r.filter(f => RT_STOCKVENTAS_TALLES.has(String(f.Codigo_talle)));
+  if (RT_STOCKVENTAS_COLORES.size) r = r.filter(f => RT_STOCKVENTAS_COLORES.has(f.Nombre_color || f.Codigo_color || ''));
+  return r;
+}
+
+// Dropdown de checkboxes (<details>/<summary>, sin JS de posicionamiento ni listener de
+// click-afuera) -- reutilizado por Talle y Color. abierto/onToggleAbierto persisten el
+// estado expandido entre renders: cada tilde dispara rtRenderVistaActual() y reconstruye
+// todo #rtPanelHost, así que sin esto el panel se cerraría solo despues de cada click.
+function rtStockVentasFiltroDropdown(titulo, opciones, seleccionados, abierto, onToggleAbierto, onToggleValor, onLimpiar) {
+  const details = rtEl('details', { className:'rt-sv-filtro' });
+  details.open = abierto;
+  details.addEventListener('toggle', () => onToggleAbierto(details.open));
+  const summary = rtEl('summary', { className:'btn-sm rt-sv-filtro-btn',
+    text: titulo + (seleccionados.size ? ' (' + seleccionados.size + ')' : '') + ' ▾' });
+  details.appendChild(summary);
+
+  const panel = rtEl('div', { className:'rt-sv-filtro-panel' });
+  if (seleccionados.size) {
+    const limpiar = rtEl('button', { className:'rt-sv-filtro-limpiar', text:'Limpiar selección' });
+    limpiar.type = 'button';
+    limpiar.addEventListener('click', onLimpiar);
+    panel.appendChild(limpiar);
+  }
+  if (!opciones.length) {
+    panel.appendChild(rtEl('p', { className:'rt-note', text:'Sin opciones para el filtro actual.' }));
+  } else {
+    opciones.forEach(v => {
+      const lbl = rtEl('label', { className:'rt-sv-filtro-opcion' });
+      const chk = rtEl('input', { attrs:{ type:'checkbox' } });
+      chk.checked = seleccionados.has(v);
+      chk.addEventListener('change', () => onToggleValor(v, chk.checked));
+      lbl.appendChild(chk);
+      lbl.appendChild(document.createTextNode(' ' + v));
+      panel.appendChild(lbl);
+    });
+  }
+  details.appendChild(panel);
+  return details;
+}
+
 function renderRTStockVentas(host) {
   host.appendChild(rtEl('h3', { text:'Stock Ventas', className:'rt-subtitulo' }));
   host.appendChild(rtEl('p', { className:'rt-note', text:'Venta y stock por variante y sucursal del período ' +
@@ -3594,6 +3680,16 @@ function rtStockVentasTabla(host, todasLasFilas) {
   }
   toolbar.appendChild(searchWrap);
 
+  // Opciones de talle/color: se calculan sobre todasLasFilas (ya filtrado por
+  // rubro/subrubro/marca/codigo del lado del servidor), sin aplicar todavia busqueda ni
+  // los checkboxes -- asi la lista de opciones no se achica sola a medida que se tildan.
+  const talleOpciones = Array.from(new Set(todasLasFilas.map(f => f.Codigo_talle).filter(t => t != null && t !== '').map(String))).sort(sizeSort);
+  const colorOpciones = Array.from(new Set(todasLasFilas.map(f => f.Nombre_color || f.Codigo_color).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
+  toolbar.appendChild(rtStockVentasFiltroDropdown('Talle', talleOpciones, RT_STOCKVENTAS_TALLES, RT_STOCKVENTAS_TALLE_ABIERTO,
+    (abierto) => { RT_STOCKVENTAS_TALLE_ABIERTO = abierto; }, rtStockVentasToggleTalle, rtStockVentasLimpiarTalles));
+  toolbar.appendChild(rtStockVentasFiltroDropdown('Color', colorOpciones, RT_STOCKVENTAS_COLORES, RT_STOCKVENTAS_COLOR_ABIERTO,
+    (abierto) => { RT_STOCKVENTAS_COLOR_ABIERTO = abierto; }, rtStockVentasToggleColor, rtStockVentasLimpiarColores));
+
   const filasSel = rtEl('div', { className:'rt-productos-filas-sel' });
   filasSel.appendChild(rtEl('label', { text:'Filas por página', attrs:{ for:'rtStockVentasFilas' } }));
   const select = rtEl('select', { attrs:{ id:'rtStockVentasFilas', 'aria-label':'Filas por página' } });
@@ -3607,11 +3703,11 @@ function rtStockVentasTabla(host, todasLasFilas) {
   toolbar.appendChild(filasSel);
   host.appendChild(toolbar);
 
-  const filtradas = rtStockVentasAplicarBusqueda(todasLasFilas);
+  const filtradas = rtStockVentasAplicarFiltrosCliente(todasLasFilas);
   if (!filtradas.length) {
     const vacioHost = rtEl('div', { className:'card' });
-    rtEstado(vacioHost, 'vacio', RT_STOCKVENTAS_BUSQUEDA
-      ? 'Sin variantes que coincidan con "' + RT_STOCKVENTAS_BUSQUEDA + '".'
+    rtEstado(vacioHost, 'vacio', (RT_STOCKVENTAS_BUSQUEDA || RT_STOCKVENTAS_TALLES.size || RT_STOCKVENTAS_COLORES.size)
+      ? 'Sin variantes que coincidan con la búsqueda y los filtros aplicados.'
       : 'Sin variantes para mostrar.');
     host.appendChild(vacioHost);
     return;
