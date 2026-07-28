@@ -512,6 +512,22 @@
     .rt-stockventas-tabla th.rt-sv-suc, .rt-stockventas-tabla td.rt-sv-suc{
       width:47px;min-width:47px;max-width:47px;text-align:center;padding:4px 2px}
     .rt-stockventas-tabla th.rt-sv-suc{white-space:normal;line-height:1.25;font-size:9.5px;vertical-align:bottom}
+    /* Venta Total/Stock Total son columnas ordenables (th con boton adentro, ver
+       rtProductosThOrdenable) -- el boton necesita su propio override para envolver el
+       texto en 2 lineas igual que el resto de rt-sv-suc, .rt-th-btn de base no envuelve. */
+    .rt-stockventas-tabla th.rt-sv-suc .rt-th-btn{white-space:normal;padding:4px 2px;
+      font-size:9.5px;justify-content:center;text-align:center;line-height:1.25}
+    /* Color por sucursal en los encabezados -- mismo codigo de color que ya usan los
+       badges de sucursal en toda la app (.s01..s14, ver rtSucursalBadge). En los datos
+       solo se tiñe el fondo (variante rt-sv-bg-*), nunca el texto, para no perder
+       contraste en los numeros. Selector con .rt-stockventas-tabla + td para pisar el
+       fondo gris de tfoot (mas especifico que ".rt-stockventas-tabla tfoot td"). */
+    .rt-stockventas-tabla td.rt-sv-bg-s01{background:var(--suc-01-s)}
+    .rt-stockventas-tabla td.rt-sv-bg-s05{background:var(--suc-05-s)}
+    .rt-stockventas-tabla td.rt-sv-bg-s09{background:var(--suc-09-s)}
+    .rt-stockventas-tabla td.rt-sv-bg-s10{background:var(--suc-10-s)}
+    .rt-stockventas-tabla td.rt-sv-bg-s12{background:var(--suc-12-s)}
+    .rt-stockventas-tabla td.rt-sv-bg-s14{background:var(--suc-14-s)}
     /* Filtros de Talle/Color -- <details>/<summary> nativo, sin JS de posicionamiento. */
     .rt-sv-filtro{position:relative}
     .rt-sv-filtro-btn{cursor:pointer;list-style:none;user-select:none}
@@ -709,10 +725,11 @@ const RT_CENTRO_NOMBRE = {
   '0010':'10 Perito Moreno', '0012':'12 Centenario', '0014':'14 Roca',
 };
 const RT_CENTRO_CLS = { '0001':'s01', '0005':'s05', '0009':'s09', '0010':'s10', '0012':'s12', '0014':'s14' };
-// Nombre corto sin el prefijo numerico -- solo para encabezados de tablas muy anchas
-// (Stock Ventas) donde 'Venta 01 Paseo' de mas no entra sin agrandar la columna.
-const RT_CENTRO_NOMBRE_CORTO = {
-  '0001':'Paseo', '0005':'Wave', '0009':'Cipo San Martín', '0010':'Perito Moreno', '0012':'Centenario', '0014':'Roca',
+// Diminutivo -- solo para encabezados de columnas angostas (Stock Ventas, 47px) donde ni
+// el nombre corto entra sin agrandar la columna. Pedido explicito 2026-07-28: Cipo San
+// Martín -> Cipo, Perito Moreno -> Perito, Centenario -> Cente (resto ya entraba entero).
+const RT_CENTRO_NOMBRE_DIMINUTIVO = {
+  '0001':'Paseo', '0005':'Wave', '0009':'Cipo', '0010':'Perito', '0012':'Cente', '0014':'Roca',
 };
 const RT_LIMITE_PAGINAS_COMPLETO = 20; // tope de seguridad: 20 * 500 = 10.000 filas
 
@@ -3637,8 +3654,10 @@ function renderRTStockVentas(host) {
   rtStockVentasTabla(host, todasLasFilas);
 }
 
-function rtStockVentasTh(etiqueta, campoId) {
-  return rtProductosThOrdenable(etiqueta, campoId, RT_STOCKVENTAS_ORDEN, () => rtStockVentasOrdenarPor(campoId));
+function rtStockVentasTh(etiqueta, campoId, claseExtra) {
+  const th = rtProductosThOrdenable(etiqueta, campoId, RT_STOCKVENTAS_ORDEN, () => rtStockVentasOrdenarPor(campoId));
+  if (claseExtra) th.classList.add(claseExtra);
+  return th;
 }
 
 function rtStockVentasTabla(host, todasLasFilas) {
@@ -3736,12 +3755,12 @@ function rtStockVentasTabla(host, todasLasFilas) {
   trh.appendChild(rtEl('th', { text:'Precio' }));
   trh.appendChild(rtEl('th', { text:'Costo' }));
   RT_CENTROS.forEach(c => {
-    trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Venta ' + RT_CENTRO_NOMBRE_CORTO[c] }));
-    trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Stock ' + RT_CENTRO_NOMBRE_CORTO[c] }));
+    trh.appendChild(rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Venta ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }));
+    trh.appendChild(rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Stock ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }));
   });
-  trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Stock Depósito' }));
-  trh.appendChild(rtStockVentasTh('Venta total', 'ventas'));
-  trh.appendChild(rtStockVentasTh('Stock total', 'stock'));
+  trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Stock Depo' }));
+  trh.appendChild(rtStockVentasTh('Venta Total', 'ventas', 'rt-sv-suc'));
+  trh.appendChild(rtStockVentasTh('Stock Total', 'stock', 'rt-sv-suc'));
   thead.appendChild(trh);
   table.appendChild(thead);
 
@@ -3760,12 +3779,12 @@ function rtStockVentasTabla(host, todasLasFilas) {
     tr.appendChild(rtEl('td', { className:'nr', text: f.Precio != null ? money(f.Precio) : '—' }));
     tr.appendChild(rtEl('td', { className:'nr', text: f.Precio_costo != null ? money(f.Precio_costo) : '—' }));
     RT_CENTROS.forEach(c => {
-      tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f['Ventas_ctro_' + c] || 0) }));
-      tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f['Stock_ctro_' + c] || 0) }));
+      tr.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Ventas_ctro_' + c] || 0) }));
+      tr.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Stock_ctro_' + c] || 0) }));
     });
     tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_ctro_0000 || 0) }));
-    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f.Ventas_total || 0) }));
-    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f.Stock_total || 0) }));
+    tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Ventas_total || 0) }));
+    tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_total || 0) }));
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
@@ -3778,12 +3797,12 @@ function rtStockVentasTabla(host, todasLasFilas) {
   trTotal.appendChild(rtEl('td', { className:'nr' }));
   trTotal.appendChild(rtEl('td', { className:'nr' }));
   RT_CENTROS.forEach(c => {
-    trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f['Ventas_ctro_' + c] || 0), 0)) }));
-    trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0)) }));
+    trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(pagina.reduce((a, f) => a + (f['Ventas_ctro_' + c] || 0), 0)) }));
+    trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(pagina.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0)) }));
   });
   trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0)) }));
-  trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f.Ventas_total || 0), 0)) }));
-  trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_total || 0), 0)) }));
+  trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Ventas_total || 0), 0)) }));
+  trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_total || 0), 0)) }));
   tfoot.appendChild(trTotal);
   table.appendChild(tfoot);
 
