@@ -3454,9 +3454,23 @@ function renderRTTallesColores(host) {
     host.appendChild(box);
     return;
   }
-  if (RT_COMPLETO_ERROR) return rtEstado(host, 'error', 'No se pudo cargar la curva completa. ' + RT_COMPLETO_ERROR, rtCargarCompleto);
+  // rtEstado() hace container.replaceChildren() -- se le pasa un contenedor propio (no
+  // "host") para no borrar el formulario/chip de filtro ya agregados arriba (mismo bug
+  // que en Stock Ventas: sin esto, un filtro sin resultados o con error dejaba la vista
+  // sin forma de cambiar el filtro).
+  if (RT_COMPLETO_ERROR) {
+    const errHost = rtEl('div');
+    rtEstado(errHost, 'error', 'No se pudo cargar la curva completa. ' + RT_COMPLETO_ERROR, rtCargarCompleto);
+    host.appendChild(errHost);
+    return;
+  }
   const filas = RT_COMPLETO.filas;
-  if (!filas.length) return rtEstado(host, 'vacio', 'Sin datos para este filtro y período.');
+  if (!filas.length) {
+    const vacioHost = rtEl('div');
+    rtEstado(vacioHost, 'vacio', 'Sin datos para este filtro y período.');
+    host.appendChild(vacioHost);
+    return;
+  }
   if (RT_COMPLETO.capado) host.appendChild(rtEl('div', { className:'alert alert-warning', text:'El filtro tiene más de ' + nf.format(RT_LIMITE_PAGINAS_COMPLETO * 500) + ' variantes — se muestra un subconjunto. Acotá el filtro (marca/rubro/subrubro más específico) para ver el total.' }));
 
   const porTalle = new Map(), porColor = new Map();
@@ -3757,7 +3771,15 @@ function renderRTStockVentas(host) {
     return;
   }
   const todasLasFilas = RT_COMPLETO.filas;
-  if (!todasLasFilas.length) return rtEstado(host, 'vacio', 'Sin variantes para este filtro y período.');
+  // rtEstado() hace container.replaceChildren() -- se le pasa un contenedor propio (no
+  // "host") para no borrar el formulario/chip de filtro ya agregados arriba (bug real:
+  // sin esto, un filtro sin resultados dejaba la vista sin forma de cambiar el filtro).
+  if (!todasLasFilas.length) {
+    const vacioHost = rtEl('div');
+    rtEstado(vacioHost, 'vacio', 'Sin variantes para este filtro y período.');
+    host.appendChild(vacioHost);
+    return;
+  }
   if (RT_COMPLETO.capado) host.appendChild(rtEl('div', { className:'alert alert-warning', text:'El filtro tiene más de ' + nf.format(RT_LIMITE_PAGINAS_COMPLETO * 500) + ' variantes — se muestra un subconjunto (tope de seguridad de rtCargarCompleto). Acotá el filtro (marca/rubro/subrubro más específico) para ver el total.' }));
 
   rtStockVentasTabla(host, todasLasFilas);
