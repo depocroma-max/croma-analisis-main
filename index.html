@@ -847,6 +847,11 @@ let RT_STOCKVENTAS_TALLES = new Set();
 let RT_STOCKVENTAS_COLORES = new Set();
 let RT_STOCKVENTAS_TALLE_ABIERTO = false;
 let RT_STOCKVENTAS_COLOR_ABIERTO = false;
+// Columnas ocultas a mano (boton "Columnas" arriba de la tabla) -- Codigo y Producto
+// nunca se ocultan (ver siempre:true en rtStockVentasColumnas), quedan como ancla minima
+// para identificar la fila. Vacio = todas las columnas visibles.
+let RT_STOCKVENTAS_COLUMNAS_OCULTAS = new Set();
+let RT_STOCKVENTAS_COLUMNAS_ABIERTO = false;
 
 // Oportunidades -- endpoint propio (agregado a nivel producto, no variante), no usa
 // RT_COMPLETO/rtCargarCompleto (eso ahora es de Productos y Talles y colores).
@@ -3609,6 +3614,108 @@ function rtStockVentasFiltroDropdown(titulo, opciones, seleccionados, abierto, o
   return details;
 }
 
+function rtStockVentasToggleColumna(id, visible) {
+  if (visible) RT_STOCKVENTAS_COLUMNAS_OCULTAS.delete(id); else RT_STOCKVENTAS_COLUMNAS_OCULTAS.add(id);
+  rtRenderVistaActual();
+}
+function rtStockVentasMostrarTodasColumnas() {
+  RT_STOCKVENTAS_COLUMNAS_OCULTAS = new Set();
+  rtRenderVistaActual();
+}
+
+// Variante de rtStockVentasFiltroDropdown para elegir columnas: el check significa
+// "visible" (al reves que en Talle/Color, donde significa "filtrar por este valor"), y
+// el boton de arriba muestra todo en vez de vaciar la seleccion (vaciar aca dejaria la
+// tabla sin columnas, que no tiene sentido).
+function rtStockVentasColumnasDropdown(columnas) {
+  const details = rtEl('details', { className:'rt-sv-filtro' });
+  details.open = RT_STOCKVENTAS_COLUMNAS_ABIERTO;
+  details.addEventListener('toggle', () => { RT_STOCKVENTAS_COLUMNAS_ABIERTO = details.open; });
+  const ocultas = RT_STOCKVENTAS_COLUMNAS_OCULTAS.size;
+  const summary = rtEl('summary', { className:'btn-sm rt-sv-filtro-btn',
+    text:'Columnas' + (ocultas ? ' (−' + ocultas + ')' : '') + ' ▾' });
+  details.appendChild(summary);
+
+  const panel = rtEl('div', { className:'rt-sv-filtro-panel' });
+  if (ocultas) {
+    const mostrar = rtEl('button', { className:'rt-sv-filtro-limpiar', text:'Mostrar todas' });
+    mostrar.type = 'button';
+    mostrar.addEventListener('click', rtStockVentasMostrarTodasColumnas);
+    panel.appendChild(mostrar);
+  }
+  columnas.forEach(c => {
+    const lbl = rtEl('label', { className:'rt-sv-filtro-opcion' });
+    const chk = rtEl('input', { attrs:{ type:'checkbox' } });
+    chk.checked = !RT_STOCKVENTAS_COLUMNAS_OCULTAS.has(c.id);
+    chk.addEventListener('change', () => rtStockVentasToggleColumna(c.id, chk.checked));
+    lbl.appendChild(chk);
+    lbl.appendChild(document.createTextNode(' ' + c.label));
+    panel.appendChild(lbl);
+  });
+  details.appendChild(panel);
+  return details;
+}
+
+// Fuente unica de las columnas de la tabla -- header/celda/celda-de-total salen todos de
+// aca, tanto para armar la tabla como para listar las opciones del dropdown "Columnas".
+// siempre:true = nunca se puede ocultar (Codigo y Producto, ancla minima de la fila).
+// resumen = funcion opcional (filas de la pagina) => numero para la fila de totales; sin
+// ella la celda de esa columna en el pie va vacia (o lleva la etiqueta "Total (pagina)",
+// una unica vez, en la primera columna visible que no tenga resumen).
+function rtStockVentasColumnas(mostrarRubro, mostrarSubrubro) {
+  const cols = [];
+  if (mostrarRubro) cols.push({ id:'rubro', label:'Rubro',
+    th:() => rtEl('th', { text:'Rubro' }), td:f => rtEl('td', { text:f.Nombre_rubro || '—' }) });
+  if (mostrarSubrubro) cols.push({ id:'subrubro', label:'Subrubro',
+    th:() => rtEl('th', { text:'Subrubro' }), td:f => rtEl('td', { text:f.Nombre_subrubro || '—' }) });
+  cols.push({ id:'codigo', label:'Código', siempre:true,
+    th:() => rtStockVentasTh('Código', 'codigo'), td:f => rtEl('td', { text:f.Codigo_producto || '—' }) });
+  cols.push({ id:'talle', label:'Talle',
+    th:() => rtStockVentasTh('Talle', 'talle'),
+    td:f => rtEl('td', { text: f.Codigo_talle != null && f.Codigo_talle !== '' ? String(f.Codigo_talle) : '—' }) });
+  cols.push({ id:'cod_color', label:'Cód. Color',
+    th:() => rtEl('th', { text:'Cód. Color' }), td:f => rtEl('td', { text:f.Codigo_color || '—' }) });
+  cols.push({ id:'color', label:'Color',
+    th:() => rtEl('th', { text:'Color' }), td:f => rtEl('td', { text:f.Nombre_color || '—' }) });
+  cols.push({ id:'producto', label:'Producto', siempre:true,
+    th:() => rtStockVentasTh('Producto', 'producto'), td:f => rtEl('td', { className:'pname', text:f.Nombre_producto || '—' }) });
+  cols.push({ id:'marca', label:'Marca',
+    th:() => rtStockVentasTh('Marca', 'marca'), td:f => rtEl('td', { text:f.Nombre_marca || '—' }) });
+  cols.push({ id:'ultimo_ingreso', label:'Últ. ingreso',
+    th:() => rtEl('th', { text:'Últ. ingreso' }), td:f => rtEl('td', { text: f.Ultimo_ingreso ? rtFmtFecha(f.Ultimo_ingreso) : '—' }) });
+  cols.push({ id:'precio', label:'Precio',
+    th:() => rtEl('th', { text:'Precio' }), td:f => rtEl('td', { className:'nr', text: f.Precio != null ? money(f.Precio) : '—' }) });
+  cols.push({ id:'costo', label:'Costo',
+    th:() => rtEl('th', { text:'Costo' }), td:f => rtEl('td', { className:'nr', text: f.Precio_costo != null ? money(f.Precio_costo) : '—' }) });
+  RT_CENTROS.forEach(c => {
+    cols.push({ id:'venta_' + c, label:'Venta ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c],
+      th:() => rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Venta ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }),
+      td:f => rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Ventas_ctro_' + c] || 0) }),
+      resumen: rows => rows.reduce((a, f) => a + (f['Ventas_ctro_' + c] || 0), 0), resumenClase:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c] });
+    cols.push({ id:'stock_' + c, label:'Stock ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c],
+      th:() => rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Stock ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }),
+      td:f => rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Stock_ctro_' + c] || 0) }),
+      resumen: rows => rows.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0), resumenClase:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c] });
+  });
+  cols.push({ id:'stock_deposito', label:'Stock Depósito',
+    th:() => rtEl('th', { className:'nr rt-sv-suc', text:'Stock Depo' }),
+    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_ctro_0000 || 0) }),
+    resumen: rows => rows.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0), resumenClase:'nr rt-sv-suc' });
+  cols.push({ id:'stock_fallas', label:'Stock Fallas',
+    th:() => rtEl('th', { className:'nr rt-sv-suc', text:'Stock Fallas' }),
+    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_fallados || 0) }),
+    resumen: rows => rows.reduce((a, f) => a + (f.Stock_fallados || 0), 0), resumenClase:'nr rt-sv-suc' });
+  cols.push({ id:'venta_total', label:'Venta Total',
+    th:() => rtStockVentasTh('Venta Total', 'ventas', 'rt-sv-suc'),
+    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Ventas_total || 0) }),
+    resumen: rows => rows.reduce((a, f) => a + (f.Ventas_total || 0), 0), resumenClase:'nr rt-sv-suc' });
+  cols.push({ id:'stock_total', label:'Stock Total',
+    th:() => rtStockVentasTh('Stock Total', 'stock', 'rt-sv-suc'),
+    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_total || 0) }),
+    resumen: rows => rows.reduce((a, f) => a + (f.Stock_total || 0), 0), resumenClase:'nr rt-sv-suc' });
+  return cols;
+}
+
 function renderRTStockVentas(host) {
   host.appendChild(rtEl('h3', { text:'Stock Ventas', className:'rt-subtitulo' }));
   host.appendChild(rtEl('p', { className:'rt-note', text:'Venta y stock por variante y sucursal del período ' +
@@ -3703,6 +3810,15 @@ function rtStockVentasTabla(host, todasLasFilas) {
   toolbar.appendChild(rtStockVentasFiltroDropdown('Color', colorOpciones, RT_STOCKVENTAS_COLORES, RT_STOCKVENTAS_COLOR_ABIERTO,
     (abierto) => { RT_STOCKVENTAS_COLOR_ABIERTO = abierto; }, rtStockVentasToggleColor, rtStockVentasLimpiarColores));
 
+  // Rubro/Subrubro salen de la lista de columnas (ni el dropdown "Columnas" las ofrece)
+  // cuando el filtro ya los fija -- quedan en el chip de arriba (ver rtFiltroChip), son
+  // la misma columna repetida en todas las filas.
+  const mostrarRubro = !(RT_FILTRO && RT_FILTRO.rubro);
+  const mostrarSubrubro = !(RT_FILTRO && RT_FILTRO.subrubro);
+  const columnasTodas = rtStockVentasColumnas(mostrarRubro, mostrarSubrubro);
+  const columnasVisibles = columnasTodas.filter(c => c.siempre || !RT_STOCKVENTAS_COLUMNAS_OCULTAS.has(c.id));
+  toolbar.appendChild(rtStockVentasColumnasDropdown(columnasTodas.filter(c => !c.siempre)));
+
   const filasSel = rtEl('div', { className:'rt-productos-filas-sel' });
   filasSel.appendChild(rtEl('label', { text:'Filas por página', attrs:{ for:'rtStockVentasFilas' } }));
   const select = rtEl('select', { attrs:{ id:'rtStockVentasFilas', 'aria-label':'Filas por página' } });
@@ -3733,35 +3849,11 @@ function rtStockVentasTabla(host, todasLasFilas) {
   const offset = RT_STOCKVENTAS_PAGINA * RT_STOCKVENTAS_FILAS_POR_PAGINA;
   const pagina = ordenadas.slice(offset, offset + RT_STOCKVENTAS_FILAS_POR_PAGINA);
 
-  // Rubro/Subrubro salen de la tabla cuando el filtro ya los fija (quedan en el chip de
-  // arriba, ver rtFiltroChip) -- son la misma columna repetida en todas las filas y solo
-  // restan ancho a una tabla que ya tiene 20+ columnas por el desglose de sucursales.
-  const mostrarRubro = !(RT_FILTRO && RT_FILTRO.rubro);
-  const mostrarSubrubro = !(RT_FILTRO && RT_FILTRO.subrubro);
-  const colspanTotal = 8 - (mostrarRubro ? 0 : 1) - (mostrarSubrubro ? 0 : 1);
-
   const wrap = rtEl('div', { className:'rt-table-wrap' });
   const table = rtEl('table', { className:'rt-table rt-stockventas-tabla' });
   const thead = rtEl('thead');
   const trh = rtEl('tr');
-  if (mostrarRubro) trh.appendChild(rtEl('th', { text:'Rubro' }));
-  if (mostrarSubrubro) trh.appendChild(rtEl('th', { text:'Subrubro' }));
-  trh.appendChild(rtStockVentasTh('Código', 'codigo'));
-  trh.appendChild(rtStockVentasTh('Talle', 'talle'));
-  trh.appendChild(rtEl('th', { text:'Color' }));
-  trh.appendChild(rtStockVentasTh('Producto', 'producto'));
-  trh.appendChild(rtStockVentasTh('Marca', 'marca'));
-  trh.appendChild(rtEl('th', { text:'Últ. ingreso' }));
-  trh.appendChild(rtEl('th', { text:'Precio' }));
-  trh.appendChild(rtEl('th', { text:'Costo' }));
-  RT_CENTROS.forEach(c => {
-    trh.appendChild(rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Venta ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }));
-    trh.appendChild(rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Stock ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }));
-  });
-  trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Stock Depo' }));
-  trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Stock Fallas' }));
-  trh.appendChild(rtStockVentasTh('Venta Total', 'ventas', 'rt-sv-suc'));
-  trh.appendChild(rtStockVentasTh('Stock Total', 'stock', 'rt-sv-suc'));
+  columnasVisibles.forEach(c => trh.appendChild(c.th()));
   thead.appendChild(trh);
   table.appendChild(thead);
 
@@ -3769,43 +3861,28 @@ function rtStockVentasTabla(host, todasLasFilas) {
   pagina.forEach(f => {
     const sinStock = (f.Stock_total || 0) <= 0;
     const tr = rtEl('tr', { className: sinStock ? 'rt-fila-sinstock' : '' });
-    if (mostrarRubro) tr.appendChild(rtEl('td', { text: f.Nombre_rubro || '—' }));
-    if (mostrarSubrubro) tr.appendChild(rtEl('td', { text: f.Nombre_subrubro || '—' }));
-    tr.appendChild(rtEl('td', { text: f.Codigo_producto || '—' }));
-    tr.appendChild(rtEl('td', { text: f.Codigo_talle != null && f.Codigo_talle !== '' ? String(f.Codigo_talle) : '—' }));
-    tr.appendChild(rtEl('td', { text: f.Nombre_color || f.Codigo_color || '—' }));
-    tr.appendChild(rtEl('td', { className:'pname', text: f.Nombre_producto || '—' }));
-    tr.appendChild(rtEl('td', { text: f.Nombre_marca || '—' }));
-    tr.appendChild(rtEl('td', { text: f.Ultimo_ingreso ? rtFmtFecha(f.Ultimo_ingreso) : '—' }));
-    tr.appendChild(rtEl('td', { className:'nr', text: f.Precio != null ? money(f.Precio) : '—' }));
-    tr.appendChild(rtEl('td', { className:'nr', text: f.Precio_costo != null ? money(f.Precio_costo) : '—' }));
-    RT_CENTROS.forEach(c => {
-      tr.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Ventas_ctro_' + c] || 0) }));
-      tr.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Stock_ctro_' + c] || 0) }));
-    });
-    tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_ctro_0000 || 0) }));
-    tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_fallados || 0) }));
-    tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Ventas_total || 0) }));
-    tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_total || 0) }));
+    columnasVisibles.forEach(c => tr.appendChild(c.td(f)));
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
 
   // Totales de la pagina actual solamente -- coherente con como Productos pagina (ver
-  // rtProductosTabla), nunca suma filas fuera de la pagina visible.
+  // rtProductosTabla), nunca suma filas fuera de la pagina visible. La etiqueta "Total
+  // (pagina)" va en la primera columna visible sin resumen (no hace falta colspan: al
+  // ocultar/mostrar columnas cualquier columna podria terminar siendo la primera).
   const tfoot = rtEl('tfoot');
   const trTotal = rtEl('tr', { className:'rt-stockventas-total' });
-  trTotal.appendChild(rtEl('td', { text:'Total (página)', attrs:{ colspan:String(colspanTotal) } }));
-  trTotal.appendChild(rtEl('td', { className:'nr' }));
-  trTotal.appendChild(rtEl('td', { className:'nr' }));
-  RT_CENTROS.forEach(c => {
-    trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(pagina.reduce((a, f) => a + (f['Ventas_ctro_' + c] || 0), 0)) }));
-    trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(pagina.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0)) }));
+  let etiquetaTotalPuesta = false;
+  columnasVisibles.forEach(c => {
+    if (c.resumen) {
+      trTotal.appendChild(rtEl('td', { className: c.resumenClase || 'nr', text: nf.format(c.resumen(pagina)) }));
+    } else if (!etiquetaTotalPuesta) {
+      trTotal.appendChild(rtEl('td', { text:'Total (página)' }));
+      etiquetaTotalPuesta = true;
+    } else {
+      trTotal.appendChild(rtEl('td', {}));
+    }
   });
-  trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0)) }));
-  trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_fallados || 0), 0)) }));
-  trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Ventas_total || 0), 0)) }));
-  trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_total || 0), 0)) }));
   tfoot.appendChild(trTotal);
   table.appendChild(tfoot);
 
