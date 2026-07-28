@@ -3687,6 +3687,24 @@ function rtStockVentasColumnas(mostrarRubro, mostrarSubrubro) {
     th:() => rtEl('th', { text:'Precio' }), td:f => rtEl('td', { className:'nr', text: f.Precio != null ? money(f.Precio) : '—' }) });
   cols.push({ id:'costo', label:'Costo',
     th:() => rtEl('th', { text:'Costo' }), td:f => rtEl('td', { className:'nr', text: f.Precio_costo != null ? money(f.Precio_costo) : '—' }) });
+  // Orden pedido explicitamente 2026-07-28: los totales y el resumen de deposito van
+  // primero (justo despues de Costo), y recien despues el desglose sucursal por sucursal.
+  cols.push({ id:'venta_total', label:'Venta Total',
+    th:() => rtStockVentasTh('Venta Total', 'ventas', 'rt-sv-suc'),
+    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Ventas_total || 0) }),
+    resumen: rows => rows.reduce((a, f) => a + (f.Ventas_total || 0), 0), resumenClase:'nr rt-sv-suc' });
+  cols.push({ id:'stock_total', label:'Stock Total',
+    th:() => rtStockVentasTh('Stock Total', 'stock', 'rt-sv-suc'),
+    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_total || 0) }),
+    resumen: rows => rows.reduce((a, f) => a + (f.Stock_total || 0), 0), resumenClase:'nr rt-sv-suc' });
+  cols.push({ id:'stock_deposito', label:'Stock Depósito',
+    th:() => rtEl('th', { className:'nr rt-sv-suc', text:'Stock Depo' }),
+    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_ctro_0000 || 0) }),
+    resumen: rows => rows.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0), resumenClase:'nr rt-sv-suc' });
+  cols.push({ id:'stock_fallas', label:'Stock Fallas',
+    th:() => rtEl('th', { className:'nr rt-sv-suc', text:'Stock Fallas' }),
+    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_fallados || 0) }),
+    resumen: rows => rows.reduce((a, f) => a + (f.Stock_fallados || 0), 0), resumenClase:'nr rt-sv-suc' });
   RT_CENTROS.forEach(c => {
     cols.push({ id:'venta_' + c, label:'Venta ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c],
       th:() => rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Venta ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }),
@@ -3697,22 +3715,6 @@ function rtStockVentasColumnas(mostrarRubro, mostrarSubrubro) {
       td:f => rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Stock_ctro_' + c] || 0) }),
       resumen: rows => rows.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0), resumenClase:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c] });
   });
-  cols.push({ id:'stock_deposito', label:'Stock Depósito',
-    th:() => rtEl('th', { className:'nr rt-sv-suc', text:'Stock Depo' }),
-    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_ctro_0000 || 0) }),
-    resumen: rows => rows.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0), resumenClase:'nr rt-sv-suc' });
-  cols.push({ id:'stock_fallas', label:'Stock Fallas',
-    th:() => rtEl('th', { className:'nr rt-sv-suc', text:'Stock Fallas' }),
-    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_fallados || 0) }),
-    resumen: rows => rows.reduce((a, f) => a + (f.Stock_fallados || 0), 0), resumenClase:'nr rt-sv-suc' });
-  cols.push({ id:'venta_total', label:'Venta Total',
-    th:() => rtStockVentasTh('Venta Total', 'ventas', 'rt-sv-suc'),
-    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Ventas_total || 0) }),
-    resumen: rows => rows.reduce((a, f) => a + (f.Ventas_total || 0), 0), resumenClase:'nr rt-sv-suc' });
-  cols.push({ id:'stock_total', label:'Stock Total',
-    th:() => rtStockVentasTh('Stock Total', 'stock', 'rt-sv-suc'),
-    td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_total || 0) }),
-    resumen: rows => rows.reduce((a, f) => a + (f.Stock_total || 0), 0), resumenClase:'nr rt-sv-suc' });
   return cols;
 }
 
