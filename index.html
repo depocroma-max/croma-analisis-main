@@ -3759,6 +3759,7 @@ function rtStockVentasTabla(host, todasLasFilas) {
     trh.appendChild(rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Stock ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }));
   });
   trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Stock Depo' }));
+  trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Stock Fallas' }));
   trh.appendChild(rtStockVentasTh('Venta Total', 'ventas', 'rt-sv-suc'));
   trh.appendChild(rtStockVentasTh('Stock Total', 'stock', 'rt-sv-suc'));
   thead.appendChild(trh);
@@ -3783,6 +3784,7 @@ function rtStockVentasTabla(host, todasLasFilas) {
       tr.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Stock_ctro_' + c] || 0) }));
     });
     tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_ctro_0000 || 0) }));
+    tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_fallados || 0) }));
     tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Ventas_total || 0) }));
     tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_total || 0) }));
     tbody.appendChild(tr);
@@ -3801,6 +3803,7 @@ function rtStockVentasTabla(host, todasLasFilas) {
     trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(pagina.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0)) }));
   });
   trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0)) }));
+  trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_fallados || 0), 0)) }));
   trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Ventas_total || 0), 0)) }));
   trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_total || 0), 0)) }));
   tfoot.appendChild(trTotal);
