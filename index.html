@@ -503,6 +503,7 @@
     .rt-fila-cantidad{font-size:16px;font-weight:700;margin-left:auto}
     .rt-fila-sinstock{opacity:.55}
     .rt-fila-sinstock .rt-fila-cantidad{color:var(--gray-400);font-weight:500}
+    .rt-stockventas-tabla tfoot td{font-weight:700;border-top:2px solid var(--gray-100);background:var(--gray-50)}
 
     @media(max-width:640px){
       .wrap{padding:14px 14px 60px}
@@ -580,6 +581,7 @@
         <button class="tab" data-view="marcas">Marcas</button>
         <button class="tab" data-view="productos">Productos</button>
         <button class="tab" data-view="talles-colores">Talles y colores</button>
+        <button class="tab" data-view="stock-ventas">Stock Ventas</button>
         <button class="tab" data-view="oportunidades">Oportunidades</button>
         <button class="tab" data-view="insumos">Insumos</button>
         <button class="tab" data-view="rotaciones">Rotaciones</button>
@@ -786,6 +788,15 @@ let RT_PRODUCTOS_PAGINA = 0;
 let RT_PRODUCTOS_FILAS_POR_PAGINA = 10;
 let RT_PRODUCTOS_EXPANDIDO = null; // Codigo_producto del detalle abierto
 let RT_PRODUCTOS_VARIANTES_ORDEN = { campo:null, dir:-1 }; // orden de la tabla de variantes del detalle abierto
+
+// Vista Stock Ventas -- misma fuente RT_COMPLETO (Productos y Talles y colores), pero
+// sin agrupar por producto: una fila por variante (cod+talle+color), con venta/stock
+// desglosados por sucursal (mismos campos Ventas_ctro_XXXX/Stock_ctro_XXXX que ya usa
+// rtProductosDetalle), namespaced RT_STOCKVENTAS_* para no pisar el estado de Productos.
+let RT_STOCKVENTAS_ORDEN = { campo:'ventas', dir:-1 };
+let RT_STOCKVENTAS_BUSQUEDA = '';
+let RT_STOCKVENTAS_PAGINA = 0;
+let RT_STOCKVENTAS_FILAS_POR_PAGINA = 25;
 
 // Oportunidades -- endpoint propio (agregado a nivel producto, no variante), no usa
 // RT_COMPLETO/rtCargarCompleto (eso ahora es de Productos y Talles y colores).
@@ -2063,6 +2074,7 @@ function rtRenderVistaActual() {
   else if (RT_VIEW === 'marcas') renderRTMarcas(host);
   else if (RT_VIEW === 'productos') renderRTProductos(host);
   else if (RT_VIEW === 'talles-colores') renderRTTallesColores(host);
+  else if (RT_VIEW === 'stock-ventas') renderRTStockVentas(host);
   else if (RT_VIEW === 'oportunidades') renderRTOportunidades(host);
   else if (RT_VIEW === 'insumos') renderRTInsumos(host);
   else if (RT_VIEW === 'rotaciones') renderRTRotaciones(host);
@@ -3428,6 +3440,250 @@ function renderRTTallesColores(host) {
       return tr;
     }
   ));
+}
+
+// ── Stock Ventas ──────────────────────────────────────────────────────────────
+// Tabla plana: una fila por variante (cod+talle+color) tal cual la devuelve
+// /analisis/stock-ventas, con venta y stock desglosados por sucursal -- pensada para
+// reemplazar el reporte Excel "Stock Ventas" que se armaba a mano. Reutiliza RT_COMPLETO
+// (misma carga que Productos y Talles y colores, ver rtCargarCompleto) para no duplicar
+// la paginación contra la API.
+function rtStockVentasAplicarBusqueda(filas) {
+  if (!RT_STOCKVENTAS_BUSQUEDA) return filas;
+  const q = norm(RT_STOCKVENTAS_BUSQUEDA);
+  return filas.filter(f =>
+    norm(f.Codigo_producto).includes(q) || norm(f.Nombre_producto).includes(q) ||
+    norm(f.Nombre_marca).includes(q) || norm(f.Nombre_rubro).includes(q) ||
+    norm(f.Nombre_subrubro).includes(q) || norm(f.Nombre_color).includes(q)
+  );
+}
+
+// Orden inicial ventas desc, codigo asc como desempate -- mismo patron que rtProductosOrdenar.
+function rtStockVentasOrdenar(filas) {
+  const { campo, dir } = RT_STOCKVENTAS_ORDEN;
+  const copia = filas.slice();
+  copia.sort((a, b) => {
+    let cmp;
+    if (campo === 'talle') cmp = dir * sizeSort(a.Codigo_talle, b.Codigo_talle);
+    else if (campo === 'ventas') cmp = dir * ((a.Ventas_total || 0) - (b.Ventas_total || 0));
+    else if (campo === 'stock') cmp = dir * ((a.Stock_total || 0) - (b.Stock_total || 0));
+    else {
+      const x = campo === 'producto' ? (a.Nombre_producto || '') : campo === 'marca' ? (a.Nombre_marca || '') : (a.Codigo_producto || '');
+      const y = campo === 'producto' ? (b.Nombre_producto || '') : campo === 'marca' ? (b.Nombre_marca || '') : (b.Codigo_producto || '');
+      cmp = dir * String(x).localeCompare(String(y), 'es');
+    }
+    if (cmp !== 0) return cmp;
+    const codCmp = String(a.Codigo_producto || '').localeCompare(String(b.Codigo_producto || ''), 'es');
+    if (codCmp !== 0) return codCmp;
+    return sizeSort(a.Codigo_talle, b.Codigo_talle);
+  });
+  return copia;
+}
+
+function rtStockVentasOrdenarPor(campo) {
+  if (RT_STOCKVENTAS_ORDEN.campo === campo) RT_STOCKVENTAS_ORDEN.dir *= -1;
+  else RT_STOCKVENTAS_ORDEN = { campo, dir: (campo === 'codigo' || campo === 'producto' || campo === 'marca' || campo === 'talle') ? 1 : -1 };
+  RT_STOCKVENTAS_PAGINA = 0;
+  rtRenderVistaActual();
+}
+
+function rtStockVentasBuscar(valor) {
+  RT_STOCKVENTAS_BUSQUEDA = valor;
+  RT_STOCKVENTAS_PAGINA = 0;
+  rtRenderVistaActual();
+}
+
+function renderRTStockVentas(host) {
+  host.appendChild(rtEl('h3', { text:'Stock Ventas', className:'rt-subtitulo' }));
+  host.appendChild(rtEl('p', { className:'rt-note', text:'Venta y stock por variante y sucursal del período ' +
+    rtFmtFecha(RT_DESDE) + ' – ' + rtFmtFecha(RT_HASTA) + '.' }));
+
+  rtFormularioFiltro(host);
+
+  if (!RT_FILTRO) { rtEstadoInicialFiltro(host, 'stock y ventas'); return; }
+  rtFiltroChip(host);
+
+  // Mismo patron lazy-load-on-render que Productos/Talles y colores (ver rtCargarCompleto):
+  // comparten RT_COMPLETO por filtroKey, asi que si ya se visito otra de esas vistas con
+  // el mismo filtro no se vuelve a pedir nada.
+  const key = rtFiltroKey();
+  const yaFalloEsteFiltro = RT_COMPLETO_ERROR_KEY === key;
+  if (!RT_COMPLETO_LOADING && !yaFalloEsteFiltro && (!RT_COMPLETO || RT_COMPLETO.filtroKey !== key)) {
+    rtCargarCompleto();
+  }
+  if (RT_COMPLETO_LOADING) {
+    const box = rtEl('div', { className:'rt-progress' });
+    box.appendChild(rtEl('div', { className:'spinner' }));
+    box.appendChild(rtEl('span', { text: 'Cargando variantes... ' + nf.format(RT_COMPLETO_PROGRESO) + ' filas' }));
+    host.appendChild(box);
+    return;
+  }
+  if (yaFalloEsteFiltro) {
+    const errHost = rtEl('div');
+    rtEstado(errHost, 'error', 'No se pudo cargar Stock Ventas. ' + RT_COMPLETO_ERROR, rtCargarCompleto);
+    host.appendChild(errHost);
+    return;
+  }
+  if (!RT_COMPLETO || RT_COMPLETO.filtroKey !== key) {
+    const box = rtEl('div', { className:'rt-progress' });
+    box.appendChild(rtEl('div', { className:'spinner' }));
+    box.appendChild(rtEl('span', { text:'Cargando variantes...' }));
+    host.appendChild(box);
+    return;
+  }
+  const todasLasFilas = RT_COMPLETO.filas;
+  if (!todasLasFilas.length) return rtEstado(host, 'vacio', 'Sin variantes para este filtro y período.');
+  if (RT_COMPLETO.capado) host.appendChild(rtEl('div', { className:'alert alert-warning', text:'El filtro tiene más de ' + nf.format(RT_LIMITE_PAGINAS_COMPLETO * 500) + ' variantes — se muestra un subconjunto (tope de seguridad de rtCargarCompleto). Acotá el filtro (marca/rubro/subrubro más específico) para ver el total.' }));
+
+  rtStockVentasTabla(host, todasLasFilas);
+}
+
+function rtStockVentasTh(etiqueta, campoId) {
+  return rtProductosThOrdenable(etiqueta, campoId, RT_STOCKVENTAS_ORDEN, () => rtStockVentasOrdenarPor(campoId));
+}
+
+function rtStockVentasTabla(host, todasLasFilas) {
+  const head = rtEl('div', { className:'rt-panel-head' });
+  head.appendChild(rtEl('h3', { text:'Variantes', className:'rt-subtitulo' }));
+  head.appendChild(rtEl('span', { className:'rt-note', text: nf.format(todasLasFilas.length) + (todasLasFilas.length === 1 ? ' variante encontrada' : ' variantes encontradas') }));
+  host.appendChild(head);
+
+  const toolbar = rtEl('div', { className:'rt-productos-toolbar' });
+  const searchWrap = rtEl('div', { className:'rt-productos-search' });
+  const searchIcon = rtEl('span', { attrs:{ 'aria-hidden':'true' } });
+  searchIcon.innerHTML = icon('search', ''); // icono estatico del helper
+  searchWrap.appendChild(searchIcon);
+  const searchInput = rtEl('input', { attrs:{ type:'text', placeholder:'Buscar en los resultados…', 'aria-label':'Buscar en los resultados', id:'rtStockVentasBuscador' } });
+  searchInput.value = RT_STOCKVENTAS_BUSQUEDA;
+  // Filtra sobre los datos ya cargados -- nunca una consulta nueva por tecla (mismo
+  // patron que rtProductosBuscar, incluida la restauracion de foco+cursor).
+  searchInput.addEventListener('input', () => {
+    const cursor = searchInput.selectionStart;
+    RT_STOCKVENTAS_BUSQUEDA = searchInput.value;
+    RT_STOCKVENTAS_PAGINA = 0;
+    rtRenderVistaActual();
+    const nuevo = document.getElementById('rtStockVentasBuscador');
+    if (nuevo) { nuevo.focus(); try { nuevo.setSelectionRange(cursor, cursor); } catch (e) {} }
+  });
+  searchWrap.appendChild(searchInput);
+  if (RT_STOCKVENTAS_BUSQUEDA) {
+    const clear = rtEl('button', { className:'rt-productos-search-clear', attrs:{ 'aria-label':'Limpiar búsqueda' } });
+    clear.type = 'button';
+    clear.innerHTML = icon('x', 'icon-16');
+    clear.addEventListener('click', () => rtStockVentasBuscar(''));
+    searchWrap.appendChild(clear);
+  }
+  toolbar.appendChild(searchWrap);
+
+  const filasSel = rtEl('div', { className:'rt-productos-filas-sel' });
+  filasSel.appendChild(rtEl('label', { text:'Filas por página', attrs:{ for:'rtStockVentasFilas' } }));
+  const select = rtEl('select', { attrs:{ id:'rtStockVentasFilas', 'aria-label':'Filas por página' } });
+  [25, 50, 100].forEach(n => {
+    const opt = rtEl('option', { text:String(n), attrs:{ value:String(n) } });
+    if (n === RT_STOCKVENTAS_FILAS_POR_PAGINA) opt.selected = true;
+    select.appendChild(opt);
+  });
+  select.addEventListener('change', () => { RT_STOCKVENTAS_FILAS_POR_PAGINA = Number(select.value); RT_STOCKVENTAS_PAGINA = 0; rtRenderVistaActual(); });
+  filasSel.appendChild(select);
+  toolbar.appendChild(filasSel);
+  host.appendChild(toolbar);
+
+  const filtradas = rtStockVentasAplicarBusqueda(todasLasFilas);
+  if (!filtradas.length) {
+    const vacioHost = rtEl('div', { className:'card' });
+    rtEstado(vacioHost, 'vacio', RT_STOCKVENTAS_BUSQUEDA
+      ? 'Sin variantes que coincidan con "' + RT_STOCKVENTAS_BUSQUEDA + '".'
+      : 'Sin variantes para mostrar.');
+    host.appendChild(vacioHost);
+    return;
+  }
+
+  const ordenadas = rtStockVentasOrdenar(filtradas);
+  const total = ordenadas.length;
+  const totalPaginas = Math.max(1, Math.ceil(total / RT_STOCKVENTAS_FILAS_POR_PAGINA));
+  if (RT_STOCKVENTAS_PAGINA >= totalPaginas) RT_STOCKVENTAS_PAGINA = totalPaginas - 1;
+  const offset = RT_STOCKVENTAS_PAGINA * RT_STOCKVENTAS_FILAS_POR_PAGINA;
+  const pagina = ordenadas.slice(offset, offset + RT_STOCKVENTAS_FILAS_POR_PAGINA);
+
+  const wrap = rtEl('div', { className:'rt-table-wrap' });
+  const table = rtEl('table', { className:'rt-table rt-stockventas-tabla' });
+  const thead = rtEl('thead');
+  const trh = rtEl('tr');
+  trh.appendChild(rtEl('th', { text:'Rubro' }));
+  trh.appendChild(rtEl('th', { text:'Subrubro' }));
+  trh.appendChild(rtStockVentasTh('Código', 'codigo'));
+  trh.appendChild(rtStockVentasTh('Talle', 'talle'));
+  trh.appendChild(rtEl('th', { text:'Color' }));
+  trh.appendChild(rtStockVentasTh('Producto', 'producto'));
+  trh.appendChild(rtStockVentasTh('Marca', 'marca'));
+  trh.appendChild(rtEl('th', { text:'Último ingreso' }));
+  trh.appendChild(rtEl('th', { text:'Precio' }));
+  trh.appendChild(rtEl('th', { text:'Costo' }));
+  RT_CENTROS.forEach(c => {
+    trh.appendChild(rtEl('th', { className:'nr', text:'Venta ' + RT_CENTRO_NOMBRE[c] }));
+    trh.appendChild(rtEl('th', { className:'nr', text:'Stock ' + RT_CENTRO_NOMBRE[c] }));
+  });
+  trh.appendChild(rtEl('th', { className:'nr', text:'Stock Depósito' }));
+  trh.appendChild(rtStockVentasTh('Venta total', 'ventas'));
+  trh.appendChild(rtStockVentasTh('Stock total', 'stock'));
+  thead.appendChild(trh);
+  table.appendChild(thead);
+
+  const tbody = rtEl('tbody');
+  pagina.forEach(f => {
+    const sinStock = (f.Stock_total || 0) <= 0;
+    const tr = rtEl('tr', { className: sinStock ? 'rt-fila-sinstock' : '' });
+    tr.appendChild(rtEl('td', { text: f.Nombre_rubro || '—' }));
+    tr.appendChild(rtEl('td', { text: f.Nombre_subrubro || '—' }));
+    tr.appendChild(rtEl('td', { text: f.Codigo_producto || '—' }));
+    tr.appendChild(rtEl('td', { text: f.Codigo_talle != null && f.Codigo_talle !== '' ? String(f.Codigo_talle) : '—' }));
+    tr.appendChild(rtEl('td', { text: f.Nombre_color || f.Codigo_color || '—' }));
+    tr.appendChild(rtEl('td', { className:'pname', text: f.Nombre_producto || '—' }));
+    tr.appendChild(rtEl('td', { text: f.Nombre_marca || '—' }));
+    tr.appendChild(rtEl('td', { text: f.Ultimo_ingreso ? rtFmtFecha(f.Ultimo_ingreso) : '—' }));
+    tr.appendChild(rtEl('td', { className:'nr', text: f.Precio != null ? money(f.Precio) : '—' }));
+    tr.appendChild(rtEl('td', { className:'nr', text: f.Precio_costo != null ? money(f.Precio_costo) : '—' }));
+    RT_CENTROS.forEach(c => {
+      tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f['Ventas_ctro_' + c] || 0) }));
+      tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f['Stock_ctro_' + c] || 0) }));
+    });
+    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f.Stock_ctro_0000 || 0) }));
+    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f.Ventas_total || 0) }));
+    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f.Stock_total || 0) }));
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  // Totales de la pagina actual solamente -- coherente con como Productos pagina (ver
+  // rtProductosTabla), nunca suma filas fuera de la pagina visible.
+  const tfoot = rtEl('tfoot');
+  const trTotal = rtEl('tr', { className:'rt-stockventas-total' });
+  trTotal.appendChild(rtEl('td', { text:'Total (página)', attrs:{ colspan:'8' } }));
+  trTotal.appendChild(rtEl('td', { className:'nr' }));
+  trTotal.appendChild(rtEl('td', { className:'nr' }));
+  RT_CENTROS.forEach(c => {
+    trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f['Ventas_ctro_' + c] || 0), 0)) }));
+    trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0)) }));
+  });
+  trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0)) }));
+  trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f.Ventas_total || 0), 0)) }));
+  trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_total || 0), 0)) }));
+  tfoot.appendChild(trTotal);
+  table.appendChild(tfoot);
+
+  wrap.appendChild(table);
+  host.appendChild(wrap);
+
+  const pag = rtEl('div', { className:'rt-pagination' });
+  pag.appendChild(rtEl('span', { text:'Mostrando ' + (offset + 1) + '–' + Math.min(offset + RT_STOCKVENTAS_FILAS_POR_PAGINA, total) + ' de ' + nf.format(total) + (total === 1 ? ' variante' : ' variantes') }));
+  const btnAnt = rtEl('button', { className:'btn-sm', text:'← Anterior' });
+  btnAnt.type = 'button'; btnAnt.disabled = RT_STOCKVENTAS_PAGINA === 0;
+  btnAnt.addEventListener('click', () => { RT_STOCKVENTAS_PAGINA--; rtRenderVistaActual(); });
+  const btnSig = rtEl('button', { className:'btn-sm', text:'Siguiente →' });
+  btnSig.type = 'button'; btnSig.disabled = offset + RT_STOCKVENTAS_FILAS_POR_PAGINA >= total;
+  btnSig.addEventListener('click', () => { RT_STOCKVENTAS_PAGINA++; rtRenderVistaActual(); });
+  pag.appendChild(btnAnt); pag.appendChild(btnSig);
+  host.appendChild(pag);
 }
 
 // ── Oportunidades ─────────────────────────────────────────────────────────────
