@@ -511,6 +511,11 @@
     /* Tabla con ~20 columnas (venta/stock x sucursal) -- padding mas chico que .rt-table
        para que entren mas columnas antes de necesitar el scroll horizontal interno. */
     .rt-stockventas-tabla th, .rt-stockventas-tabla td{padding:6px 7px;font-size:12.5px}
+    /* Columnas de venta/stock por sucursal + deposito -- angostas y con el encabezado en
+       2 lineas (ej. "Venta" arriba, "Paseo" abajo), como la planilla Excel de referencia. */
+    .rt-stockventas-tabla th.rt-sv-suc, .rt-stockventas-tabla td.rt-sv-suc{
+      width:47px;min-width:47px;max-width:47px;text-align:center;padding:4px 2px}
+    .rt-stockventas-tabla th.rt-sv-suc{white-space:normal;line-height:1.25;font-size:9.5px;vertical-align:bottom}
 
     @media(max-width:640px){
       .wrap{padding:14px 14px 60px}
@@ -3641,12 +3646,12 @@ function rtStockVentasTabla(host, todasLasFilas) {
   trh.appendChild(rtEl('th', { text:'Precio' }));
   trh.appendChild(rtEl('th', { text:'Costo' }));
   RT_CENTROS.forEach(c => {
-    trh.appendChild(rtEl('th', { className:'nr', text:'Vta. ' + RT_CENTRO_NOMBRE_CORTO[c], attrs:{ title:'Venta ' + RT_CENTRO_NOMBRE[c] } }));
-    trh.appendChild(rtEl('th', { className:'nr', text:'Stk. ' + RT_CENTRO_NOMBRE_CORTO[c], attrs:{ title:'Stock ' + RT_CENTRO_NOMBRE[c] } }));
+    trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Venta ' + RT_CENTRO_NOMBRE_CORTO[c] }));
+    trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Stock ' + RT_CENTRO_NOMBRE_CORTO[c] }));
   });
-  trh.appendChild(rtEl('th', { className:'nr', text:'Stk. Depósito', attrs:{ title:'Stock Depósito' } }));
-  trh.appendChild(rtStockVentasTh('Vta. total', 'ventas'));
-  trh.appendChild(rtStockVentasTh('Stk. total', 'stock'));
+  trh.appendChild(rtEl('th', { className:'nr rt-sv-suc', text:'Stock Depósito' }));
+  trh.appendChild(rtStockVentasTh('Venta total', 'ventas'));
+  trh.appendChild(rtStockVentasTh('Stock total', 'stock'));
   thead.appendChild(trh);
   table.appendChild(thead);
 
@@ -3665,10 +3670,10 @@ function rtStockVentasTabla(host, todasLasFilas) {
     tr.appendChild(rtEl('td', { className:'nr', text: f.Precio != null ? money(f.Precio) : '—' }));
     tr.appendChild(rtEl('td', { className:'nr', text: f.Precio_costo != null ? money(f.Precio_costo) : '—' }));
     RT_CENTROS.forEach(c => {
-      tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f['Ventas_ctro_' + c] || 0) }));
-      tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f['Stock_ctro_' + c] || 0) }));
+      tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f['Ventas_ctro_' + c] || 0) }));
+      tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f['Stock_ctro_' + c] || 0) }));
     });
-    tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f.Stock_ctro_0000 || 0) }));
+    tr.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_ctro_0000 || 0) }));
     tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f.Ventas_total || 0) }));
     tr.appendChild(rtEl('td', { className:'nr', text: nf.format(f.Stock_total || 0) }));
     tbody.appendChild(tr);
@@ -3683,10 +3688,10 @@ function rtStockVentasTabla(host, todasLasFilas) {
   trTotal.appendChild(rtEl('td', { className:'nr' }));
   trTotal.appendChild(rtEl('td', { className:'nr' }));
   RT_CENTROS.forEach(c => {
-    trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f['Ventas_ctro_' + c] || 0), 0)) }));
-    trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0)) }));
+    trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f['Ventas_ctro_' + c] || 0), 0)) }));
+    trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0)) }));
   });
-  trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0)) }));
+  trTotal.appendChild(rtEl('td', { className:'nr rt-sv-suc', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0)) }));
   trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f.Ventas_total || 0), 0)) }));
   trTotal.appendChild(rtEl('td', { className:'nr', text: nf.format(pagina.reduce((a, f) => a + (f.Stock_total || 0), 0)) }));
   tfoot.appendChild(trTotal);
