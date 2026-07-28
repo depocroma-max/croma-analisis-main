@@ -77,11 +77,7 @@
       align-items:center;justify-content:center;transition:.15s}
     .sesion-logout:hover{background:#dc2626;border-color:#dc2626;color:#fff}
 
-    .wrap{max-width:1300px;margin:0 auto;padding:20px 20px 80px}
-    /* Stock Ventas tiene muchas columnas (venta/stock por cada sucursal) -- sin esto el
-       .wrap de 1300px deja espacio muerto a los costados en pantallas grandes y fuerza el
-       slider horizontal de la tabla antes de lo necesario. Solo esta vista lo pide ancho. */
-    .wrap.rt-wrap-ancho{max-width:1800px}
+    .wrap{max-width:1800px;margin:0 auto;padding:20px 20px 80px}
 
     /* Filter bar */
     .fbar{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r);
@@ -2106,8 +2102,6 @@ function rtFiltroTexto() {
 function rtRenderVistaActual() {
   const host = document.getElementById('rtPanelHost');
   if (!host) return;
-  const wrapEl = document.getElementById('rtWrap');
-  if (wrapEl) wrapEl.classList.toggle('rt-wrap-ancho', RT_VIEW === 'stock-ventas');
   host.replaceChildren();
   if (RT_VIEW === 'dashboard') renderRTDashboard(host);
   else if (RT_VIEW === 'marcas') renderRTMarcas(host);
