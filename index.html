@@ -78,6 +78,10 @@
     .sesion-logout:hover{background:#dc2626;border-color:#dc2626;color:#fff}
 
     .wrap{max-width:1300px;margin:0 auto;padding:20px 20px 80px}
+    /* Stock Ventas tiene muchas columnas (venta/stock por cada sucursal) -- sin esto el
+       .wrap de 1300px deja espacio muerto a los costados en pantallas grandes y fuerza el
+       slider horizontal de la tabla antes de lo necesario. Solo esta vista lo pide ancho. */
+    .wrap.rt-wrap-ancho{max-width:1800px}
 
     /* Filter bar */
     .fbar{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r);
@@ -504,6 +508,9 @@
     .rt-fila-sinstock{opacity:.55}
     .rt-fila-sinstock .rt-fila-cantidad{color:var(--gray-400);font-weight:500}
     .rt-stockventas-tabla tfoot td{font-weight:700;border-top:2px solid var(--gray-100);background:var(--gray-50)}
+    /* Tabla con ~20 columnas (venta/stock x sucursal) -- padding mas chico que .rt-table
+       para que entren mas columnas antes de necesitar el scroll horizontal interno. */
+    .rt-stockventas-tabla th, .rt-stockventas-tabla td{padding:6px 7px;font-size:12.5px}
 
     @media(max-width:640px){
       .wrap{padding:14px 14px 60px}
@@ -566,7 +573,7 @@
     </div>
   </header>
 
-  <div class="wrap">
+  <div class="wrap" id="rtWrap">
     <div id="rtApp">
       <div class="fbar" id="rtBar">
         <label class="rt-periodo-label">Desde <input type="date" id="rtDesde" class="form-control rt-periodo-input"></label>
@@ -689,6 +696,11 @@ const RT_CENTRO_NOMBRE = {
   '0010':'10 Perito Moreno', '0012':'12 Centenario', '0014':'14 Roca',
 };
 const RT_CENTRO_CLS = { '0001':'s01', '0005':'s05', '0009':'s09', '0010':'s10', '0012':'s12', '0014':'s14' };
+// Nombre corto sin el prefijo numerico -- solo para encabezados de tablas muy anchas
+// (Stock Ventas) donde 'Venta 01 Paseo' de mas no entra sin agrandar la columna.
+const RT_CENTRO_NOMBRE_CORTO = {
+  '0001':'Paseo', '0005':'Wave', '0009':'Cipo San Martín', '0010':'Perito Moreno', '0012':'Centenario', '0014':'Roca',
+};
 const RT_LIMITE_PAGINAS_COMPLETO = 20; // tope de seguridad: 20 * 500 = 10.000 filas
 
 // Badge de color por sucursal (clases .sN/.suc-N ya definidas en <style>, sin usar hasta
@@ -2069,6 +2081,8 @@ function rtFiltroTexto() {
 function rtRenderVistaActual() {
   const host = document.getElementById('rtPanelHost');
   if (!host) return;
+  const wrapEl = document.getElementById('rtWrap');
+  if (wrapEl) wrapEl.classList.toggle('rt-wrap-ancho', RT_VIEW === 'stock-ventas');
   host.replaceChildren();
   if (RT_VIEW === 'dashboard') renderRTDashboard(host);
   else if (RT_VIEW === 'marcas') renderRTMarcas(host);
@@ -3605,27 +3619,34 @@ function rtStockVentasTabla(host, todasLasFilas) {
   const offset = RT_STOCKVENTAS_PAGINA * RT_STOCKVENTAS_FILAS_POR_PAGINA;
   const pagina = ordenadas.slice(offset, offset + RT_STOCKVENTAS_FILAS_POR_PAGINA);
 
+  // Rubro/Subrubro salen de la tabla cuando el filtro ya los fija (quedan en el chip de
+  // arriba, ver rtFiltroChip) -- son la misma columna repetida en todas las filas y solo
+  // restan ancho a una tabla que ya tiene 20+ columnas por el desglose de sucursales.
+  const mostrarRubro = !(RT_FILTRO && RT_FILTRO.rubro);
+  const mostrarSubrubro = !(RT_FILTRO && RT_FILTRO.subrubro);
+  const colspanTotal = 8 - (mostrarRubro ? 0 : 1) - (mostrarSubrubro ? 0 : 1);
+
   const wrap = rtEl('div', { className:'rt-table-wrap' });
   const table = rtEl('table', { className:'rt-table rt-stockventas-tabla' });
   const thead = rtEl('thead');
   const trh = rtEl('tr');
-  trh.appendChild(rtEl('th', { text:'Rubro' }));
-  trh.appendChild(rtEl('th', { text:'Subrubro' }));
+  if (mostrarRubro) trh.appendChild(rtEl('th', { text:'Rubro' }));
+  if (mostrarSubrubro) trh.appendChild(rtEl('th', { text:'Subrubro' }));
   trh.appendChild(rtStockVentasTh('Código', 'codigo'));
   trh.appendChild(rtStockVentasTh('Talle', 'talle'));
   trh.appendChild(rtEl('th', { text:'Color' }));
   trh.appendChild(rtStockVentasTh('Producto', 'producto'));
   trh.appendChild(rtStockVentasTh('Marca', 'marca'));
-  trh.appendChild(rtEl('th', { text:'Último ingreso' }));
+  trh.appendChild(rtEl('th', { text:'Últ. ingreso' }));
   trh.appendChild(rtEl('th', { text:'Precio' }));
   trh.appendChild(rtEl('th', { text:'Costo' }));
   RT_CENTROS.forEach(c => {
-    trh.appendChild(rtEl('th', { className:'nr', text:'Venta ' + RT_CENTRO_NOMBRE[c] }));
-    trh.appendChild(rtEl('th', { className:'nr', text:'Stock ' + RT_CENTRO_NOMBRE[c] }));
+    trh.appendChild(rtEl('th', { className:'nr', text:'Vta. ' + RT_CENTRO_NOMBRE_CORTO[c], attrs:{ title:'Venta ' + RT_CENTRO_NOMBRE[c] } }));
+    trh.appendChild(rtEl('th', { className:'nr', text:'Stk. ' + RT_CENTRO_NOMBRE_CORTO[c], attrs:{ title:'Stock ' + RT_CENTRO_NOMBRE[c] } }));
   });
-  trh.appendChild(rtEl('th', { className:'nr', text:'Stock Depósito' }));
-  trh.appendChild(rtStockVentasTh('Venta total', 'ventas'));
-  trh.appendChild(rtStockVentasTh('Stock total', 'stock'));
+  trh.appendChild(rtEl('th', { className:'nr', text:'Stk. Depósito', attrs:{ title:'Stock Depósito' } }));
+  trh.appendChild(rtStockVentasTh('Vta. total', 'ventas'));
+  trh.appendChild(rtStockVentasTh('Stk. total', 'stock'));
   thead.appendChild(trh);
   table.appendChild(thead);
 
@@ -3633,8 +3654,8 @@ function rtStockVentasTabla(host, todasLasFilas) {
   pagina.forEach(f => {
     const sinStock = (f.Stock_total || 0) <= 0;
     const tr = rtEl('tr', { className: sinStock ? 'rt-fila-sinstock' : '' });
-    tr.appendChild(rtEl('td', { text: f.Nombre_rubro || '—' }));
-    tr.appendChild(rtEl('td', { text: f.Nombre_subrubro || '—' }));
+    if (mostrarRubro) tr.appendChild(rtEl('td', { text: f.Nombre_rubro || '—' }));
+    if (mostrarSubrubro) tr.appendChild(rtEl('td', { text: f.Nombre_subrubro || '—' }));
     tr.appendChild(rtEl('td', { text: f.Codigo_producto || '—' }));
     tr.appendChild(rtEl('td', { text: f.Codigo_talle != null && f.Codigo_talle !== '' ? String(f.Codigo_talle) : '—' }));
     tr.appendChild(rtEl('td', { text: f.Nombre_color || f.Codigo_color || '—' }));
@@ -3658,7 +3679,7 @@ function rtStockVentasTabla(host, todasLasFilas) {
   // rtProductosTabla), nunca suma filas fuera de la pagina visible.
   const tfoot = rtEl('tfoot');
   const trTotal = rtEl('tr', { className:'rt-stockventas-total' });
-  trTotal.appendChild(rtEl('td', { text:'Total (página)', attrs:{ colspan:'8' } }));
+  trTotal.appendChild(rtEl('td', { text:'Total (página)', attrs:{ colspan:String(colspanTotal) } }));
   trTotal.appendChild(rtEl('td', { className:'nr' }));
   trTotal.appendChild(rtEl('td', { className:'nr' }));
   RT_CENTROS.forEach(c => {
