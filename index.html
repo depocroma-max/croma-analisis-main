@@ -363,6 +363,105 @@
     .rt-insight-icon.up{background:var(--success-bg);color:var(--success)}
     .rt-insight-icon.down{background:var(--danger-bg);color:var(--danger)}
 
+    /* ── Dashboard v2 (rediseño 2026-07-29, mockup aprobado) ──
+       Solo la vista Dashboard: .rt-kpis y rtTarjetaKPI quedan intactos porque los
+       comparten Marcas, Productos y Oportunidades. */
+    /* Barra de período: fechas agrupadas a la izquierda, estado con indicador,
+       Actualizar a la derecha (via .fbar-end existente). */
+    .rt-periodobar{align-items:center}
+    .rt-periodo-grupo{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .rt-status{display:flex;align-items:center;gap:7px}
+    .rt-status:has(#rtUltimaActualizacion:empty){display:none}
+    .rt-status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);
+      box-shadow:0 0 0 3px var(--success-bg);flex:none}
+    .rt-btn-actualizar{background:var(--croma-black);color:#fff;border-color:var(--croma-black);
+      padding:8px 15px;border-radius:10px}
+    .rt-btn-actualizar:hover{border-color:var(--croma-black);background:#222}
+
+    /* Fila 1 de KPIs: hero (Ventas) mas ancha + 6 tarjetas iguales */
+    .rt-dash-kpis{display:grid;grid-template-columns:minmax(240px,1.9fr) repeat(6,minmax(120px,1fr));gap:var(--space-3)}
+    .rt-kpi-hero{gap:8px;padding:var(--space-5)}
+    .rt-kpi-hero .rt-kpi-icon{width:38px;height:38px}
+    .rt-kpi-hero .rt-kpi-icon svg{width:19px;height:19px}
+    .rt-kpi-hero .rt-kpi-valor{font-size:46px}
+    .rt-kpi-hero-cta{margin-top:auto;align-self:flex-start}
+    .rt-kpi-desc{font-size:11.5px;color:var(--gray-400)}
+    @media(max-width:1280px){
+      .rt-dash-kpis{grid-template-columns:repeat(3,1fr)}
+      .rt-kpi-hero{grid-column:1/-1}
+    }
+    @media(max-width:640px){.rt-dash-kpis{grid-template-columns:repeat(2,1fr)}}
+
+    /* Fila 2: proporciones con barra sobre el total de variantes con actividad */
+    .rt-dash-props{display:grid;grid-template-columns:repeat(2,minmax(230px,1fr));gap:var(--space-3);max-width:820px}
+    @media(max-width:640px){.rt-dash-props{grid-template-columns:1fr}}
+    .rt-prop{flex-direction:row;align-items:center;gap:14px}
+    .rt-prop-icon{width:38px;height:38px;border-radius:50%}
+    .rt-prop-info{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+    .rt-prop-info .rt-kpi-valor{font-size:24px}
+    .rt-prop-medida{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--gray-400);white-space:nowrap}
+    .rt-prop-bar{flex:1;height:6px;border-radius:99px;background:var(--gray-100);overflow:hidden;min-width:60px}
+    .rt-prop-fill{display:block;height:100%;border-radius:99px;background:var(--gray-400)}
+    .rt-prop-fill.success{background:var(--success)}
+
+    /* Bloque inferior en 3 columnas (1 columna en pantallas chicas) */
+    .rt-dash-grid{display:grid;grid-template-columns:1.1fr 1.25fr 1fr;gap:var(--space-4);align-items:start}
+    @media(max-width:1100px){.rt-dash-grid{grid-template-columns:1fr}}
+    .rt-dash-panel{padding:0;display:flex;flex-direction:column;overflow:hidden}
+    .rt-dash-panel-head{display:flex;align-items:center;gap:9px;padding:14px 16px;border-bottom:1px solid var(--gray-100)}
+    .rt-dash-panel-head .rt-subtitulo{margin:0}
+    .rt-dash-panel-icon{width:28px;height:28px;border-radius:var(--radius-md);display:grid;place-items:center;
+      flex:none;background:var(--gray-100);color:var(--gray-600)}
+    .rt-dash-panel-icon svg{width:14px;height:14px}
+    .rt-dash-panel-body{flex:1;min-width:0}
+    .rt-dash-panel-body .rt-table-wrap{border:none;border-radius:0;box-shadow:none}
+    .rt-dash-panel-body .rt-insights-lista{padding:14px 16px}
+    .rt-dash-panel-body .rt-pendiente{border:none}
+    .rt-dash-panel-foot{border-top:1px solid var(--gray-100);display:flex;justify-content:center;padding:6px}
+    .rt-dash-link{font:inherit;font-size:12.5px;font-weight:600;color:var(--gray-600);background:none;border:none;
+      border-radius:8px;padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.13s}
+    .rt-dash-link:hover{color:var(--black);background:var(--gray-50)}
+    .rt-dash-link svg{width:13px;height:13px}
+
+    /* Delta compacto (columna "Vs. per. ant." de sucursales) */
+    .rt-delta-mini{display:inline-flex;align-items:center;gap:2px;font-size:11.5px;font-weight:700}
+    .rt-delta-mini svg{width:10px;height:10px}
+    .rt-delta-mini.up{color:var(--success)}
+    .rt-delta-mini.down{color:var(--danger)}
+    .rt-delta-mini.flat{color:var(--gray-400);font-weight:500}
+    .rt-delta-mini .arrow-up{transform:rotate(180deg)}
+
+    /* Sparklines (motor de series, Fase 1): SVG nativo estirado al contenedor;
+       vector-effect mantiene el trazo sin deformar. Color por currentColor:
+       accent en el hero (Ventas), color de sucursal en la tabla. */
+    .rt-sparkline{display:block;color:var(--accent)}
+    .rt-sparkline path{fill:none;stroke:currentColor;stroke-width:1.5;vector-effect:non-scaling-stroke;
+      stroke-linejoin:round;stroke-linecap:round}
+    .rt-sparkline circle{fill:currentColor}
+    .rt-spark-hero{width:100%;max-width:340px;height:36px;margin-top:4px}
+    .rt-spark-suc{width:76px;height:20px}
+    th.rt-col-tendencia, td.rt-col-tendencia{width:92px}
+    @media(max-width:700px){ th.rt-col-tendencia, td.rt-col-tendencia{display:none} }
+
+    /* Top productos por ventas: ranking + barra proporcional al mayor */
+    .rt-top-lista{display:flex;flex-direction:column;padding:6px 0}
+    .rt-top-fila{display:grid;grid-template-columns:26px 52px minmax(0,1fr) auto 104px;gap:10px;align-items:center;
+      padding:8px 16px;border-bottom:1px solid var(--gray-50);font-size:12.5px}
+    .rt-top-fila:last-child{border-bottom:none}
+    .rt-top-rank{width:22px;height:22px;border-radius:50%;background:var(--gray-100);color:var(--gray-600);
+      font-size:11px;font-weight:700;display:grid;place-items:center}
+    .rt-top-rank.rt-top-podio{background:var(--croma-black);color:#fff}
+    .rt-top-cod{font-size:11px;font-weight:700;color:var(--gray-400)}
+    .rt-top-nombre{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rt-top-ventas{display:flex;flex-direction:column;gap:3px;text-align:right}
+    .rt-top-ventas b{font-size:12.5px;font-variant-numeric:tabular-nums}
+    .rt-top-bar{height:5px;border-radius:99px;background:var(--gray-100);overflow:hidden}
+    .rt-top-bar span{display:block;height:100%;border-radius:99px;background:var(--info)}
+    @media(max-width:640px){
+      .rt-top-fila{grid-template-columns:26px 44px minmax(0,1fr) 88px}
+      .rt-top-marca{display:none}
+    }
+
     /* Vista Marcas -- KPIs en 2 columnas solo en tablet (601-900px), aislado del
        .rt-kpis compartido (Dashboard/Oportunidades no se tocan). */
     @media (min-width:601px) and (max-width:900px){
@@ -604,12 +703,14 @@
 
   <div class="wrap" id="rtWrap">
     <div id="rtApp">
-      <div class="fbar" id="rtBar">
-        <label class="rt-periodo-label">Desde <input type="date" id="rtDesde" class="form-control rt-periodo-input"></label>
-        <label class="rt-periodo-label">Hasta <input type="date" id="rtHasta" class="form-control rt-periodo-input"></label>
-        <span class="fname" id="rtUltimaActualizacion"></span>
+      <div class="fbar rt-periodobar" id="rtBar">
+        <div class="rt-periodo-grupo">
+          <label class="rt-periodo-label">Desde <input type="date" id="rtDesde" class="form-control rt-periodo-input"></label>
+          <label class="rt-periodo-label">Hasta <input type="date" id="rtHasta" class="form-control rt-periodo-input"></label>
+        </div>
+        <div class="rt-status"><span class="rt-status-dot" aria-hidden="true"></span><span class="fname" id="rtUltimaActualizacion"></span></div>
         <div class="fbar-end">
-          <button class="btn-sm" id="rtBtnActualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Actualizar</button>
+          <button class="btn-sm rt-btn-actualizar" id="rtBtnActualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Actualizar</button>
         </div>
       </div>
       <div class="tabs" id="rtTabs" role="tablist">
@@ -627,7 +728,7 @@
   </div>
 </div>
 
-<script src="croma-icons.js?v=20260716-1"></script>
+<script src="croma-icons.js?v=20260729-1"></script>
 <script>
 'use strict';
 
@@ -703,7 +804,7 @@ function setup() {
 
   document.getElementById('rtBtnActualizar').addEventListener('click', () => {
     RT_COMPLETO = null; RT_INSIGHT_OPP_ALTA_KEY = null;
-    rtCargarResumen(); rtCargarResumenAnterior(); if (RT_FILTRO) rtCargarCompleto();
+    rtCargarResumen(); rtCargarResumenAnterior(); rtCargarSeries({ refresh:true }); if (RT_FILTRO) rtCargarCompleto();
   });
   document.getElementById('rtTabs').addEventListener('click', e => {
     const btn = e.target.closest('.tab'); if (!btn) return;
@@ -789,6 +890,15 @@ let RT_RESUMEN = null, RT_RESUMEN_LOADING = false, RT_RESUMEN_ERROR = null, RT_R
 // "desde|hasta" (dura la sesion).
 const RT_RESUMEN_ANTERIOR_CACHE = new Map();
 let RT_RESUMEN_ANTERIOR = null, RT_RESUMEN_ANTERIOR_LOADING = false, RT_RESUMEN_ANTERIOR_ERROR = null, RT_RESUMEN_ANTERIOR_ABORT = null;
+
+// Serie diaria de ventas (/analisis/series, motor de series Fase 1) para los
+// sparklines del Dashboard. Un solo request por período (agrupar=sucursal): el
+// total del hero se suma client-side (las ventas del resumen son exactamente
+// la suma de las 6 sucursales, misma definición en el backend). Carga en
+// paralelo, nunca bloquea el dashboard; si falla, los sparklines simplemente
+// no se muestran (el KPI numérico queda intacto). Cache por período en sesión.
+const RT_SERIES_CACHE = new Map();
+let RT_SERIES = null, RT_SERIES_LOADING = false, RT_SERIES_ABORT = null;
 // Insight "oportunidades prioritarias" del dashboard -- fetch propio y liviano
 // (prioridad=alta, limit=1, solo interesa paginacion.total), independiente del estado
 // de la pestaña Oportunidades para no pisar sus filtros/paginacion.
@@ -972,6 +1082,7 @@ function iniciarModoRT() {
   document.getElementById('rtHasta').value = RT_HASTA;
   rtCargarResumen();
   rtCargarResumenAnterior(); // en paralelo, nunca bloquea el dashboard principal
+  rtCargarSeries();          // idem: sparklines llegan cuando llegan
 }
 
 function rtGuardarPeriodo() {
@@ -999,6 +1110,7 @@ function rtCambiarPeriodo() {
   // lo vuelve a pedir sola en su proximo render (mismo patron lazy que ya existia).
   rtCargarResumen();
   rtCargarResumenAnterior(); // en paralelo, nunca bloquea el dashboard principal
+  rtCargarSeries();          // idem: sparklines llegan cuando llegan
 }
 
 // Se llama de forma "fire and forget" desde rtFormularioFiltro() -- no bloquea el render
@@ -2041,6 +2153,97 @@ async function rtCargarResumenAnterior() {
   }
 }
 
+// ── Serie diaria de ventas para sparklines (motor de series, Fase 1) ─────────
+// Mismo patron que rtCargarResumenAnterior: paralelo, cacheado por periodo,
+// degradacion silenciosa (RT_SERIES queda null y no se dibuja nada).
+async function rtCargarSeries(opts) {
+  const key = RT_DESDE + '|' + RT_HASTA;
+  if (opts && opts.refresh) RT_SERIES_CACHE.delete(key);
+  const cacheado = RT_SERIES_CACHE.get(key);
+  if (cacheado) { RT_SERIES = cacheado; RT_SERIES_LOADING = false; rtRenderVistaActual(); return; }
+  if (RT_SERIES_ABORT) RT_SERIES_ABORT.abort();
+  const controller = new AbortController();
+  RT_SERIES_ABORT = controller;
+  RT_SERIES = null; RT_SERIES_LOADING = true;
+  try {
+    const params = new URLSearchParams({ metricas:'ventas', desde: RT_DESDE, hasta: RT_HASTA, agrupar:'sucursal' });
+    const resp = await fetch(STOCK_API_URL + '/analisis/series?' + params.toString(), { signal: controller.signal });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok || !Array.isArray(data.series)) throw new Error(data.error || ('HTTP ' + resp.status));
+    RT_SERIES_CACHE.set(key, data);
+    RT_SERIES = data;
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    RT_SERIES = null; // sin serie no hay sparkline -- el KPI numerico no se toca
+  } finally {
+    RT_SERIES_LOADING = false;
+    rtRenderVistaActual();
+  }
+}
+
+// Valores diarios de ventas de una sucursal (o null si la serie no esta).
+function rtSerieVentasSucursal(centro) {
+  if (!RT_SERIES) return null;
+  const s = RT_SERIES.series.find(x => x.metrica === 'ventas' && x.dimension === 'sucursal' && x.clave === centro);
+  return s ? s.valores : null;
+}
+
+// Total diario = suma punto a punto de las 6 sucursales (transformacion pura
+// client-side; el backend define Ventas_total exactamente como esa suma).
+function rtSerieVentasTotal() {
+  if (!RT_SERIES) return null;
+  const sucursales = RT_SERIES.series.filter(x => x.metrica === 'ventas' && x.dimension === 'sucursal');
+  if (!sucursales.length) return null;
+  const total = RT_SERIES.fechas.map(() => 0);
+  sucursales.forEach(s => s.valores.forEach((v, i) => { total[i] += (v || 0); }));
+  return total;
+}
+
+// Sparkline SVG nativo (sin dependencias -- el CSP script-src 'self' tampoco
+// permitiria una libreria). viewBox fijo estirado al contenedor via CSS +
+// vector-effect para que el trazo no se deforme. Casos borde: serie vacia o
+// sin numeros -> null (no se dibuja nada falso); un solo punto -> circulo;
+// serie constante -> linea al medio. Los null (sin dato, series de snapshots
+// futuras) se saltean sin interpolar.
+function rtSparkline(valores, opts) {
+  if (!Array.isArray(valores) || !valores.length) return null;
+  const nums = valores.filter(v => typeof v === 'number' && isFinite(v));
+  if (!nums.length) return null;
+  const W = 120, H = 32, PAD = 2;
+  const min = Math.min(...nums), max = Math.max(...nums), rango = max - min;
+  const n = valores.length;
+  const x = i => n === 1 ? W / 2 : PAD + (i * (W - 2 * PAD)) / (n - 1);
+  const y = v => rango === 0 ? H / 2 : (H - PAD) - ((v - min) * (H - 2 * PAD)) / rango;
+  // Un null (sin dato) CORTA el trazo en vez de unir los puntos vecinos: unir
+  // seria interpolar visualmente un valor que no existe. Para ventas nunca hay
+  // nulls (0 es un dato real); esto importa para las series de snapshots.
+  const puntos = []; // [x, y, esInicioDeSegmento]
+  let anterior = -2;
+  valores.forEach((v, i) => {
+    if (typeof v === 'number' && isFinite(v)) {
+      puntos.push([x(i), y(v), i - anterior > 1]);
+      anterior = i;
+    }
+  });
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.setAttribute('class', 'rt-sparkline' + (opts && opts.className ? ' ' + opts.className : ''));
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', (opts && opts.ariaLabel) || 'Tendencia del período');
+  if (puntos.length === 1) {
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', puntos[0][0].toFixed(1)); c.setAttribute('cy', puntos[0][1].toFixed(1)); c.setAttribute('r', '2.5');
+    svg.appendChild(c);
+  } else {
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', puntos.map(p => (p[2] ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(''));
+    svg.appendChild(path);
+  }
+  return svg;
+}
+
 // null cuando no se puede comparar de forma valida (sin dato anterior, o anterior = 0 --
 // evita division por cero / porcentajes infinitos).
 function rtDelta(actual, anterior) {
@@ -2193,11 +2396,101 @@ function rtTarjetaKPI(def) {
   card.appendChild(iconChip);
   card.appendChild(rtEl('div', { className:'rt-kpi-label', text: def.label }));
   card.appendChild(rtEl('div', { className:'rt-kpi-valor', text: nf.format(def.valor) }));
+  if (def.desc) card.appendChild(rtEl('div', { className:'rt-kpi-desc', text: def.desc }));
   if (def.deltaActual !== undefined) {
     const badge = rtDeltaBadge(rtDelta(def.deltaActual, def.deltaAnterior));
     if (badge) card.appendChild(badge);
   }
   return card;
+}
+
+// Tarjeta hero de Ventas del período: mayor jerarquía que el resto (más ancha via
+// .rt-dash-kpis, número más grande, delta, sparkline real y CTA). El sparkline
+// sale de /analisis/series (ventas diarias reales); si la serie no cargó (en
+// vuelo o con error) simplemente no se dibuja -- nunca un placeholder falso.
+function rtTarjetaKPIHero(t, tAnterior) {
+  const card = rtEl('div', { className:'card rt-kpi rt-kpi-hero' });
+  const iconChip = rtEl('div', { className:'rt-kpi-icon rt-kpi-icon-accent' });
+  iconChip.innerHTML = icon('shoppingCart', ''); // icono estatico del helper
+  card.appendChild(iconChip);
+  card.appendChild(rtEl('div', { className:'rt-kpi-label', text:'Ventas del período' }));
+  card.appendChild(rtEl('div', { className:'rt-kpi-valor', text: nf.format(t.Ventas_total) }));
+  const badge = rtDeltaBadge(rtDelta(t.Ventas_total, tAnterior && tAnterior.Ventas_total));
+  if (badge) card.appendChild(badge);
+  const serieTotal = rtSerieVentasTotal();
+  if (serieTotal) {
+    const spark = rtSparkline(serieTotal, { className:'rt-spark-hero', ariaLabel:'Evolución diaria de ventas del período' });
+    if (spark) card.appendChild(spark);
+  }
+  const cta = rtBotonIcono('btn-sm rt-kpi-hero-cta', 'chevronRight', 'Ver detalle de ventas');
+  cta.addEventListener('click', () => rtCambiarVista('productos'));
+  card.appendChild(cta);
+  return card;
+}
+
+// Tarjeta compacta con barra de proporción (fila 2 del dashboard). def.total es la
+// base del porcentaje (variantes con actividad); si es 0 la barra se oculta en vez
+// de mostrar un porcentaje inválido.
+function rtTarjetaProporcion(def) {
+  const card = rtEl('div', { className:'card rt-kpi rt-prop' });
+  const iconChip = rtEl('div', { className:'rt-kpi-icon rt-prop-icon' + (def.cls ? ' rt-kpi-icon-' + def.cls : '') });
+  iconChip.innerHTML = icon(def.icon, ''); // icono estatico del helper
+  card.appendChild(iconChip);
+  const info = rtEl('div', { className:'rt-prop-info' });
+  info.appendChild(rtEl('div', { className:'rt-kpi-label', text: def.label }));
+  info.appendChild(rtEl('div', { className:'rt-kpi-valor', text: nf.format(def.valor) }));
+  const medida = rtEl('div', { className:'rt-prop-medida' });
+  medida.appendChild(rtEl('span', { text: def.desc }));
+  if (def.total > 0) {
+    const frac = Math.max(0, Math.min(1, def.valor / def.total));
+    const bar = rtEl('div', { className:'rt-prop-bar' });
+    const fill = rtEl('span', { className:'rt-prop-fill' + (def.fillCls ? ' ' + def.fillCls : '') });
+    fill.style.width = (frac * 100).toFixed(1) + '%';
+    bar.appendChild(fill);
+    medida.appendChild(bar);
+    medida.appendChild(rtEl('span', { text: Math.round(frac * 100) + '% del total' }));
+  }
+  info.appendChild(medida);
+  card.appendChild(info);
+  return card;
+}
+
+// Variante compacta de rtDeltaBadge para celdas de tabla (sin texto largo).
+function rtDeltaMini(delta) {
+  if (!delta) return rtEl('span', { className:'rt-delta-mini flat', text:'—' });
+  if (delta.direction === 'flat') return rtEl('span', { className:'rt-delta-mini flat', text:'0,0%' });
+  const span = rtEl('span', { className:'rt-delta-mini ' + delta.direction });
+  span.innerHTML = icon('arrowDown', delta.direction === 'up' ? 'arrow-up' : ''); // icono estatico del helper
+  span.appendChild(document.createTextNode(pct(Math.abs(delta.pct))));
+  return span;
+}
+
+// Panel del bloque inferior del dashboard: header con icono + cuerpo; el footer con
+// la acción "Ver todas/os..." se agrega con rtPanelDashFoot.
+function rtPanelDash(iconName, iconCls, titulo) {
+  const card = rtEl('div', { className:'card rt-dash-panel' });
+  const head = rtEl('div', { className:'rt-dash-panel-head' });
+  const chip = rtEl('div', { className:'rt-dash-panel-icon' + (iconCls ? ' rt-kpi-icon-' + iconCls : '') });
+  chip.innerHTML = icon(iconName, ''); // icono estatico del helper
+  head.appendChild(chip);
+  head.appendChild(rtEl('h3', { className:'rt-subtitulo', text: titulo }));
+  card.appendChild(head);
+  const body = rtEl('div', { className:'rt-dash-panel-body' });
+  card.appendChild(body);
+  return { card, body };
+}
+
+function rtPanelDashFoot(card, texto, onClick) {
+  const foot = rtEl('div', { className:'rt-dash-panel-foot' });
+  const btn = rtEl('button', { className:'rt-dash-link' });
+  btn.type = 'button';
+  btn.appendChild(rtEl('span', { text: texto }));
+  const chev = rtEl('span', { className:'rt-dash-link-chev' });
+  chev.innerHTML = icon('chevronRight', ''); // icono estatico del helper
+  btn.appendChild(chev);
+  btn.addEventListener('click', onClick);
+  foot.appendChild(btn);
+  card.appendChild(foot);
 }
 
 function renderRTDashboard(host) {
@@ -2207,27 +2500,44 @@ function renderRTDashboard(host) {
   const t = RT_RESUMEN.totales;
   const tAnterior = RT_RESUMEN_ANTERIOR ? RT_RESUMEN_ANTERIOR.totales : null;
 
-  const kpis = rtEl('div', { className:'rt-kpis' });
-  const kpiDefs = [
-    { label:'Ventas del período', valor:t.Ventas_total, icon:'shoppingCart', deltaActual:t.Ventas_total, deltaAnterior: tAnterior && tAnterior.Ventas_total },
-    { label:'Stock total', valor:t.Stock_total, icon:'package', deltaActual:t.Stock_total, deltaAnterior: tAnterior && tAnterior.Stock_total },
-    { label:'Depósito Central (90)', valor:t.Stock_deposito_90, icon:'warehouse', cls:'amber' },
-    { label:'Fallados (93)', valor:t.Stock_deposito_93, icon:'warehouse', cls:'danger' },
-    { label:'Insumos', valor:t.Stock_insumos, icon:'shoppingBag', cls:'violet' },
-    { label:'Productos base', valor:t.productos_base, icon:'shirt' },
-    { label:'Variantes con actividad', valor:t.variantes, icon:'barChart3' },
-    { label:'Variantes con stock', valor:t.variantes_con_stock, icon:'circleCheck' },
-    { label:'Variantes sin ventas', valor:t.variantes_sin_ventas, icon:'info' },
-  ];
-  kpiDefs.forEach(def => kpis.appendChild(rtTarjetaKPI(def)));
+  // Fila 1: hero de Ventas + 6 KPIs. Sin sparklines en ninguna tarjeta: no hay serie
+  // temporal en /analisis/resumen (la estructura queda lista para sumarla cuando exista).
+  const kpis = rtEl('div', { className:'rt-dash-kpis' });
+  kpis.appendChild(rtTarjetaKPIHero(t, tAnterior));
+  [
+    { label:'Stock total', valor:t.Stock_total, icon:'package', desc:'Total unidades' },
+    { label:'Depósito Central (90)', valor:t.Stock_deposito_90, icon:'warehouse', cls:'amber', desc:'Unidades disponibles' },
+    { label:'Fallados (93)', valor:t.Stock_deposito_93, icon:'warehouse', cls:'danger', desc:'Unidades' },
+    { label:'Insumos', valor:t.Stock_insumos, icon:'shoppingBag', cls:'violet', desc:'Unidades' },
+    { label:'Productos base', valor:t.productos_base, icon:'shirt', desc:'Modelos únicos' },
+    { label:'Variantes con actividad', valor:t.variantes, icon:'barChart3', desc:'Con ventas o stock' },
+  ].forEach(def => kpis.appendChild(rtTarjetaKPI(def)));
   host.appendChild(kpis);
 
-  const grid = rtEl('div', { className:'dash-grid' });
+  // Fila 2: proporciones sobre el total de variantes con actividad
+  const props = rtEl('div', { className:'rt-dash-props' });
+  props.appendChild(rtTarjetaProporcion({ label:'Variantes con stock', valor:t.variantes_con_stock,
+    total:t.variantes, icon:'circleCheck', cls:'success', desc:'Disponibles', fillCls:'success' }));
+  props.appendChild(rtTarjetaProporcion({ label:'Variantes sin ventas', valor:t.variantes_sin_ventas,
+    total:t.variantes, icon:'info', desc:'Sin movimiento' }));
+  host.appendChild(props);
 
-  const panelSucursales = rtEl('div');
-  panelSucursales.appendChild(rtEl('h3', { text:'Ventas y stock por sucursal', className:'rt-subtitulo' }));
-  panelSucursales.appendChild(rtTabla(
-    ['Sucursal', 'Ventas', 'Stock'],
+  // Fila 3: tres columnas -- sucursales / top productos / insights
+  const grid = rtEl('div', { className:'rt-dash-grid' });
+
+  const pSuc = rtPanelDash('store', '', 'Ventas y stock por sucursal');
+  // Delta por sucursal contra el mismo período del año anterior: reutiliza la respuesta
+  // ya cargada por rtCargarResumenAnterior (por_sucursal), sin fetch adicional. Sin
+  // mini-tendencia por sucursal: no hay serie temporal disponible.
+  const sucAnterior = RT_RESUMEN_ANTERIOR ? RT_RESUMEN_ANTERIOR.por_sucursal : null;
+  // La columna Tendencia existe SOLO cuando la serie diaria ya cargó (API con
+  // /analisis/series desplegada y sin error): una columna siempre vacía
+  // parecería rota -- misma filosofía que ocultar el sparkline del hero.
+  const haySeries = !!RT_SERIES;
+  const headersSucursal = ['Sucursal', 'Ventas', 'Stock', { text:'Vs. per. ant.', title:'Ventas vs. mismo período del año anterior' }];
+  if (haySeries) headersSucursal.push({ text:'Tendencia', className:'rt-col-tendencia', title:'Ventas diarias del período (datos reales de /analisis/series)' });
+  pSuc.body.appendChild(rtTabla(
+    headersSucursal,
     RT_CENTROS,
     (centro) => {
       const s = RT_RESUMEN.por_sucursal[centro] || { ventas:0, stock:0 };
@@ -2237,46 +2547,67 @@ function renderRTDashboard(host) {
       tr.appendChild(tdSuc);
       tr.appendChild(rtEl('td', { text: nf.format(s.ventas) }));
       tr.appendChild(rtEl('td', { text: nf.format(s.stock) }));
+      const sAnt = sucAnterior ? sucAnterior[centro] : null;
+      const tdDelta = rtEl('td');
+      tdDelta.appendChild(rtDeltaMini(rtDelta(s.ventas, sAnt && sAnt.ventas)));
+      tr.appendChild(tdDelta);
+      if (haySeries) {
+        // Mini-tendencia real por sucursal (serie diaria del período, color de
+        // la sucursal) -- solo se agrega la celda cuando la columna existe.
+        const tdSpark = rtEl('td', { className:'rt-col-tendencia' });
+        const serieSuc = rtSerieVentasSucursal(centro);
+        if (serieSuc) {
+          const spark = rtSparkline(serieSuc, { className:'rt-spark-suc', ariaLabel:'Tendencia diaria de ventas de ' + (RT_CENTRO_NOMBRE[centro] || centro) });
+          if (spark) { spark.style.color = rtSucursalColorVar(centro); tdSpark.appendChild(spark); }
+        }
+        tr.appendChild(tdSpark);
+      }
       return tr;
     }
   ));
-  grid.appendChild(panelSucursales);
+  rtPanelDashFoot(pSuc.card, 'Ver todas las sucursales', () => rtCambiarVista('stock-ventas'));
+  grid.appendChild(pSuc.card);
 
-  const panelTop = rtEl('div');
-  panelTop.appendChild(rtEl('h3', { text:'Top productos por ventas', className:'rt-subtitulo' }));
+  const pTop = rtPanelDash('shoppingCart', '', 'Top productos por ventas');
   // Tolerante a una API todavia sin desplegar: top_productos puede no venir en la respuesta
   // (version anterior de /analisis/resumen) -- en ese caso queda el estado informativo, nunca
   // datos simulados. No hace falta una segunda consulta: el campo ya viene armado en /resumen.
   const topProductos = Array.isArray(RT_RESUMEN.top_productos) ? RT_RESUMEN.top_productos : null;
   if (topProductos === null) {
-    panelTop.appendChild(rtPanelPendiente(
+    pTop.body.appendChild(rtPanelPendiente(
       'Top productos por ventas requiere una versión de la API que todavía no está desplegada ' +
       '(el campo top_productos no vino en la respuesta de /analisis/resumen).'
     ));
   } else if (!topProductos.length) {
-    const vacioHost = rtEl('div', { className:'card' });
-    rtEstado(vacioHost, 'vacio', 'Sin ventas en el período para calcular un top de productos.');
-    panelTop.appendChild(vacioHost);
+    rtEstado(pTop.body, 'vacio', 'Sin ventas en el período para calcular un top de productos.');
   } else {
     const ordenados = topProductos.slice().sort((a, b) => (b.ventas || 0) - (a.ventas || 0));
-    panelTop.appendChild(rtTabla(
-      ['Código', 'Producto', 'Marca', 'Ventas'],
-      ordenados,
-      (f) => {
-        const tr = rtEl('tr');
-        tr.appendChild(rtEl('td', { text: f.codigo || '—' }));
-        tr.appendChild(rtEl('td', { text: f.producto || '—' }));
-        tr.appendChild(rtEl('td', { text: f.marca || '—' }));
-        tr.appendChild(rtEl('td', { text: nf.format(f.ventas || 0) }));
-        return tr;
-      }
-    ));
+    const maxVentas = ordenados[0].ventas || 0;
+    const lista = rtEl('div', { className:'rt-top-lista' });
+    ordenados.forEach((f, i) => {
+      const fila = rtEl('div', { className:'rt-top-fila' });
+      fila.appendChild(rtEl('span', { className:'rt-top-rank' + (i < 3 ? ' rt-top-podio' : ''), text: String(i + 1) }));
+      fila.appendChild(rtEl('span', { className:'rt-top-cod', text: f.codigo || '—' }));
+      fila.appendChild(rtEl('span', { className:'rt-top-nombre', text: f.producto || '—' }));
+      fila.appendChild(rtEl('span', { className:'badge badge-neutral rt-top-marca', text: f.marca || '—' }));
+      const ventas = rtEl('div', { className:'rt-top-ventas' });
+      ventas.appendChild(rtEl('b', { text: nf.format(f.ventas || 0) }));
+      const bar = rtEl('div', { className:'rt-top-bar' });
+      const fill = rtEl('span');
+      fill.style.width = maxVentas > 0 ? Math.max(2, Math.round((f.ventas || 0) / maxVentas * 100)) + '%' : '0%';
+      bar.appendChild(fill);
+      ventas.appendChild(bar);
+      fila.appendChild(ventas);
+      lista.appendChild(fila);
+    });
+    pTop.body.appendChild(lista);
   }
-  grid.appendChild(panelTop);
+  rtPanelDashFoot(pTop.card, 'Ver todos los productos', () => rtCambiarVista('productos'));
+  grid.appendChild(pTop.card);
+
+  renderRTInsights(grid, t, tAnterior);
 
   host.appendChild(grid);
-
-  renderRTInsights(host, t, tAnterior);
 }
 
 // ── Insights del período (solo metricas derivables de datos ya confiables -- el margen
@@ -2339,8 +2670,7 @@ function rtInsightFila(iconName, cls, html) {
 }
 
 function renderRTInsights(host, t, tAnterior) {
-  const panel = rtEl('div', { className:'card' });
-  panel.appendChild(rtEl('h3', { text:'Insights del período', className:'rt-subtitulo' }));
+  const panel = rtPanelDash('lightbulb', 'amber', 'Insights del período');
   const lista = rtEl('div', { className:'rt-insights-lista' });
 
   // 1) Variacion de ventas vs mismo periodo del año anterior
@@ -2381,6 +2711,38 @@ function renderRTInsights(host, t, tAnterior) {
     lista.appendChild(rtInsightFila('barChart3', '', 'Sin datos suficientes para calcular participación por rubro.'));
   }
 
+  // 3b) Marca con mayor participación (por_marca ya viene en /analisis/resumen; se
+  // excluye "sin marca" -- valor vacío en la API, ver rtMarcasDatos)
+  const marcasVentas = (RT_RESUMEN.por_marca || []).filter(m => m.marca && m.marca.trim() && (m.ventas_total || 0) > 0);
+  const topMarca = marcasVentas.slice().sort((a, b) => (b.ventas_total || 0) - (a.ventas_total || 0))[0];
+  if (topMarca && t.Ventas_total > 0) {
+    lista.appendChild(rtInsightFila('shoppingBag', '', '<b>' + esc(topMarca.marca) + '</b> es la marca con mayor participación (' +
+      esc(pct((topMarca.ventas_total || 0) / t.Ventas_total)) + ' de las ventas).'));
+  }
+
+  // 3c) Marca con mayor crecimiento vs mismo período del año anterior -- solo con el
+  // resumen anterior ya cargado, y con el mismo umbral mínimo de ventas que usa la vista
+  // Marcas (RT_MARCAS_ROTACION_VENTAS_MIN) en ambos períodos, para que una marca chica
+  // no encabece con un porcentaje engañoso.
+  if (RT_RESUMEN_ANTERIOR) {
+    const ventasAntes = new Map((RT_RESUMEN_ANTERIOR.por_marca || [])
+      .filter(m => m.marca && m.marca.trim())
+      .map(m => [norm(m.marca), m.ventas_total || 0]));
+    let mejorCrecimiento = null;
+    marcasVentas.forEach(m => {
+      const antes = ventasAntes.get(norm(m.marca));
+      if (!antes || antes < RT_MARCAS_ROTACION_VENTAS_MIN || m.ventas_total < RT_MARCAS_ROTACION_VENTAS_MIN) return;
+      const d = rtDelta(m.ventas_total, antes);
+      if (d && d.direction === 'up' && (!mejorCrecimiento || d.pct > mejorCrecimiento.pct)) {
+        mejorCrecimiento = { marca: m.marca, pct: d.pct };
+      }
+    });
+    if (mejorCrecimiento) {
+      lista.appendChild(rtInsightFila('barChart3', 'up', 'Marca con mayor crecimiento: <b>' + esc(mejorCrecimiento.marca) +
+        '</b> (+' + esc(pct(mejorCrecimiento.pct)) + ' vs. mismo período del año anterior).'));
+    }
+  }
+
   // 4) Variantes sin actividad
   lista.appendChild(rtInsightFila('info', '', '<b>' + esc(nf.format(t.variantes_sin_ventas)) + '</b> variantes sin ventas en el período.'));
 
@@ -2415,8 +2777,9 @@ function renderRTInsights(host, t, tAnterior) {
     }
   }
 
-  panel.appendChild(lista);
-  host.appendChild(panel);
+  panel.body.appendChild(lista);
+  rtPanelDashFoot(panel.card, 'Ver todas las oportunidades', () => rtCambiarVista('oportunidades'));
+  host.appendChild(panel.card);
 }
 
 // ── Marcas (vista dedicada) ──────────────────────────────────────────────────────────
