@@ -1565,16 +1565,23 @@ async function rtRotacionesCopiarTextoEnvio(envio) {
 }
 
 function renderRTRotacionesEnviadas(host) {
-  if (!RT_ROTACIONES_ENVIADOS && !RT_ROTACIONES_ENVIADOS_LOADING) rtCargarEnviados();
+  // Auto-carga diferida con queueMicrotask para no reentrar en rtRenderVistaActual()
+  // durante el render (ver comentario en renderRTRotacionesSugeridas).
+  if (!RT_ROTACIONES_ENVIADOS && !RT_ROTACIONES_ENVIADOS_LOADING) {
+    RT_ROTACIONES_ENVIADOS_LOADING = true;
+    queueMicrotask(() => rtCargarEnviados());
+  }
 
   const btnActualizar = rtEl('button', { className: 'btn-sm', text: 'Actualizar' });
   btnActualizar.type = 'button';
   btnActualizar.addEventListener('click', () => { RT_ROTACIONES_ENVIADOS = null; rtCargarEnviados(); });
   host.appendChild(btnActualizar);
 
-  if (RT_ROTACIONES_ENVIADOS_LOADING && !RT_ROTACIONES_ENVIADOS) return rtEstado(host, 'loading', 'Cargando envíos...');
+  // rtEstado() hace replaceChildren() -- pasarle "host" directo borraria las subpestañas
+  // y el boton Actualizar mientras carga (mismo patron que Sugeridas): div aislado.
+  if (RT_ROTACIONES_ENVIADOS_LOADING && !RT_ROTACIONES_ENVIADOS) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'loading', 'Cargando envíos...'); }
   if (RT_ROTACIONES_ENVIADOS_ERROR) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'error', RT_ROTACIONES_ENVIADOS_ERROR, () => rtCargarEnviados()); }
-  if (!RT_ROTACIONES_ENVIADOS) return rtEstado(host, 'loading', 'Cargando...');
+  if (!RT_ROTACIONES_ENVIADOS) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'loading', 'Cargando...'); }
   if (!RT_ROTACIONES_ENVIADOS.envios.length) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'vacio', 'Sin envíos pendientes.'); }
 
   RT_ROTACIONES_ENVIADOS.envios.forEach(env => {
@@ -1696,10 +1703,17 @@ function rtRotacionesHistorialFormularioFiltro(host) {
 function renderRTRotacionesHistorial(host) {
   rtRotacionesHistorialFormularioFiltro(host);
 
-  if (!RT_ROTACIONES_HISTORIAL && !RT_ROTACIONES_HISTORIAL_LOADING) rtCargarHistorial();
-  if (RT_ROTACIONES_HISTORIAL_LOADING && !RT_ROTACIONES_HISTORIAL) return rtEstado(host, 'loading', 'Cargando historial...');
+  // Auto-carga diferida con queueMicrotask para no reentrar en rtRenderVistaActual()
+  // durante el render (ver comentario en renderRTRotacionesSugeridas).
+  if (!RT_ROTACIONES_HISTORIAL && !RT_ROTACIONES_HISTORIAL_LOADING) {
+    RT_ROTACIONES_HISTORIAL_LOADING = true;
+    queueMicrotask(() => rtCargarHistorial());
+  }
+  // rtEstado() hace replaceChildren() -- pasarle "host" directo borraria las subpestañas
+  // y el formulario de filtros mientras carga (mismo patron que Sugeridas): div aislado.
+  if (RT_ROTACIONES_HISTORIAL_LOADING && !RT_ROTACIONES_HISTORIAL) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'loading', 'Cargando historial...'); }
   if (RT_ROTACIONES_HISTORIAL_ERROR) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'error', RT_ROTACIONES_HISTORIAL_ERROR, () => rtCargarHistorial()); }
-  if (!RT_ROTACIONES_HISTORIAL) return rtEstado(host, 'loading', 'Cargando...');
+  if (!RT_ROTACIONES_HISTORIAL) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'loading', 'Cargando...'); }
   if (!RT_ROTACIONES_HISTORIAL.envios.length) { const w = rtEl('div'); host.appendChild(w); return rtEstado(w, 'vacio', 'Sin resultados para este filtro.'); }
 
   host.appendChild(rtTabla(
@@ -1942,7 +1956,15 @@ function rtRotacionesFormularioFiltro(host) {
 function renderRTRotacionesSugeridas(host) {
   host.appendChild(rtEl('p', { className:'rt-note', text:'Sugerencias de traslado de stock entre sucursales a nivel código+talle+color, calculadas sobre el período elegido arriba. Las cantidades son estimaciones preliminares -- siempre verificar talle, color y cantidad real antes de confirmar el envío.' }));
 
-  if (!RT_ROTACIONES && !RT_ROTACIONES_LOADING) rtCargarRotaciones();
+  // La auto-carga corre dentro de un rtRenderVistaActual() en curso, y rtCargarRotaciones()
+  // vuelve a llamar rtRenderVistaActual() de forma sincronica: eso reentraba con el host a
+  // medio construir y la vista quedaba duplicada mientras cargaba (mismo bug que Insights
+  // 2026-07-20). queueMicrotask pospone la carga hasta que el render en curso termine; el
+  // flag LOADING se marca ya para que este render muestre el spinner y no se re-encole.
+  if (!RT_ROTACIONES && !RT_ROTACIONES_LOADING) {
+    RT_ROTACIONES_LOADING = true;
+    queueMicrotask(() => rtCargarRotaciones());
+  }
 
   rtRotacionesFormularioFiltro(host);
 
