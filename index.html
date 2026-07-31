@@ -2221,6 +2221,26 @@ function rtSerieVentasTotal() {
   return total;
 }
 
+// Vista client-side de la serie para el sparkline: diario hasta 92 dias; con
+// periodos mas largos se suma por SEMANAS (bloques de 7 dias alineados al
+// FINAL del periodo, asi el unico bloque parcial queda al principio y no
+// simula una caida reciente). Ademas de reducir puntos, la suma semanal
+// elimina el ruido del ciclo semanal (fin de semana vs dias flojos), que es
+// lo que hacia ilegible el grafico en periodos largos. Transformacion pura
+// sobre datos reales -- el servidor sigue entregando siempre el detalle
+// diario. Los null (sin dato) no se suman: un bloque enteramente null sigue
+// siendo null.
+function rtSerieParaSparkline(valores) {
+  if (!Array.isArray(valores) || valores.length <= 92) return valores;
+  const bloques = [];
+  for (let fin = valores.length; fin > 0; fin -= 7) {
+    const parte = valores.slice(Math.max(0, fin - 7), fin);
+    const nums = parte.filter(v => typeof v === 'number' && isFinite(v));
+    bloques.unshift(nums.length ? nums.reduce((a, b) => a + b, 0) : null);
+  }
+  return bloques;
+}
+
 // Sparkline SVG nativo (sin dependencias -- el CSP script-src 'self' tampoco
 // permitiria una libreria). viewBox fijo estirado al contenedor via CSS +
 // vector-effect para que el trazo no se deforme. Casos borde: serie vacia o
@@ -2441,7 +2461,10 @@ function rtTarjetaKPIHero(t, tAnterior) {
   if (badge) card.appendChild(badge);
   const serieTotal = rtSerieVentasTotal();
   if (serieTotal) {
-    const spark = rtSparkline(serieTotal, { className:'rt-spark-hero', ariaLabel:'Evolución diaria de ventas del período' });
+    const vista = rtSerieParaSparkline(serieTotal);
+    const esSemanal = vista.length !== serieTotal.length;
+    const spark = rtSparkline(vista, { className:'rt-spark-hero',
+      ariaLabel: 'Evolución ' + (esSemanal ? 'semanal' : 'diaria') + ' de ventas del período' });
     if (spark) card.appendChild(spark);
   }
   const cta = rtBotonIcono('btn-sm rt-kpi-hero-cta', 'chevronRight', 'Ver detalle de ventas');
@@ -2579,7 +2602,9 @@ function renderRTDashboard(host) {
         const tdSpark = rtEl('td', { className:'rt-col-tendencia' });
         const serieSuc = rtSerieVentasSucursal(centro);
         if (serieSuc) {
-          const spark = rtSparkline(serieSuc, { className:'rt-spark-suc', ariaLabel:'Tendencia diaria de ventas de ' + (RT_CENTRO_NOMBRE[centro] || centro) });
+          const vista = rtSerieParaSparkline(serieSuc);
+          const spark = rtSparkline(vista, { className:'rt-spark-suc',
+            ariaLabel: 'Tendencia ' + (vista.length !== serieSuc.length ? 'semanal' : 'diaria') + ' de ventas de ' + (RT_CENTRO_NOMBRE[centro] || centro) });
           if (spark) { spark.style.color = rtSucursalColorVar(centro); tdSpark.appendChild(spark); }
         }
         tr.appendChild(tdSpark);
