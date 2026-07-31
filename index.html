@@ -602,7 +602,11 @@
     .rt-fila-cantidad{font-size:16px;font-weight:700;margin-left:auto}
     .rt-fila-sinstock{opacity:.55}
     .rt-fila-sinstock .rt-fila-cantidad{color:var(--gray-400);font-weight:500}
-    .rt-stockventas-tabla tfoot td{font-weight:700;border-top:2px solid var(--gray-100);background:var(--gray-50)}
+    /* Fila de totales -- se repite arriba (dentro de thead, debajo de los encabezados) y
+       abajo (tfoot), mismo contenido armado por rtStockVentasFilaTotales(). */
+    .rt-stockventas-total td{font-weight:700;background:var(--gray-50)}
+    .rt-stockventas-tabla tfoot .rt-stockventas-total td{border-top:2px solid var(--gray-100)}
+    .rt-stockventas-tabla thead .rt-stockventas-total td{border-bottom:2px solid var(--gray-100)}
     /* Tabla con ~20 columnas (venta/stock x sucursal) -- padding mas chico que .rt-table
        para que entren mas columnas antes de necesitar el scroll horizontal interno. */
     .rt-stockventas-tabla th, .rt-stockventas-tabla td{padding:6px 7px;font-size:12.5px}
@@ -620,7 +624,7 @@
        badges de sucursal en toda la app (.s01..s14, ver rtSucursalBadge). En los datos
        solo se tiñe el fondo (variante rt-sv-bg-*), nunca el texto, para no perder
        contraste en los numeros. Selector con .rt-stockventas-tabla + td para pisar el
-       fondo gris de tfoot (mas especifico que ".rt-stockventas-tabla tfoot td"). */
+       fondo gris de la fila de totales (mas especifico que ".rt-stockventas-total td"). */
     .rt-stockventas-tabla td.rt-sv-bg-s01{background:var(--suc-01-s)}
     .rt-stockventas-tabla td.rt-sv-bg-s05{background:var(--suc-05-s)}
     .rt-stockventas-tabla td.rt-sv-bg-s09{background:var(--suc-09-s)}
@@ -834,6 +838,20 @@ const RT_CENTRO_NOMBRE_DIMINUTIVO = {
 };
 const RT_LIMITE_PAGINAS_COMPLETO = 20; // tope de seguridad: 20 * 500 = 10.000 filas
 
+// Campo numerico de cada variante por columna ordenable de Stock Ventas (venta/stock por
+// sucursal, deposito, fallas) -- unica fuente para que rtStockVentasOrdenar() sepa por
+// que comparar sin repetir la lista de sucursales adentro del sort. Pedido explicito
+// 2026-07-31: poder ordenar de menor a mayor cualquiera de estas columnas, no solo
+// Venta Total/Stock Total (que ya se ordenaban con 'ventas'/'stock', ver mas abajo).
+const RT_STOCKVENTAS_CAMPOS_NUMERICOS = {
+  stock_deposito: f => f.Stock_ctro_0000 || 0,
+  stock_fallas: f => f.Stock_fallados || 0,
+};
+RT_CENTROS.forEach(c => {
+  RT_STOCKVENTAS_CAMPOS_NUMERICOS['venta_' + c] = f => f['Ventas_ctro_' + c] || 0;
+  RT_STOCKVENTAS_CAMPOS_NUMERICOS['stock_' + c] = f => f['Stock_ctro_' + c] || 0;
+});
+
 // Badge de color por sucursal (clases .sN/.suc-N ya definidas en <style>, sin usar hasta
 // ahora) -- un color fijo por sucursal en toda la app para reconocerla de un vistazo,
 // en vez de leer el nombre cada vez (pedido 2026-07-20).
@@ -947,8 +965,6 @@ let RT_PRODUCTOS_VARIANTES_ORDEN = { campo:null, dir:-1 }; // orden de la tabla 
 // rtProductosDetalle), namespaced RT_STOCKVENTAS_* para no pisar el estado de Productos.
 let RT_STOCKVENTAS_ORDEN = { campo:'ventas', dir:-1 };
 let RT_STOCKVENTAS_BUSQUEDA = '';
-let RT_STOCKVENTAS_PAGINA = 0;
-let RT_STOCKVENTAS_FILAS_POR_PAGINA = 25;
 // Filtros por talle/color -- client-side sobre RT_COMPLETO.filas (la API de /stock-ventas
 // no acepta talle/color como parametro, solo rubro/subrubro/marca/codigo). Multiples
 // valores seleccionados se acumulan (OR entre si), y se combinan (AND) con el resto de
@@ -3945,11 +3961,13 @@ function rtStockVentasAplicarBusqueda(filas) {
 function rtStockVentasOrdenar(filas) {
   const { campo, dir } = RT_STOCKVENTAS_ORDEN;
   const copia = filas.slice();
+  const numGetter = RT_STOCKVENTAS_CAMPOS_NUMERICOS[campo];
   copia.sort((a, b) => {
     let cmp;
     if (campo === 'talle') cmp = dir * sizeSort(a.Codigo_talle, b.Codigo_talle);
     else if (campo === 'ventas') cmp = dir * ((a.Ventas_total || 0) - (b.Ventas_total || 0));
     else if (campo === 'stock') cmp = dir * ((a.Stock_total || 0) - (b.Stock_total || 0));
+    else if (numGetter) cmp = dir * (numGetter(a) - numGetter(b));
     else {
       const x = campo === 'producto' ? (a.Nombre_producto || '') : campo === 'marca' ? (a.Nombre_marca || '') : (a.Codigo_producto || '');
       const y = campo === 'producto' ? (b.Nombre_producto || '') : campo === 'marca' ? (b.Nombre_marca || '') : (b.Codigo_producto || '');
@@ -3966,34 +3984,28 @@ function rtStockVentasOrdenar(filas) {
 function rtStockVentasOrdenarPor(campo) {
   if (RT_STOCKVENTAS_ORDEN.campo === campo) RT_STOCKVENTAS_ORDEN.dir *= -1;
   else RT_STOCKVENTAS_ORDEN = { campo, dir: (campo === 'codigo' || campo === 'producto' || campo === 'marca' || campo === 'talle') ? 1 : -1 };
-  RT_STOCKVENTAS_PAGINA = 0;
   rtRenderVistaActual();
 }
 
 function rtStockVentasBuscar(valor) {
   RT_STOCKVENTAS_BUSQUEDA = valor;
-  RT_STOCKVENTAS_PAGINA = 0;
   rtRenderVistaActual();
 }
 
 function rtStockVentasToggleTalle(valor, marcado) {
   if (marcado) RT_STOCKVENTAS_TALLES.add(valor); else RT_STOCKVENTAS_TALLES.delete(valor);
-  RT_STOCKVENTAS_PAGINA = 0;
   rtRenderVistaActual();
 }
 function rtStockVentasLimpiarTalles() {
   RT_STOCKVENTAS_TALLES = new Set();
-  RT_STOCKVENTAS_PAGINA = 0;
   rtRenderVistaActual();
 }
 function rtStockVentasToggleColor(valor, marcado) {
   if (marcado) RT_STOCKVENTAS_COLORES.add(valor); else RT_STOCKVENTAS_COLORES.delete(valor);
-  RT_STOCKVENTAS_PAGINA = 0;
   rtRenderVistaActual();
 }
 function rtStockVentasLimpiarColores() {
   RT_STOCKVENTAS_COLORES = new Set();
-  RT_STOCKVENTAS_PAGINA = 0;
   rtRenderVistaActual();
 }
 
@@ -4126,20 +4138,20 @@ function rtStockVentasColumnas(mostrarRubro, mostrarSubrubro) {
     td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_total || 0) }),
     resumen: rows => rows.reduce((a, f) => a + (f.Stock_total || 0), 0), resumenClase:'nr rt-sv-suc' });
   cols.push({ id:'stock_deposito', label:'Stock Depósito',
-    th:() => rtEl('th', { className:'nr rt-sv-suc', text:'Stock Depo' }),
+    th:() => rtStockVentasTh('Stock Depo', 'stock_deposito', 'rt-sv-suc'),
     td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_ctro_0000 || 0) }),
     resumen: rows => rows.reduce((a, f) => a + (f.Stock_ctro_0000 || 0), 0), resumenClase:'nr rt-sv-suc' });
   cols.push({ id:'stock_fallas', label:'Stock Fallas',
-    th:() => rtEl('th', { className:'nr rt-sv-suc', text:'Stock Fallas' }),
+    th:() => rtStockVentasTh('Stock Fallas', 'stock_fallas', 'rt-sv-suc'),
     td:f => rtEl('td', { className:'nr rt-sv-suc', text: nf.format(f.Stock_fallados || 0) }),
     resumen: rows => rows.reduce((a, f) => a + (f.Stock_fallados || 0), 0), resumenClase:'nr rt-sv-suc' });
   RT_CENTROS.forEach(c => {
     cols.push({ id:'venta_' + c, label:'Venta ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c],
-      th:() => rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Venta ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }),
+      th:() => rtStockVentasTh('Venta ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c], 'venta_' + c, 'rt-sv-suc ' + RT_CENTRO_CLS[c]),
       td:f => rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Ventas_ctro_' + c] || 0) }),
       resumen: rows => rows.reduce((a, f) => a + (f['Ventas_ctro_' + c] || 0), 0), resumenClase:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c] });
     cols.push({ id:'stock_' + c, label:'Stock ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c],
-      th:() => rtEl('th', { className:'nr rt-sv-suc ' + RT_CENTRO_CLS[c], text:'Stock ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c] }),
+      th:() => rtStockVentasTh('Stock ' + RT_CENTRO_NOMBRE_DIMINUTIVO[c], 'stock_' + c, 'rt-sv-suc ' + RT_CENTRO_CLS[c]),
       td:f => rtEl('td', { className:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c], text: nf.format(f['Stock_ctro_' + c] || 0) }),
       resumen: rows => rows.reduce((a, f) => a + (f['Stock_ctro_' + c] || 0), 0), resumenClase:'nr rt-sv-suc rt-sv-bg-' + RT_CENTRO_CLS[c] });
   });
@@ -4201,8 +4213,32 @@ function renderRTStockVentas(host) {
 
 function rtStockVentasTh(etiqueta, campoId, claseExtra) {
   const th = rtProductosThOrdenable(etiqueta, campoId, RT_STOCKVENTAS_ORDEN, () => rtStockVentasOrdenarPor(campoId));
-  if (claseExtra) th.classList.add(claseExtra);
+  // claseExtra puede traer mas de una clase separadas por espacio (ej. 'rt-sv-suc s01')
+  // -- classList.add() no acepta un string con espacios de una, hay que separarlas.
+  if (claseExtra) claseExtra.split(' ').forEach(cls => cls && th.classList.add(cls));
   return th;
+}
+
+// Fila de totales, reutilizada arriba (thead, debajo de los encabezados) y abajo
+// (tfoot) -- mismo contenido en los dos lugares, calculado sobre las filas que se le
+// pasen (siempre TODAS las filtradas: sin paginacion, no hay "pagina actual" que sumar
+// aparte). La etiqueta va en la primera columna visible sin resumen (no hace falta
+// colspan: al ocultar/mostrar columnas cualquier columna podria terminar siendo la
+// primera).
+function rtStockVentasFilaTotales(columnasVisibles, filas, etiqueta) {
+  const tr = rtEl('tr', { className:'rt-stockventas-total' });
+  let etiquetaPuesta = false;
+  columnasVisibles.forEach(c => {
+    if (c.resumen) {
+      tr.appendChild(rtEl('td', { className: c.resumenClase || 'nr', text: nf.format(c.resumen(filas)) }));
+    } else if (!etiquetaPuesta) {
+      tr.appendChild(rtEl('td', { text: etiqueta }));
+      etiquetaPuesta = true;
+    } else {
+      tr.appendChild(rtEl('td', {}));
+    }
+  });
+  return tr;
 }
 
 function rtStockVentasTabla(host, todasLasFilas) {
@@ -4223,7 +4259,6 @@ function rtStockVentasTabla(host, todasLasFilas) {
   searchInput.addEventListener('input', () => {
     const cursor = searchInput.selectionStart;
     RT_STOCKVENTAS_BUSQUEDA = searchInput.value;
-    RT_STOCKVENTAS_PAGINA = 0;
     rtRenderVistaActual();
     const nuevo = document.getElementById('rtStockVentasBuscador');
     if (nuevo) { nuevo.focus(); try { nuevo.setSelectionRange(cursor, cursor); } catch (e) {} }
@@ -4256,18 +4291,6 @@ function rtStockVentasTabla(host, todasLasFilas) {
   const columnasTodas = rtStockVentasColumnas(mostrarRubro, mostrarSubrubro);
   const columnasVisibles = columnasTodas.filter(c => c.siempre || !RT_STOCKVENTAS_COLUMNAS_OCULTAS.has(c.id));
   toolbar.appendChild(rtStockVentasColumnasDropdown(columnasTodas.filter(c => !c.siempre)));
-
-  const filasSel = rtEl('div', { className:'rt-productos-filas-sel' });
-  filasSel.appendChild(rtEl('label', { text:'Filas por página', attrs:{ for:'rtStockVentasFilas' } }));
-  const select = rtEl('select', { attrs:{ id:'rtStockVentasFilas', 'aria-label':'Filas por página' } });
-  [25, 50, 100].forEach(n => {
-    const opt = rtEl('option', { text:String(n), attrs:{ value:String(n) } });
-    if (n === RT_STOCKVENTAS_FILAS_POR_PAGINA) opt.selected = true;
-    select.appendChild(opt);
-  });
-  select.addEventListener('change', () => { RT_STOCKVENTAS_FILAS_POR_PAGINA = Number(select.value); RT_STOCKVENTAS_PAGINA = 0; rtRenderVistaActual(); });
-  filasSel.appendChild(select);
-  toolbar.appendChild(filasSel);
   host.appendChild(toolbar);
 
   const filtradas = rtStockVentasAplicarFiltrosCliente(todasLasFilas);
@@ -4280,12 +4303,13 @@ function rtStockVentasTabla(host, todasLasFilas) {
     return;
   }
 
+  // Sin paginacion (pedido explicito 2026-07-31): se muestran todas las filas
+  // filtradas de una, para poder registrar el total real de lo filtrado sin tener que
+  // sumar pagina por pagina -- por eso mismo la fila de totales pasa a ir arriba
+  // (repetida abajo tambien), asi queda a la vista sin bajar hasta el final de la lista.
   const ordenadas = rtStockVentasOrdenar(filtradas);
   const total = ordenadas.length;
-  const totalPaginas = Math.max(1, Math.ceil(total / RT_STOCKVENTAS_FILAS_POR_PAGINA));
-  if (RT_STOCKVENTAS_PAGINA >= totalPaginas) RT_STOCKVENTAS_PAGINA = totalPaginas - 1;
-  const offset = RT_STOCKVENTAS_PAGINA * RT_STOCKVENTAS_FILAS_POR_PAGINA;
-  const pagina = ordenadas.slice(offset, offset + RT_STOCKVENTAS_FILAS_POR_PAGINA);
+  const etiquetaTotal = 'Total (' + nf.format(total) + (total === 1 ? ' variante)' : ' variantes)');
 
   const wrap = rtEl('div', { className:'rt-table-wrap' });
   const table = rtEl('table', { className:'rt-table rt-stockventas-tabla' });
@@ -4293,10 +4317,11 @@ function rtStockVentasTabla(host, todasLasFilas) {
   const trh = rtEl('tr');
   columnasVisibles.forEach(c => trh.appendChild(c.th()));
   thead.appendChild(trh);
+  thead.appendChild(rtStockVentasFilaTotales(columnasVisibles, ordenadas, etiquetaTotal));
   table.appendChild(thead);
 
   const tbody = rtEl('tbody');
-  pagina.forEach(f => {
+  ordenadas.forEach(f => {
     const sinStock = (f.Stock_total || 0) <= 0;
     const tr = rtEl('tr', { className: sinStock ? 'rt-fila-sinstock' : '' });
     columnasVisibles.forEach(c => tr.appendChild(c.td(f)));
@@ -4304,39 +4329,12 @@ function rtStockVentasTabla(host, todasLasFilas) {
   });
   table.appendChild(tbody);
 
-  // Totales de la pagina actual solamente -- coherente con como Productos pagina (ver
-  // rtProductosTabla), nunca suma filas fuera de la pagina visible. La etiqueta "Total
-  // (pagina)" va en la primera columna visible sin resumen (no hace falta colspan: al
-  // ocultar/mostrar columnas cualquier columna podria terminar siendo la primera).
   const tfoot = rtEl('tfoot');
-  const trTotal = rtEl('tr', { className:'rt-stockventas-total' });
-  let etiquetaTotalPuesta = false;
-  columnasVisibles.forEach(c => {
-    if (c.resumen) {
-      trTotal.appendChild(rtEl('td', { className: c.resumenClase || 'nr', text: nf.format(c.resumen(pagina)) }));
-    } else if (!etiquetaTotalPuesta) {
-      trTotal.appendChild(rtEl('td', { text:'Total (página)' }));
-      etiquetaTotalPuesta = true;
-    } else {
-      trTotal.appendChild(rtEl('td', {}));
-    }
-  });
-  tfoot.appendChild(trTotal);
+  tfoot.appendChild(rtStockVentasFilaTotales(columnasVisibles, ordenadas, etiquetaTotal));
   table.appendChild(tfoot);
 
   wrap.appendChild(table);
   host.appendChild(wrap);
-
-  const pag = rtEl('div', { className:'rt-pagination' });
-  pag.appendChild(rtEl('span', { text:'Mostrando ' + (offset + 1) + '–' + Math.min(offset + RT_STOCKVENTAS_FILAS_POR_PAGINA, total) + ' de ' + nf.format(total) + (total === 1 ? ' variante' : ' variantes') }));
-  const btnAnt = rtEl('button', { className:'btn-sm', text:'← Anterior' });
-  btnAnt.type = 'button'; btnAnt.disabled = RT_STOCKVENTAS_PAGINA === 0;
-  btnAnt.addEventListener('click', () => { RT_STOCKVENTAS_PAGINA--; rtRenderVistaActual(); });
-  const btnSig = rtEl('button', { className:'btn-sm', text:'Siguiente →' });
-  btnSig.type = 'button'; btnSig.disabled = offset + RT_STOCKVENTAS_FILAS_POR_PAGINA >= total;
-  btnSig.addEventListener('click', () => { RT_STOCKVENTAS_PAGINA++; rtRenderVistaActual(); });
-  pag.appendChild(btnAnt); pag.appendChild(btnSig);
-  host.appendChild(pag);
 }
 
 // ── Oportunidades ─────────────────────────────────────────────────────────────
