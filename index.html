@@ -844,6 +844,10 @@ const RT_LIMITE_PAGINAS_COMPLETO = 20; // tope de seguridad: 20 * 500 = 10.000 f
 // 2026-07-31: poder ordenar de menor a mayor cualquiera de estas columnas, no solo
 // Venta Total/Stock Total (que ya se ordenaban con 'ventas'/'stock', ver mas abajo).
 const RT_STOCKVENTAS_CAMPOS_NUMERICOS = {
+  ventas: f => f.Ventas_total || 0,
+  stock: f => f.Stock_total || 0,
+  precio: f => f.Precio ?? -Infinity,
+  costo: f => f.Precio_costo ?? -Infinity,
   stock_deposito: f => f.Stock_ctro_0000 || 0,
   stock_fallas: f => f.Stock_fallados || 0,
 };
@@ -851,6 +855,18 @@ RT_CENTROS.forEach(c => {
   RT_STOCKVENTAS_CAMPOS_NUMERICOS['venta_' + c] = f => f['Ventas_ctro_' + c] || 0;
   RT_STOCKVENTAS_CAMPOS_NUMERICOS['stock_' + c] = f => f['Stock_ctro_' + c] || 0;
 });
+// Pedido explicito 2026-07-31: todas las columnas ordenables, no solo las numericas --
+// las de texto usan localeCompare('es'), Talle sigue con sizeSort (S/M/L, no alfabetico)
+// y Ultimo ingreso compara por fecha, ver rtStockVentasOrdenar().
+const RT_STOCKVENTAS_CAMPOS_TEXTO = {
+  rubro: f => f.Nombre_rubro || '',
+  subrubro: f => f.Nombre_subrubro || '',
+  codigo: f => f.Codigo_producto || '',
+  cod_color: f => f.Codigo_color || '',
+  color: f => f.Nombre_color || '',
+  producto: f => f.Nombre_producto || '',
+  marca: f => f.Nombre_marca || '',
+};
 
 // Badge de color por sucursal (clases .sN/.suc-N ya definidas en <style>, sin usar hasta
 // ahora) -- un color fijo por sucursal en toda la app para reconocerla de un vistazo,
@@ -3962,17 +3978,18 @@ function rtStockVentasOrdenar(filas) {
   const { campo, dir } = RT_STOCKVENTAS_ORDEN;
   const copia = filas.slice();
   const numGetter = RT_STOCKVENTAS_CAMPOS_NUMERICOS[campo];
+  const textoGetter = RT_STOCKVENTAS_CAMPOS_TEXTO[campo];
   copia.sort((a, b) => {
     let cmp;
     if (campo === 'talle') cmp = dir * sizeSort(a.Codigo_talle, b.Codigo_talle);
-    else if (campo === 'ventas') cmp = dir * ((a.Ventas_total || 0) - (b.Ventas_total || 0));
-    else if (campo === 'stock') cmp = dir * ((a.Stock_total || 0) - (b.Stock_total || 0));
-    else if (numGetter) cmp = dir * (numGetter(a) - numGetter(b));
-    else {
-      const x = campo === 'producto' ? (a.Nombre_producto || '') : campo === 'marca' ? (a.Nombre_marca || '') : (a.Codigo_producto || '');
-      const y = campo === 'producto' ? (b.Nombre_producto || '') : campo === 'marca' ? (b.Nombre_marca || '') : (b.Codigo_producto || '');
-      cmp = dir * String(x).localeCompare(String(y), 'es');
+    else if (campo === 'ultimo_ingreso') {
+      const x = a.Ultimo_ingreso ? new Date(a.Ultimo_ingreso).getTime() : -Infinity;
+      const y = b.Ultimo_ingreso ? new Date(b.Ultimo_ingreso).getTime() : -Infinity;
+      cmp = dir * (x - y);
     }
+    else if (numGetter) cmp = dir * (numGetter(a) - numGetter(b));
+    else if (textoGetter) cmp = dir * String(textoGetter(a)).localeCompare(String(textoGetter(b)), 'es');
+    else cmp = 0;
     if (cmp !== 0) return cmp;
     const codCmp = String(a.Codigo_producto || '').localeCompare(String(b.Codigo_producto || ''), 'es');
     if (codCmp !== 0) return codCmp;
@@ -3981,9 +3998,13 @@ function rtStockVentasOrdenar(filas) {
   return copia;
 }
 
+// Orden ascendente por defecto solo para columnas de texto/identidad (A-Z tiene mas
+// sentido al primer click); el resto (numericas y Ultimo ingreso, igual que en
+// Productos) arranca descendente -- valor mas alto / fecha mas reciente primero.
+const RT_STOCKVENTAS_CAMPOS_ASC_DEFAULT = new Set(['codigo', 'producto', 'marca', 'talle', 'rubro', 'subrubro', 'cod_color', 'color']);
 function rtStockVentasOrdenarPor(campo) {
   if (RT_STOCKVENTAS_ORDEN.campo === campo) RT_STOCKVENTAS_ORDEN.dir *= -1;
-  else RT_STOCKVENTAS_ORDEN = { campo, dir: (campo === 'codigo' || campo === 'producto' || campo === 'marca' || campo === 'talle') ? 1 : -1 };
+  else RT_STOCKVENTAS_ORDEN = { campo, dir: RT_STOCKVENTAS_CAMPOS_ASC_DEFAULT.has(campo) ? 1 : -1 };
   rtRenderVistaActual();
 }
 
@@ -4105,28 +4126,28 @@ function rtStockVentasColumnasDropdown(columnas) {
 function rtStockVentasColumnas(mostrarRubro, mostrarSubrubro) {
   const cols = [];
   if (mostrarRubro) cols.push({ id:'rubro', label:'Rubro',
-    th:() => rtEl('th', { text:'Rubro' }), td:f => rtEl('td', { text:f.Nombre_rubro || '—' }) });
+    th:() => rtStockVentasTh('Rubro', 'rubro'), td:f => rtEl('td', { text:f.Nombre_rubro || '—' }) });
   if (mostrarSubrubro) cols.push({ id:'subrubro', label:'Subrubro',
-    th:() => rtEl('th', { text:'Subrubro' }), td:f => rtEl('td', { text:f.Nombre_subrubro || '—' }) });
+    th:() => rtStockVentasTh('Subrubro', 'subrubro'), td:f => rtEl('td', { text:f.Nombre_subrubro || '—' }) });
   cols.push({ id:'codigo', label:'Código', siempre:true,
     th:() => rtStockVentasTh('Código', 'codigo'), td:f => rtEl('td', { text:f.Codigo_producto || '—' }) });
   cols.push({ id:'talle', label:'Talle',
     th:() => rtStockVentasTh('Talle', 'talle'),
     td:f => rtEl('td', { text: f.Codigo_talle != null && f.Codigo_talle !== '' ? String(f.Codigo_talle) : '—' }) });
   cols.push({ id:'cod_color', label:'Cód. Color',
-    th:() => rtEl('th', { text:'Cód. Color' }), td:f => rtEl('td', { text:f.Codigo_color || '—' }) });
+    th:() => rtStockVentasTh('Cód. Color', 'cod_color'), td:f => rtEl('td', { text:f.Codigo_color || '—' }) });
   cols.push({ id:'color', label:'Color',
-    th:() => rtEl('th', { text:'Color' }), td:f => rtEl('td', { text:f.Nombre_color || '—' }) });
+    th:() => rtStockVentasTh('Color', 'color'), td:f => rtEl('td', { text:f.Nombre_color || '—' }) });
   cols.push({ id:'producto', label:'Producto', siempre:true,
     th:() => rtStockVentasTh('Producto', 'producto'), td:f => rtEl('td', { className:'pname', text:f.Nombre_producto || '—' }) });
   cols.push({ id:'marca', label:'Marca',
     th:() => rtStockVentasTh('Marca', 'marca'), td:f => rtEl('td', { text:f.Nombre_marca || '—' }) });
   cols.push({ id:'ultimo_ingreso', label:'Últ. ingreso',
-    th:() => rtEl('th', { text:'Últ. ingreso' }), td:f => rtEl('td', { text: f.Ultimo_ingreso ? rtFmtFecha(f.Ultimo_ingreso) : '—' }) });
+    th:() => rtStockVentasTh('Últ. ingreso', 'ultimo_ingreso'), td:f => rtEl('td', { text: f.Ultimo_ingreso ? rtFmtFecha(f.Ultimo_ingreso) : '—' }) });
   cols.push({ id:'precio', label:'Precio',
-    th:() => rtEl('th', { text:'Precio' }), td:f => rtEl('td', { className:'nr', text: f.Precio != null ? money(f.Precio) : '—' }) });
+    th:() => rtStockVentasTh('Precio', 'precio'), td:f => rtEl('td', { className:'nr', text: f.Precio != null ? money(f.Precio) : '—' }) });
   cols.push({ id:'costo', label:'Costo',
-    th:() => rtEl('th', { text:'Costo' }), td:f => rtEl('td', { className:'nr', text: f.Precio_costo != null ? money(f.Precio_costo) : '—' }) });
+    th:() => rtStockVentasTh('Costo', 'costo'), td:f => rtEl('td', { className:'nr', text: f.Precio_costo != null ? money(f.Precio_costo) : '—' }) });
   // Orden pedido explicitamente 2026-07-28: los totales y el resumen de deposito van
   // primero (justo despues de Costo), y recien despues el desglose sucursal por sucursal.
   cols.push({ id:'venta_total', label:'Venta Total',
