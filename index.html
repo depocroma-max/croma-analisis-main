@@ -4314,10 +4314,13 @@ function rtStockVentasTabla(host, todasLasFilas) {
   const wrap = rtEl('div', { className:'rt-table-wrap' });
   const table = rtEl('table', { className:'rt-table rt-stockventas-tabla' });
   const thead = rtEl('thead');
+  // La fila de totales va primero (arriba de los nombres de columna Rubro/Subrubro/
+  // Codigo/Talle/etc, pedido explicito 2026-07-31) -- se ve apenas se entra a la tabla,
+  // sin tener que buscarla debajo de los encabezados.
+  thead.appendChild(rtStockVentasFilaTotales(columnasVisibles, ordenadas, etiquetaTotal));
   const trh = rtEl('tr');
   columnasVisibles.forEach(c => trh.appendChild(c.th()));
   thead.appendChild(trh);
-  thead.appendChild(rtStockVentasFilaTotales(columnasVisibles, ordenadas, etiquetaTotal));
   table.appendChild(thead);
 
   const tbody = rtEl('tbody');
