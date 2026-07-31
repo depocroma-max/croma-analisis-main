@@ -2221,17 +2221,21 @@ function rtSerieVentasTotal() {
   return total;
 }
 
-// Vista client-side de la serie para el sparkline: diario hasta 92 dias; con
+// Vista client-side de la serie para el sparkline: diario hasta 35 dias; con
 // periodos mas largos se suma por SEMANAS (bloques de 7 dias alineados al
 // FINAL del periodo, asi el unico bloque parcial queda al principio y no
-// simula una caida reciente). Ademas de reducir puntos, la suma semanal
-// elimina el ruido del ciclo semanal (fin de semana vs dias flojos), que es
-// lo que hacia ilegible el grafico en periodos largos. Transformacion pura
-// sobre datos reales -- el servidor sigue entregando siempre el detalle
+// simula una caida reciente). El problema no es solo la cantidad de puntos:
+// es el CICLO semanal (fin de semana vs dias flojos) repitiendose una y otra
+// vez -- con el periodo por defecto de Analisis (90 dias, rtPeriodoDefecto)
+// ese patron se repite ~13 veces y ya se ve como puro ruido en un sparkline
+// chico (reportado 2026-07-31 con la vista por defecto). Umbral bajado de 92
+// a 35 dias para que el periodo por defecto tambien quede agrupado. La suma
+// semanal elimina ese ruido en vez de solo comprimir puntos. Transformacion
+// pura sobre datos reales -- el servidor sigue entregando siempre el detalle
 // diario. Los null (sin dato) no se suman: un bloque enteramente null sigue
 // siendo null.
 function rtSerieParaSparkline(valores) {
-  if (!Array.isArray(valores) || valores.length <= 92) return valores;
+  if (!Array.isArray(valores) || valores.length <= 35) return valores;
   const bloques = [];
   for (let fin = valores.length; fin > 0; fin -= 7) {
     const parte = valores.slice(Math.max(0, fin - 7), fin);
