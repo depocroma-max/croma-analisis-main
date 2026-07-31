@@ -4130,9 +4130,9 @@ function rtStockVentasColumnas(mostrarRubro, mostrarSubrubro) {
   if (mostrarSubrubro) cols.push({ id:'subrubro', label:'Subrubro',
     th:() => rtStockVentasTh('Subrubro', 'subrubro'), td:f => rtEl('td', { text:f.Nombre_subrubro || '—' }) });
   cols.push({ id:'codigo', label:'Código', siempre:true,
-    th:() => rtStockVentasTh('Código', 'codigo'), td:f => rtEl('td', { text:f.Codigo_producto || '—' }) });
+    th:() => rtStockVentasTh('COD', 'codigo'), td:f => rtEl('td', { text:f.Codigo_producto || '—' }) });
   cols.push({ id:'talle', label:'Talle',
-    th:() => rtStockVentasTh('Talle', 'talle'),
+    th:() => rtStockVentasTh('T', 'talle'),
     td:f => rtEl('td', { text: f.Codigo_talle != null && f.Codigo_talle !== '' ? String(f.Codigo_talle) : '—' }) });
   cols.push({ id:'cod_color', label:'Cód. Color',
     th:() => rtStockVentasTh('C', 'cod_color'), td:f => rtEl('td', { text:f.Codigo_color || '—' }) });
