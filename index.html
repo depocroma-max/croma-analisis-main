@@ -4135,7 +4135,7 @@ function rtStockVentasColumnas(mostrarRubro, mostrarSubrubro) {
     th:() => rtStockVentasTh('Talle', 'talle'),
     td:f => rtEl('td', { text: f.Codigo_talle != null && f.Codigo_talle !== '' ? String(f.Codigo_talle) : '—' }) });
   cols.push({ id:'cod_color', label:'Cód. Color',
-    th:() => rtStockVentasTh('Cód. Color', 'cod_color'), td:f => rtEl('td', { text:f.Codigo_color || '—' }) });
+    th:() => rtStockVentasTh('C', 'cod_color'), td:f => rtEl('td', { text:f.Codigo_color || '—' }) });
   cols.push({ id:'color', label:'Color',
     th:() => rtStockVentasTh('Color', 'color'), td:f => rtEl('td', { text:f.Nombre_color || '—' }) });
   cols.push({ id:'producto', label:'Producto', siempre:true,
