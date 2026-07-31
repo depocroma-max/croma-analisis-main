@@ -610,6 +610,10 @@
     /* Tabla con ~20 columnas (venta/stock x sucursal) -- padding mas chico que .rt-table
        para que entren mas columnas antes de necesitar el scroll horizontal interno. */
     .rt-stockventas-tabla th, .rt-stockventas-tabla td{padding:6px 7px;font-size:12.5px}
+    /* Rubro/Subrubro/Marca/Color sin tope se acomodaban solos al valor mas largo y
+       forzaban el slider horizontal de toda la tabla -- mismo criterio que .pname
+       (Producto), pero mas angosto. title= en el td conserva el texto completo al hover. */
+    .rt-stockventas-tabla td.rt-sv-truncar{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     /* Columnas de venta/stock por sucursal + deposito -- angostas y con el encabezado en
        2 lineas (ej. "Venta" arriba, "Paseo" abajo), como la planilla Excel de referencia. */
     .rt-stockventas-tabla th.rt-sv-suc, .rt-stockventas-tabla td.rt-sv-suc{
@@ -4123,12 +4127,22 @@ function rtStockVentasColumnasDropdown(columnas) {
 // resumen = funcion opcional (filas de la pagina) => numero para la fila de totales; sin
 // ella la celda de esa columna en el pie va vacia (o lleva la etiqueta "Total (pagina)",
 // una unica vez, en la primera columna visible que no tenga resumen).
+// Columnas de texto sin tope (Rubro, Subrubro, Marca, Color) se acomodaban a su propio
+// contenido -- un valor largo suelto agrandaba esa columna y forzaba el slider horizontal
+// de toda la tabla (molesto, pedido explicito 2026-07-31: evitarlo). Mismo tope+ellipsis
+// que ya usaba Producto (.pname, 230px), pero mas angosto porque estos valores suelen ser
+// mas cortos -- title= conserva el texto completo al pasar el mouse.
+function rtStockVentasTdTruncado(texto) {
+  const valor = texto || '—';
+  return rtEl('td', { className:'rt-sv-truncar', text: valor, attrs: texto ? { title: texto } : {} });
+}
+
 function rtStockVentasColumnas(mostrarRubro, mostrarSubrubro) {
   const cols = [];
   if (mostrarRubro) cols.push({ id:'rubro', label:'Rubro',
-    th:() => rtStockVentasTh('Rubro', 'rubro'), td:f => rtEl('td', { text:f.Nombre_rubro || '—' }) });
+    th:() => rtStockVentasTh('Rubro', 'rubro'), td:f => rtStockVentasTdTruncado(f.Nombre_rubro) });
   if (mostrarSubrubro) cols.push({ id:'subrubro', label:'Subrubro',
-    th:() => rtStockVentasTh('Subrubro', 'subrubro'), td:f => rtEl('td', { text:f.Nombre_subrubro || '—' }) });
+    th:() => rtStockVentasTh('Subrubro', 'subrubro'), td:f => rtStockVentasTdTruncado(f.Nombre_subrubro) });
   cols.push({ id:'codigo', label:'Código', siempre:true,
     th:() => rtStockVentasTh('COD', 'codigo'), td:f => rtEl('td', { text:f.Codigo_producto || '—' }) });
   cols.push({ id:'talle', label:'Talle',
@@ -4137,11 +4151,11 @@ function rtStockVentasColumnas(mostrarRubro, mostrarSubrubro) {
   cols.push({ id:'cod_color', label:'Cód. Color',
     th:() => rtStockVentasTh('C', 'cod_color'), td:f => rtEl('td', { text:f.Codigo_color || '—' }) });
   cols.push({ id:'color', label:'Color',
-    th:() => rtStockVentasTh('Color', 'color'), td:f => rtEl('td', { text:f.Nombre_color || '—' }) });
+    th:() => rtStockVentasTh('Color', 'color'), td:f => rtStockVentasTdTruncado(f.Nombre_color) });
   cols.push({ id:'producto', label:'Producto', siempre:true,
     th:() => rtStockVentasTh('Producto', 'producto'), td:f => rtEl('td', { className:'pname', text:f.Nombre_producto || '—' }) });
   cols.push({ id:'marca', label:'Marca',
-    th:() => rtStockVentasTh('Marca', 'marca'), td:f => rtEl('td', { text:f.Nombre_marca || '—' }) });
+    th:() => rtStockVentasTh('Marca', 'marca'), td:f => rtStockVentasTdTruncado(f.Nombre_marca) });
   cols.push({ id:'ultimo_ingreso', label:'Últ. ingreso',
     th:() => rtStockVentasTh('Últ. ingreso', 'ultimo_ingreso'), td:f => rtEl('td', { text: f.Ultimo_ingreso ? rtFmtFecha(f.Ultimo_ingreso) : '—' }) });
   cols.push({ id:'precio', label:'Precio',
