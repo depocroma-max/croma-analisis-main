@@ -1012,6 +1012,11 @@ let RT_OPORTUNIDADES_OFFSET = 0;
 const RT_OPORTUNIDADES_LIMITE = 50;
 // Codigo_producto de la unica fila expandida (o null) -- una sola a la vez (2026-07-20).
 let RT_OPORTUNIDADES_EXPANDIDO = null;
+
+// Fase 5: cache de aceleracion por codigo -- se carga on-demand SOLO para el
+// codigo expandido (nunca para toda la pagina/lista), evita N+1. Valores:
+// undefined (no pedido), 'loading', 'error', o el resultado de rtSerieAceleracion.
+const RT_ACELERACION_CACHE = new Map();
 const RT_ESTADO_CLS = {
   revisar_devoluciones: 'badge-danger', reposicion_urgente: 'badge-danger', reponer_desde_deposito: 'badge-danger', posible_rotacion: 'badge-danger',
   reposicion_proxima: 'badge-warning', venta_destacada: 'badge-warning', bien_vendido: 'badge-warning',
@@ -2279,6 +2284,70 @@ function rtSerieParaSparkline(valores) {
     bloques.unshift(nums.length ? nums.reduce((a, b) => a + b, 0) : null);
   }
   return bloques;
+}
+
+// ── Fase 5: diagnostico operativo — transformaciones matematicas puras ──────────
+// Principio (docs de la fase): dato de negocio con definicion unica -> backend;
+// transformacion matematica pura de una serie -> frontend. Aceleracion/desbalance
+// son puramente matematicos sobre datos que el backend ya entrega (series de
+// ventas, por_sucursal de /analisis/oportunidades) -- no se registran como
+// metricas nuevas en croma-api.
+
+function rtRestarDias(fechaISO, dias) {
+  const d = new Date(fechaISO + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() - dias);
+  return d.toISOString().slice(0, 10);
+}
+
+// Aceleracion de ventas: compara el total de una ventana reciente contra una
+// ventana previa de igual longitud (nunca look-ahead: ambas ventanas terminan
+// en o antes de la fecha de corte). Volumen minimo documentado explicitamente
+// (no escondido en la formula) para evitar el caso "0 -> 1 = explosion de
+// ventas": sin al menos RT_ACELERACION_VOLUMEN_MINIMO unidades combinadas entre
+// ambas ventanas, no hay base suficiente para opinar.
+const RT_ACELERACION_VOLUMEN_MINIMO = 5;
+function rtSerieAceleracion(recienteTotal, previoTotal) {
+  const combinado = recienteTotal + previoTotal;
+  if (combinado < RT_ACELERACION_VOLUMEN_MINIMO) return { suficiente: false, variacion: null };
+  if (previoTotal === 0) return { suficiente: true, variacion: null }; // sin base de comparacion valida, nunca "infinito"
+  return { suficiente: true, variacion: (recienteTotal - previoTotal) / previoTotal };
+}
+
+// Clasificacion explicable (nunca texto libre/IA): umbral +/-20% documentado como
+// constante nueva -- no existe en Oportunidades porque ese motor no compara
+// ventanas de ventas entre si, solo evalua un periodo unico.
+const RT_ACELERACION_UMBRAL = 0.20;
+function evaluarAceleracion(resultado) {
+  if (!resultado.suficiente) return { estado: 'datos_insuficientes', motivos: ['volumen_insuficiente'] };
+  if (resultado.variacion === null) return { estado: 'sin_base_comparable', motivos: ['sin_ventas_periodo_previo'] };
+  if (resultado.variacion >= RT_ACELERACION_UMBRAL) return { estado: 'acelerando', motivos: ['variacion_positiva_relevante'] };
+  if (resultado.variacion <= -RT_ACELERACION_UMBRAL) return { estado: 'desacelerando', motivos: ['variacion_negativa_relevante'] };
+  return { estado: 'estable', motivos: ['variacion_dentro_de_rango_normal'] };
+}
+
+// Desbalance de participacion por sucursal: puramente matematico sobre
+// por_sucursal, que /analisis/oportunidades YA entrega para cada producto -- sin
+// fetch adicional. Deposito nunca participa (no es un local comercial, mismo
+// criterio que agrupar=sucursal en /analisis/series). Umbral (15 puntos
+// porcentuales de diferencia) documentado como constante nueva, sin precedente
+// en Oportunidades.
+const RT_DESBALANCE_UMBRAL = 0.15;
+function calcularDesbalance(porSucursal) {
+  const totalVentas = RT_CENTROS.reduce((a, c) => a + ((porSucursal[c] && porSucursal[c].ventas) || 0), 0);
+  const totalStock = RT_CENTROS.reduce((a, c) => a + ((porSucursal[c] && porSucursal[c].stock) || 0), 0);
+  return RT_CENTROS.map(c => {
+    const s = porSucursal[c] || { ventas: 0, stock: 0 };
+    const participacionVentas = totalVentas > 0 ? s.ventas / totalVentas : null;
+    const participacionStock = totalStock > 0 ? s.stock / totalStock : null;
+    const desbalance = (participacionVentas != null && participacionStock != null) ? participacionVentas - participacionStock : null;
+    return { centro: c, ventas: s.ventas, stock: s.stock, participacionVentas, participacionStock, desbalance };
+  });
+}
+function evaluarDesbalance(fila) {
+  if (fila.desbalance == null) return { estado: 'sin_datos', motivos: [] };
+  if (fila.desbalance >= RT_DESBALANCE_UMBRAL) return { estado: 'deficit_relativo', motivos: ['mas_demanda_que_stock'] };
+  if (fila.desbalance <= -RT_DESBALANCE_UMBRAL) return { estado: 'superavit_relativo', motivos: ['mas_stock_que_demanda'] };
+  return { estado: 'equilibrado', motivos: [] };
 }
 
 // Sparkline SVG nativo (sin dependencias -- el CSP script-src 'self' tampoco
@@ -4438,8 +4507,46 @@ function rtOportunidadesVerDetalle(codigo) {
 // dispara el clic en la fila, Enter/Espacio con teclado, y el boton "Ver detalle".
 function rtOportunidadesToggleDetalle(codigo) {
   RT_OPORTUNIDADES_EXPANDIDO = (RT_OPORTUNIDADES_EXPANDIDO === codigo) ? null : codigo;
+  if (RT_OPORTUNIDADES_EXPANDIDO) rtCargarAceleracion(RT_OPORTUNIDADES_EXPANDIDO);
   rtRenderVistaActual();
 }
+
+// Fase 5: ventas de los ultimos 7 dias vs los 7 dias inmediatamente anteriores
+// (ventana retrospectiva, sin look-ahead), terminando en RT_HASTA -- una sola
+// llamada a /analisis/series por codigo, solo cuando se expande su detalle
+// (nunca para la lista completa). Cachea por codigo dentro de la sesion de la
+// pestaña; no reintenta solo si ya esta en curso o ya resolvio.
+async function rtCargarAceleracion(codigo) {
+  if (RT_ACELERACION_CACHE.has(codigo)) { rtRenderVistaActual(); return; }
+  RT_ACELERACION_CACHE.set(codigo, 'loading');
+  try {
+    const hasta = RT_HASTA;
+    const desde = rtRestarDias(hasta, 13); // 14 dias: 7 previos + 7 recientes
+    const params = new URLSearchParams({ metricas: 'ventas', desde, hasta, codigo });
+    const resp = await fetch(STOCK_API_URL + '/analisis/series?' + params.toString());
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    const serie = (data.series || []).find(s => s.metrica === 'ventas');
+    const valores = serie ? serie.valores : [];
+    const previos = valores.slice(0, 7).reduce((a, v) => a + (v || 0), 0);
+    const recientes = valores.slice(7, 14).reduce((a, v) => a + (v || 0), 0);
+    const resultado = rtSerieAceleracion(recientes, previos);
+    RT_ACELERACION_CACHE.set(codigo, Object.assign({ recientes, previos }, resultado));
+  } catch (err) {
+    RT_ACELERACION_CACHE.set(codigo, 'error');
+  }
+  if (RT_OPORTUNIDADES_EXPANDIDO === codigo) rtRenderVistaActual();
+}
+
+const RT_TEXTO_ACELERACION = {
+  acelerando: 'Acelerando', desacelerando: 'Desacelerando', estable: 'Estable',
+  datos_insuficientes: 'Datos insuficientes', sin_base_comparable: 'Sin base de comparación',
+};
+const RT_TEXTO_DESBALANCE = {
+  deficit_relativo: 'Déficit relativo (más demanda que stock)',
+  superavit_relativo: 'Superávit relativo (más stock que demanda)',
+  equilibrado: 'Equilibrado', sin_datos: 'Sin datos',
+};
 
 function rtBadgeEstado(estadoPrincipal, texto) {
   const cls = RT_ESTADO_CLS[estadoPrincipal] || 'badge-neutral';
@@ -4701,6 +4808,42 @@ function rtOportunidadesPanelDetalle(f) {
   });
   panel.appendChild(bloque('Stock por sucursal', filasSucursal));
   panel.appendChild(bloque('Depósito 90 / Fallados 93', nf.format(rtOportunidadesStockDeposito(f)) + ' / ' + nf.format(f.Stock_fallados || 0)));
+
+  // Fase 5: desbalance de participacion por sucursal -- puramente matematico
+  // sobre por_sucursal (ya cargado arriba), sin fetch adicional. Solo se
+  // muestran las sucursales con desbalance relevante (umbral documentado en
+  // RT_DESBALANCE_UMBRAL); si ninguna lo supera, se indica "equilibrado".
+  const desbalances = calcularDesbalance(f.por_sucursal).map(d => Object.assign({}, d, evaluarDesbalance(d)));
+  const relevantes = desbalances.filter(d => d.estado === 'deficit_relativo' || d.estado === 'superavit_relativo');
+  if (relevantes.length) {
+    const listaDesb = rtEl('div', { className:'rt-oport-detalle-suc-lista' });
+    relevantes.forEach(d => {
+      const fila = rtEl('div', { className:'rt-oport-detalle-suc-fila' });
+      fila.appendChild(rtSucursalBadge(d.centro));
+      fila.appendChild(rtEl('span', { text: RT_TEXTO_DESBALANCE[d.estado]
+        + ' — ' + rtOportunidadesPct(d.participacionVentas) + ' de ventas, ' + rtOportunidadesPct(d.participacionStock) + ' de stock' }));
+      listaDesb.appendChild(fila);
+    });
+    panel.appendChild(bloque('Desbalance entre sucursales', listaDesb));
+  } else {
+    panel.appendChild(bloque('Desbalance entre sucursales', 'Equilibrado entre las 6 sucursales (dentro del umbral de ' + rtOportunidadesPct(RT_DESBALANCE_UMBRAL) + ').'));
+  }
+
+  // Fase 5: aceleracion/desaceleracion -- on-demand, cargado al expandir (ver
+  // rtOportunidadesToggleDetalle). Nunca interpreta el hueco de stock granular
+  // como parte de esta cuenta: usa ventas (historial completo real, tipo
+  // 'sql'), no stock.
+  const acel = RT_ACELERACION_CACHE.get(f.Codigo_producto);
+  let valorAcel;
+  if (acel === 'loading' || acel === undefined) valorAcel = 'Calculando...';
+  else if (acel === 'error') valorAcel = 'No se pudo calcular.';
+  else {
+    const ev = evaluarAceleracion(acel);
+    valorAcel = RT_TEXTO_ACELERACION[ev.estado]
+      + ' — últimos 7 días: ' + nf.format(acel.recientes) + ' un., 7 días previos: ' + nf.format(acel.previos) + ' un.'
+      + (acel.variacion != null ? ' (' + (acel.variacion >= 0 ? '+' : '') + rtOportunidadesPct(acel.variacion) + ')' : '');
+  }
+  panel.appendChild(bloque('Tendencia de ventas (7 días vs 7 días previos)', valorAcel));
 
   // Demanda reciente (v1.3.0): solo tiene sentido mostrarla cuando el motor la calculo
   // (estado_principal o secundario reposicion_urgente/reposicion_a_evaluar) -- "últimos
