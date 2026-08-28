@@ -644,6 +644,8 @@
       padding:8px;min-width:170px;max-height:280px;overflow-y:auto}
     .rt-sv-filtro-opcion{display:flex;align-items:center;gap:6px;padding:4px 4px;font-size:13px;white-space:nowrap;cursor:pointer}
     .rt-sv-filtro-opcion:hover{background:var(--gray-50);border-radius:4px}
+    .rt-sv-filtro-buscar{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;
+      border:1px solid var(--gray-200);border-radius:6px;padding:5px 8px;margin-bottom:6px;background:var(--gray-50)}
     .rt-sv-filtro-limpiar{display:block;width:100%;text-align:left;margin-bottom:4px;background:none;
       border:none;border-bottom:1px solid var(--gray-100);color:var(--accent);font-size:12px;
       cursor:pointer;padding:2px 4px 6px}
@@ -892,6 +894,19 @@ let RT_VIEW = 'dashboard';
 // aunque el filtro funcionara bien si se tipeaba a mano -- bug 2026-07-21). Se pide una
 // sola vez por sesion (el catalogo cambia con poca frecuencia).
 let RT_CATALOGO = null, RT_CATALOGO_LOADING = false;
+// Borrador de seleccion multiple del formulario de filtro (Fase de filtros multiples
+// 2026-07-20) -- separado de RT_FILTRO (el filtro ya APLICADO): el usuario tilda
+// checkboxes libremente y recien se aplica al tocar "Filtrar", igual que el input de
+// codigo de siempre. RT_FILTRO_BORRADOR_KEY guarda la key de RT_FILTRO con la que se
+// sincronizo por ultima vez -- si RT_FILTRO cambia por otra via (Quitar filtro, "Ver
+// productos" desde Marcas, etc.) el proximo render de rtFormularioFiltro detecta el
+// desfasaje y reconstruye el borrador desde RT_FILTRO.
+let RT_FILTRO_BORRADOR = { marca:new Set(), rubro:new Set(), subrubro:new Set(), talle:new Set(), color:new Set() };
+let RT_FILTRO_BORRADOR_KEY = undefined;
+let RT_FILTRO_ABIERTO = { marca:false, rubro:false, subrubro:false, talle:false, color:false };
+// Texto de busqueda por campo dentro de cada dropdown -- necesario en produccion (129
+// marcas, 310 rubros, 405 colores), ver rtFiltroDropdown.
+let RT_FILTRO_BUSQUEDA = { marca:'', rubro:'', subrubro:'', talle:'', color:'' };
 // Pestaña Insumos (/analisis/insumos) -- independiente de RT_DESDE/RT_HASTA, ver
 // comentario del endpoint en croma-api. Se pide una vez y se reutiliza (cache de 15 min
 // ya la tiene el backend); "Actualizar" del header no la refresca a proposito, tiene su
@@ -1165,7 +1180,17 @@ async function rtCargarCatalogo() {
     const resp = await fetch(STOCK_API_URL + '/analisis/catalogo');
     const data = await resp.json();
     if (resp.ok && data.ok) {
-      RT_CATALOGO = data;
+      // Normaliza campos nuevos (Fase de filtros multiples 2026-07-20) que un backend
+      // todavia no desplegado no manda -- el orden de deploy entre croma-api y este
+      // frontend no esta garantizado, sin este fallback el formulario de filtro rompe
+      // con "Cannot read properties of undefined" hasta que se despliegue el backend.
+      RT_CATALOGO = {
+        ...data,
+        talles: data.talles || [],
+        subrubros_por_rubro: data.subrubros_por_rubro || {},
+        talles_por_rubro: data.talles_por_rubro || {},
+        colores: data.colores || [],
+      };
       rtRenderVistaActual();
     }
   } catch (err) {
@@ -2458,6 +2483,7 @@ function rtQuitarFiltro() {
   RT_COMPLETO = null;
   RT_PRODUCTOS_PAGINA = 0; RT_PRODUCTOS_EXPANDIDO = null; RT_PRODUCTOS_BUSQUEDA = '';
   RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_EXPANDIDO = null;
+  RT_FILTRO_BUSQUEDA = { marca:'', rubro:'', subrubro:'', talle:'', color:'' };
   rtRenderVistaActual();
 }
 
@@ -2466,13 +2492,19 @@ function rtFiltroKey() {
   return JSON.stringify(RT_FILTRO);
 }
 
+// marca/rubro/subrubro/talle/color son siempre arrays no vacios cuando estan presentes
+// (rtFormularioFiltro nunca guarda una clave con array vacio) -- codigo sigue siendo un
+// string suelto, es busqueda exacta de un solo producto.
 function rtFiltroTexto() {
   if (!RT_FILTRO) return '';
   if (RT_FILTRO.codigo) return 'Código: ' + RT_FILTRO.codigo;
-  if (RT_FILTRO.rubro && RT_FILTRO.subrubro) return 'Rubro: ' + RT_FILTRO.rubro + ' · Subrubro: ' + RT_FILTRO.subrubro;
-  if (RT_FILTRO.rubro) return 'Rubro: ' + RT_FILTRO.rubro;
-  if (RT_FILTRO.marca) return 'Marca: ' + RT_FILTRO.marca;
-  return '';
+  const partes = [];
+  if (RT_FILTRO.rubro) partes.push('Rubro: ' + RT_FILTRO.rubro.join(', '));
+  if (RT_FILTRO.subrubro) partes.push('Subrubro: ' + RT_FILTRO.subrubro.join(', '));
+  if (RT_FILTRO.marca) partes.push('Marca: ' + RT_FILTRO.marca.join(', '));
+  if (RT_FILTRO.talle) partes.push('Talle: ' + RT_FILTRO.talle.join(', '));
+  if (RT_FILTRO.color) partes.push('Color: ' + RT_FILTRO.color.join(', '));
+  return partes.join(' · ');
 }
 
 function rtRenderVistaActual() {
@@ -3287,7 +3319,7 @@ function rtMarcaDetalle(host, m) {
     // Reutiliza rtAplicarFiltroYVer (ya existente, usado por Marcas/Rubros/Subrubros) --
     // aplica { marca } como filtro y navega a Productos con paginacion, sin consulta masiva
     // sin filtro. No se duplica logica de filtros entre Marcas y Productos.
-    btnVer.addEventListener('click', () => rtAplicarFiltroYVer({ marca: m.marca }, 'Marcas'));
+    btnVer.addEventListener('click', () => rtAplicarFiltroYVer({ marca: [m.marca] }, 'Marcas'));
     ctaWrap.appendChild(btnVer);
   }
   panel.appendChild(ctaWrap);
@@ -3419,8 +3451,102 @@ function rtProductosNormalizarCodigo(valor) {
 // alAplicar: callback opcional que reemplaza la accion por defecto al enviar el filtro
 // (reset de pagina/expandido de Productos + rtCargarCompleto()) -- Oportunidades pasa
 // el suyo propio (reset de offset + rtCargarOportunidades()), ya que no usa RT_COMPLETO.
-function rtFormularioFiltro(host, alAplicar) {
+// Reconstruye RT_FILTRO_BORRADOR desde RT_FILTRO cuando este ultimo cambio por otra via
+// (Quitar filtro, "Ver productos" desde Marcas, "Ver en Talles y colores" desde
+// Oportunidades, etc.) -- sin esto el formulario mostraria tildes de un filtro anterior
+// que ya no esta aplicado. rtFiltroKey() ya sirve de "version" barata de RT_FILTRO.
+function rtFiltroSincronizarBorrador() {
+  const key = rtFiltroKey();
+  if (RT_FILTRO_BORRADOR_KEY === key) return;
+  RT_FILTRO_BORRADOR_KEY = key;
+  const f = RT_FILTRO || {};
+  RT_FILTRO_BORRADOR = {
+    marca: new Set(f.marca || []),
+    rubro: new Set(f.rubro || []),
+    subrubro: new Set(f.subrubro || []),
+    talle: new Set(f.talle || []),
+    color: new Set(f.color || []),
+  };
+}
+
+// Color es el unico campo cuyo VALOR MOSTRADO (nombre) no es el que espera el backend
+// (codigo crudo, ver p.color en croma-api) -- el borrador y RT_FILTRO.color guardan
+// siempre el NOMBRE (mismo criterio que el resto de los campos, legible en el chip de
+// filtro), y esta funcion convierte a codigo recien al armar la URL del pedido.
+function rtColorNombreACodigo(nombre) {
+  if (!RT_CATALOGO) return null;
+  const entrada = RT_CATALOGO.colores.find(c => c.nombre === nombre);
+  return entrada ? entrada.codigo : null;
+}
+
+// Subrubro/Talle se acotan al Rubro tildado en el borrador (pedido explicito 2026-07-20:
+// "que solo me aparezcan los subrubros que estan dentro de ese rubro") -- usa
+// subrubros_por_rubro/talles_por_rubro de /analisis/catalogo, ya calculados en el
+// backend. Sin rubro tildado, se ofrece el catalogo completo (comportamiento actual).
+function rtFiltroOpcionesPorRubro(mapaPorRubro, todas) {
+  if (!RT_CATALOGO) return [];
+  if (!RT_FILTRO_BORRADOR.rubro.size) return todas;
+  const set = new Set();
+  RT_FILTRO_BORRADOR.rubro.forEach(r => (mapaPorRubro[r] || []).forEach(v => set.add(v)));
+  return [...set].sort((a, b) => a.localeCompare(b, 'es'));
+}
+function rtFiltroOpcionesSubrubro() {
+  return rtFiltroOpcionesPorRubro(RT_CATALOGO ? RT_CATALOGO.subrubros_por_rubro : {}, RT_CATALOGO ? RT_CATALOGO.subrubros : []);
+}
+function rtFiltroOpcionesTalle() {
+  return rtFiltroOpcionesPorRubro(RT_CATALOGO ? RT_CATALOGO.talles_por_rubro : {}, RT_CATALOGO ? RT_CATALOGO.talles : []);
+}
+
+function rtFiltroBorradorToggle(campo, valor, marcado) {
+  if (marcado) RT_FILTRO_BORRADOR[campo].add(valor); else RT_FILTRO_BORRADOR[campo].delete(valor);
+  // Cambiar el Rubro puede dejar tildes de Subrubro/Talle que ya no pertenecen a ningun
+  // rubro seleccionado -- un filtro "fantasma" tildado pero invisible en la lista. Se
+  // podan apenas cambia el rubro, no recien al aplicar.
+  if (campo === 'rubro') {
+    const subOk = new Set(rtFiltroOpcionesSubrubro());
+    [...RT_FILTRO_BORRADOR.subrubro].forEach(s => { if (!subOk.has(s)) RT_FILTRO_BORRADOR.subrubro.delete(s); });
+    const talleOk = new Set(rtFiltroOpcionesTalle());
+    [...RT_FILTRO_BORRADOR.talle].forEach(t => { if (!talleOk.has(t)) RT_FILTRO_BORRADOR.talle.delete(t); });
+  }
+  rtRenderVistaActual();
+}
+function rtFiltroBorradorLimpiarCampo(campo) {
+  RT_FILTRO_BORRADOR[campo].clear();
+  rtRenderVistaActual();
+}
+
+// Vuelca un RT_FILTRO (codigo:string, resto:string[]) a un URLSearchParams -- listas
+// como coma-separado (croma-api las parsea con parseListaFiltro), color convertido de
+// nombre a codigo. `omitir` lo usa Oportunidades para no mandar talle/color: opera a
+// nivel PRODUCTO, no variante, esos filtros no tendrian efecto ahi (ver coincideCatalogo
+// en croma-api/routes/analisis.js).
+function rtFiltroAParams(params, filtro, omitir) {
+  if (!filtro) return;
+  Object.keys(filtro).forEach(k => {
+    if (omitir && omitir.includes(k)) return;
+    const v = filtro[k];
+    if (v == null) return;
+    if (!Array.isArray(v)) { params.set(k, v); return; }
+    if (!v.length) return;
+    if (k === 'color') {
+      const codigos = v.map(rtColorNombreACodigo).filter(Boolean);
+      if (codigos.length) params.set('color', codigos.join(','));
+    } else {
+      params.set(k, v.join(','));
+    }
+  });
+}
+
+// opts.sinTalleColor: Oportunidades trabaja a nivel PRODUCTO (agrega todas las
+// variantes) -- Talle/Color no tienen sentido ahi, se ocultan del formulario en vez de
+// mostrarlos sin efecto real.
+// alAplicar: callback opcional que reemplaza la accion por defecto al enviar el filtro
+// (reset de pagina/expandido de Productos + rtCargarCompleto()) -- Oportunidades pasa
+// el suyo propio (reset de offset + rtCargarOportunidades()), ya que no usa RT_COMPLETO.
+function rtFormularioFiltro(host, alAplicar, opts) {
   if (!RT_CATALOGO && !RT_CATALOGO_LOADING) rtCargarCatalogo();
+  rtFiltroSincronizarBorrador();
+  const sinTalleColor = Boolean(opts && opts.sinTalleColor);
   if (RT_PRODUCTOS_FILTRO_ORIGEN) {
     const badge = rtEl('div', { className:'rt-productos-origen' });
     badge.innerHTML = icon('info', ''); // icono estatico del helper
@@ -3428,45 +3554,47 @@ function rtFormularioFiltro(host, alAplicar) {
     host.appendChild(badge);
   }
 
-  // <form> real (no solo un botón) para que Enter envie el filtro sin listeners de
-  // tecla por input -- nunca se llama a la API en cada pulsación.
+  // <form> real (no solo un botón) para que Enter (en Código) envie el filtro.
   const form = rtEl('form', { className:'rt-productos-filtros' });
   form.setAttribute('novalidate', 'novalidate');
 
-  const campo = (id, label, valorActual, listaSugerencias) => {
-    const fc = rtEl('div', { className:'fc' });
-    fc.appendChild(rtEl('label', { text:label, attrs:{ for:id } }));
-    const attrs = { type:'text', id, name:id, autocomplete:'off' };
-    if (listaSugerencias) attrs.list = id + 'Lista';
-    const inp = rtEl('input', { attrs });
-    inp.value = valorActual || '';
-    fc.appendChild(inp);
-    if (listaSugerencias) {
-      const datalist = rtEl('datalist', { attrs:{ id: id + 'Lista' } });
-      listaSugerencias.forEach(v => datalist.appendChild(rtEl('option', { attrs:{ value:v } })));
-      fc.appendChild(datalist);
-    }
-    form.appendChild(fc);
-    return inp;
-  };
-  // Sugerencias: se arman una sola vez sobre RT_RESUMEN.por_marca/por_rubro/por_subrubro
-  // (ya cargado por el Dashboard, sin pedir nada nuevo a la API) -- ordenadas y sin
-  // duplicados. Si RT_RESUMEN todavia no cargo, el campo queda sin <datalist> (se
-  // sigue pudiendo tipear el filtro a mano, solo no autocompleta).
-  const sugerenciasUnicas = valores => Array.from(new Set(valores.filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
-  // RT_CATALOGO (todo el catalogo) es la fuente preferida -- RT_RESUMEN (TOP 100 por
-  // ventas del periodo) queda solo como respaldo mientras RT_CATALOGO todavia no cargo.
-  const sugerenciasMarca = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.marcas)
-    : (RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_marca.map(m => m.marca)) : null);
-  const sugerenciasRubro = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.rubros)
-    : (RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_rubro.map(r => r.rubro)) : null);
-  const sugerenciasSubrubro = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.subrubros)
-    : (RT_RESUMEN ? sugerenciasUnicas(RT_RESUMEN.por_subrubro.map(s => s.subrubro)) : null);
+  const fcCodigo = rtEl('div', { className:'fc' });
+  fcCodigo.appendChild(rtEl('label', { text:'Código exacto', attrs:{ for:'rtProdCodigo' } }));
+  const inCodigo = rtEl('input', { attrs:{ type:'text', id:'rtProdCodigo', name:'rtProdCodigo', autocomplete:'off' } });
+  inCodigo.value = (RT_FILTRO && RT_FILTRO.codigo) || '';
+  fcCodigo.appendChild(inCodigo);
+  form.appendChild(fcCodigo);
 
-  const inCodigo = campo('rtProdCodigo', 'Código exacto', RT_FILTRO && RT_FILTRO.codigo);
-  const inMarca = campo('rtProdMarca', 'Marca', RT_FILTRO && RT_FILTRO.marca, sugerenciasMarca);
-  const inRubro = campo('rtProdRubro', 'Rubro', RT_FILTRO && RT_FILTRO.rubro, sugerenciasRubro);
-  const inSubrubro = campo('rtProdSubrubro', 'Subrubro', RT_FILTRO && RT_FILTRO.subrubro, sugerenciasSubrubro);
+  // Selector multiple por checkboxes (rtFiltroDropdown, mismo componente que Talle/Color
+  // de Stock Ventas) -- Fase de filtros multiples 2026-07-20: reemplaza el input de texto
+  // libre de una sola marca/rubro/subrubro por "elegir varios de una lista real".
+  const multiSelect = (campo, titulo, opciones) => {
+    const fc = rtEl('div', { className:'fc' });
+    fc.appendChild(rtEl('label', { text:titulo }));
+    fc.appendChild(rtFiltroDropdown(
+      titulo, opciones, RT_FILTRO_BORRADOR[campo], RT_FILTRO_ABIERTO[campo],
+      (abierto) => { RT_FILTRO_ABIERTO[campo] = abierto; },
+      (valor, marcado) => rtFiltroBorradorToggle(campo, valor, marcado),
+      () => rtFiltroBorradorLimpiarCampo(campo),
+      { id:'rtFiltroBuscar_' + campo, valor: RT_FILTRO_BUSQUEDA[campo],
+        onBuscar: (texto) => { RT_FILTRO_BUSQUEDA[campo] = texto; rtRenderVistaActual(); } }
+    ));
+    form.appendChild(fc);
+  };
+
+  const opcionesMarca = RT_CATALOGO ? RT_CATALOGO.marcas : [];
+  const opcionesRubro = RT_CATALOGO ? RT_CATALOGO.rubros : [];
+  const opcionesSubrubro = rtFiltroOpcionesSubrubro();
+  const opcionesTalle = rtFiltroOpcionesTalle();
+  const opcionesColor = RT_CATALOGO ? RT_CATALOGO.colores.map(c => c.nombre) : [];
+
+  multiSelect('marca', 'Marca', opcionesMarca);
+  multiSelect('rubro', 'Rubro', opcionesRubro);
+  multiSelect('subrubro', 'Subrubro', opcionesSubrubro);
+  if (!sinTalleColor) {
+    multiSelect('talle', 'Talle', opcionesTalle);
+    multiSelect('color', 'Color', opcionesColor);
+  }
 
   const acciones = rtEl('div', { className:'rt-productos-filtros-acciones' });
   const btnFiltrar = rtBotonIcono('btn-sm', 'filter', 'Filtrar');
@@ -3480,23 +3608,25 @@ function rtFormularioFiltro(host, alAplicar) {
   acciones.appendChild(btnFiltrar); acciones.appendChild(btnLimpiar);
   form.appendChild(acciones);
 
-  const actualizarDisabled = () => {
-    btnFiltrar.disabled = !inCodigo.value.trim() && !inMarca.value.trim() && !inRubro.value.trim() && !inSubrubro.value.trim();
-  };
-  [inCodigo, inMarca, inRubro, inSubrubro].forEach(inp => inp.addEventListener('input', actualizarDisabled));
-  actualizarDisabled();
+  const hayBorrador = () => inCodigo.value.trim() || Object.keys(RT_FILTRO_BORRADOR).some(c => RT_FILTRO_BORRADOR[c].size);
+  btnFiltrar.disabled = !hayBorrador();
+  inCodigo.addEventListener('input', () => { btnFiltrar.disabled = !hayBorrador(); });
 
   form.addEventListener('submit', e => {
     e.preventDefault();
     const codigo = rtProductosNormalizarCodigo(inCodigo.value);
-    const marca = inMarca.value.trim(), rubro = inRubro.value.trim(), subrubro = inSubrubro.value.trim();
     const filtro = {};
     if (codigo) filtro.codigo = codigo;
-    if (marca) filtro.marca = marca;
-    if (rubro) filtro.rubro = rubro;
-    if (subrubro) filtro.subrubro = subrubro;
+    // Orden alfabetico fijo (no el orden en que se tildo) -- rtFiltroKey()=JSON.stringify
+    // necesita una key deterministica para que el cache de RT_COMPLETO por filtroKey
+    // funcione: el mismo conjunto de valores tildados en distinto orden de click no debe
+    // producir una key distinta.
+    ['marca', 'rubro', 'subrubro', 'talle', 'color'].forEach(c => {
+      if (RT_FILTRO_BORRADOR[c].size) filtro[c] = [...RT_FILTRO_BORRADOR[c]].sort((a, b) => a.localeCompare(b, 'es'));
+    });
     if (!Object.keys(filtro).length) return;
     RT_FILTRO = filtro;
+    RT_FILTRO_BORRADOR_KEY = rtFiltroKey(); // el borrador ya representa este RT_FILTRO, no resincronizar
     RT_PRODUCTOS_FILTRO_ORIGEN = null; // filtro armado a mano reemplaza al precargado
     if (alAplicar) { alAplicar(); }
     else { RT_PRODUCTOS_PAGINA = 0; RT_PRODUCTOS_EXPANDIDO = null; rtCargarCompleto(); }
@@ -3928,7 +4058,7 @@ async function rtCargarCompleto() {
   try {
     for (let pagina = 0; pagina < RT_LIMITE_PAGINAS_COMPLETO; pagina++) {
       const params = new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, limit: '500', offset: String(offset) });
-      Object.keys(RT_FILTRO).forEach(k => params.set(k, RT_FILTRO[k]));
+      rtFiltroAParams(params, RT_FILTRO);
       const resp = await fetch(STOCK_API_URL + '/analisis/stock-ventas?' + params.toString(), { signal: controller.signal });
       const data = await resp.json();
       if (seq !== RT_COMPLETO_SEQ) return; // el filtro cambio, se descarta
@@ -4113,10 +4243,18 @@ function rtStockVentasAplicarFiltrosCliente(filas) {
 }
 
 // Dropdown de checkboxes (<details>/<summary>, sin JS de posicionamiento ni listener de
-// click-afuera) -- reutilizado por Talle y Color. abierto/onToggleAbierto persisten el
-// estado expandido entre renders: cada tilde dispara rtRenderVistaActual() y reconstruye
-// todo #rtPanelHost, así que sin esto el panel se cerraría solo despues de cada click.
-function rtStockVentasFiltroDropdown(titulo, opciones, seleccionados, abierto, onToggleAbierto, onToggleValor, onLimpiar) {
+// click-afuera) -- generico, reutilizado por Talle/Color de Stock Ventas y por el
+// formulario de filtro compartido (Marca/Rubro/Subrubro/Talle/Color, Fase de filtros
+// multiples 2026-07-20). abierto/onToggleAbierto persisten el estado expandido entre
+// renders: cada tilde dispara rtRenderVistaActual() y reconstruye todo #rtPanelHost, así
+// que sin esto el panel se cerraría solo despues de cada click.
+// busqueda (opcional, {id, valor, onBuscar}): filtra `opciones` por texto libre antes de
+// listar los checkboxes -- necesario para campos con muchas opciones reales (Marca 129,
+// Rubro 310, Color 405 en produccion, Fase de filtros multiples 2026-07-20); sin `id` no
+// se puede restaurar el foco/cursor despues del re-render que dispara cada tecla (mismo
+// patron que rtMarcasBuscar). Los 2 call-sites existentes (Talle/Color de Stock Ventas)
+// no lo pasan -- quedan exactamente igual, sin buscador, listas cortas en la practica.
+function rtFiltroDropdown(titulo, opciones, seleccionados, abierto, onToggleAbierto, onToggleValor, onLimpiar, busqueda) {
   const details = rtEl('details', { className:'rt-sv-filtro' });
   details.open = abierto;
   details.addEventListener('toggle', () => onToggleAbierto(details.open));
@@ -4131,10 +4269,27 @@ function rtStockVentasFiltroDropdown(titulo, opciones, seleccionados, abierto, o
     limpiar.addEventListener('click', onLimpiar);
     panel.appendChild(limpiar);
   }
-  if (!opciones.length) {
+  let opcionesFiltradas = opciones;
+  if (busqueda) {
+    const inputBusqueda = rtEl('input', { className:'rt-sv-filtro-buscar',
+      attrs:{ type:'text', id:busqueda.id, placeholder:'Buscar ' + titulo.toLowerCase() + '…', autocomplete:'off' } });
+    inputBusqueda.value = busqueda.valor || '';
+    inputBusqueda.addEventListener('input', () => {
+      const cursor = inputBusqueda.selectionStart;
+      busqueda.onBuscar(inputBusqueda.value);
+      const nuevo = document.getElementById(busqueda.id);
+      if (nuevo) { nuevo.focus(); try { nuevo.setSelectionRange(cursor, cursor); } catch (e) {} }
+    });
+    panel.appendChild(inputBusqueda);
+    if (busqueda.valor) {
+      const q = busqueda.valor.toLocaleLowerCase('es');
+      opcionesFiltradas = opciones.filter(o => o.toLocaleLowerCase('es').includes(q));
+    }
+  }
+  if (!opcionesFiltradas.length) {
     panel.appendChild(rtEl('p', { className:'rt-note', text:'Sin opciones para el filtro actual.' }));
   } else {
-    opciones.forEach(v => {
+    opcionesFiltradas.forEach(v => {
       const lbl = rtEl('label', { className:'rt-sv-filtro-opcion' });
       const chk = rtEl('input', { attrs:{ type:'checkbox' } });
       chk.checked = seleccionados.has(v);
@@ -4382,9 +4537,9 @@ function rtStockVentasTabla(host, todasLasFilas) {
   // los checkboxes -- asi la lista de opciones no se achica sola a medida que se tildan.
   const talleOpciones = Array.from(new Set(todasLasFilas.map(f => f.Codigo_talle).filter(t => t != null && t !== '').map(String))).sort(sizeSort);
   const colorOpciones = Array.from(new Set(todasLasFilas.map(f => f.Nombre_color || f.Codigo_color).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
-  toolbar.appendChild(rtStockVentasFiltroDropdown('Talle', talleOpciones, RT_STOCKVENTAS_TALLES, RT_STOCKVENTAS_TALLE_ABIERTO,
+  toolbar.appendChild(rtFiltroDropdown('Talle', talleOpciones, RT_STOCKVENTAS_TALLES, RT_STOCKVENTAS_TALLE_ABIERTO,
     (abierto) => { RT_STOCKVENTAS_TALLE_ABIERTO = abierto; }, rtStockVentasToggleTalle, rtStockVentasLimpiarTalles));
-  toolbar.appendChild(rtStockVentasFiltroDropdown('Color', colorOpciones, RT_STOCKVENTAS_COLORES, RT_STOCKVENTAS_COLOR_ABIERTO,
+  toolbar.appendChild(rtFiltroDropdown('Color', colorOpciones, RT_STOCKVENTAS_COLORES, RT_STOCKVENTAS_COLOR_ABIERTO,
     (abierto) => { RT_STOCKVENTAS_COLOR_ABIERTO = abierto; }, rtStockVentasToggleColor, rtStockVentasLimpiarColores));
 
   // Rubro/Subrubro salen de la lista de columnas (ni el dropdown "Columnas" las ofrece)
@@ -4456,7 +4611,7 @@ async function rtCargarOportunidades() {
   rtRenderVistaActual();
   try {
     const params = new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, limit: String(RT_OPORTUNIDADES_LIMITE), offset: String(RT_OPORTUNIDADES_OFFSET) });
-    if (RT_FILTRO) Object.keys(RT_FILTRO).forEach(k => params.set(k, RT_FILTRO[k]));
+    if (RT_FILTRO) rtFiltroAParams(params, RT_FILTRO, ['talle', 'color']);
     if (RT_OPORTUNIDADES_ESTADO) params.set('estado', RT_OPORTUNIDADES_ESTADO);
     if (RT_OPORTUNIDADES_PRIORIDAD) params.set('prioridad', RT_OPORTUNIDADES_PRIORIDAD);
     if (RT_OPORTUNIDADES_CONFIANZA) params.set('confianza', RT_OPORTUNIDADES_CONFIANZA);
@@ -4935,7 +5090,7 @@ function renderRTOportunidades(host) {
   rtFormularioFiltro(host, () => {
     RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_EXPANDIDO = null;
     rtCargarOportunidades();
-  });
+  }, { sinTalleColor: true });
 
   if (RT_FILTRO) rtFiltroChip(host);
   else host.appendChild(rtEl('p', { className:'rt-note', text:'Panorama general del período. Aplicá un filtro arriba para acotar.' }));
