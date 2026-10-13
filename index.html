@@ -1221,6 +1221,64 @@ function rtInsumosCeldaCobertura(f) {
   return nf1.format(f.cobertura_dias) + ' días';
 }
 
+// Tamaño/medidas: editables en linea (PUT /analisis/insumos/:codigo/medidas, solo admin --
+// la pagina entera ya exige rol admin, ver init()). RT_INSUMOS_EDITANDO guarda el codigo
+// de la fila en edicion; las filas del resto se muestran normales.
+let RT_INSUMOS_EDITANDO = null, RT_INSUMOS_GUARDANDO = false;
+
+function rtInsumosCeldasMedidas(tr, f) {
+  if (RT_INSUMOS_EDITANDO !== f.codigo) {
+    tr.appendChild(rtEl('td', { text: f.tamano || '—' }));
+    const td = rtEl('td');
+    td.appendChild(rtEl('span', { text: f.medidas || '—' }));
+    const btn = rtEl('button', { className:'btn-sm', text:'Editar', attrs:{ type:'button', 'aria-label':'Editar medidas de ' + f.codigo } });
+    btn.style.marginLeft = '8px';
+    btn.addEventListener('click', () => { RT_INSUMOS_EDITANDO = f.codigo; rtRenderVistaActual(); });
+    td.appendChild(btn);
+    tr.appendChild(td);
+    return;
+  }
+  const inTamano = rtEl('input', { className:'form-control', attrs:{ type:'text', maxlength:'40', placeholder:'Ej: ZAPAS', 'aria-label':'Tamaño de ' + f.codigo } });
+  inTamano.value = f.tamano || '';
+  const inMedidas = rtEl('input', { className:'form-control', attrs:{ type:'text', maxlength:'40', placeholder:'Ej: 30X12X41', 'aria-label':'Medidas de ' + f.codigo } });
+  inMedidas.value = f.medidas || '';
+  const tdT = rtEl('td'); tdT.appendChild(inTamano); tr.appendChild(tdT);
+  const tdM = rtEl('td'); tdM.appendChild(inMedidas);
+  const guardar = rtEl('button', { className:'btn-sm', text:'Guardar', attrs:{ type:'button' } });
+  const cancelar = rtEl('button', { className:'btn-sm', text:'Cancelar', attrs:{ type:'button' } });
+  guardar.style.marginLeft = cancelar.style.marginLeft = '8px';
+  guardar.addEventListener('click', () => rtGuardarMedidasInsumo(f.codigo, inTamano.value, inMedidas.value));
+  cancelar.addEventListener('click', () => { RT_INSUMOS_EDITANDO = null; rtRenderVistaActual(); });
+  [inTamano, inMedidas].forEach(inp => inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') guardar.click();
+    if (e.key === 'Escape') cancelar.click();
+  }));
+  tdM.appendChild(guardar); tdM.appendChild(cancelar);
+  tr.appendChild(tdM);
+}
+
+async function rtGuardarMedidasInsumo(codigo, tamano, medidas) {
+  if (RT_INSUMOS_GUARDANDO) return;
+  RT_INSUMOS_GUARDANDO = true;
+  try {
+    const resp = await fetch(STOCK_API_URL + '/analisis/insumos/' + encodeURIComponent(codigo) + '/medidas', {
+      method: 'PUT',
+      headers: { ...rtRotAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tamano, medidas }),
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+    const fila = RT_INSUMOS && RT_INSUMOS.data.find(x => x.codigo === codigo);
+    if (fila) { fila.tamano = data.tamano; fila.medidas = data.medidas; }
+    RT_INSUMOS_EDITANDO = null;
+  } catch (err) {
+    alert('No se pudieron guardar las medidas: ' + err.message);
+  } finally {
+    RT_INSUMOS_GUARDANDO = false;
+    rtRenderVistaActual();
+  }
+}
+
 function renderRTInsumos(host) {
   host.appendChild(rtEl('h3', { text:'Insumos', className:'rt-subtitulo' }));
   host.appendChild(rtEl('p', { className:'rt-note', text:'Bolsas de entrega (rubros INSUMOS / ART REGALOS Y PROMOS) -- independiente del período elegido arriba, usa el historial completo de ingresos para estimar cuándo reponer.' }));
@@ -1248,12 +1306,13 @@ function renderRTInsumos(host) {
   }
 
   host.appendChild(rtTabla(
-    ['Código', 'Producto', 'Stock total', 'Stock sucursales', 'Depósito 90', 'Último ingreso', 'Cantidad recibida', 'Consumo diario est.', 'Cobertura estimada', 'Estado'],
+    ['Código', 'Producto', 'Tamaño', 'Medidas (cm)', 'Stock total', 'Stock sucursales', 'Depósito 90', 'Último ingreso', 'Cantidad recibida', 'Consumo diario est.', 'Cobertura estimada', 'Estado'],
     datos,
     (f) => {
       const tr = rtEl('tr');
       tr.appendChild(rtEl('td', { text: f.codigo }));
       tr.appendChild(rtEl('td', { text: f.producto || '—' }));
+      rtInsumosCeldasMedidas(tr, f);
       tr.appendChild(rtEl('td', { text: nf.format(f.stock) }));
       tr.appendChild(rtEl('td', { text: nf.format(f.stock_sucursales || 0) }));
       tr.appendChild(rtEl('td', { text: nf.format(f.stock_deposito || 0) }));
