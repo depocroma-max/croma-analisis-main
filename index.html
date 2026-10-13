@@ -143,6 +143,9 @@
     .rt-ins-card-label{font-size:13px;color:var(--gray-600)}
     .rt-ins-card-valor{font-size:30px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
     .rt-ins-card-detalle{font-size:12.5px;color:var(--gray-500);line-height:1.4}
+    .rt-ins-card>div:last-child{min-width:0}
+    .rt-ins-card{align-items:flex-start}
+    .rt-ins-desglose{list-style:none;margin:6px 0 8px;padding:0;display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
     .rt-ins-calc-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap}
     .rt-ins-params{display:flex;gap:var(--space-3);flex-wrap:wrap}
     .rt-ins-param{display:flex;flex-direction:column;gap:4px;width:170px}
@@ -1503,7 +1506,7 @@ function rtInsumosAbrirCorreo(texto, fecha) {
 }
 
 // ── Vista ────────────────────────────────────────────────────────────────────
-function rtInsumosTarjeta(iconName, tono, etiqueta, valor, detalle) {
+function rtInsumosTarjeta(iconName, tono, etiqueta, valor, detalle, lista) {
   const card = rtEl('div', { className:'card rt-ins-card' });
   const ic = rtEl('div', { className:'rt-kpi-icon rt-kpi-icon-' + tono + ' rt-ins-card-icon', attrs:{ 'aria-hidden':'true' } });
   ic.innerHTML = icon(iconName, ''); // icono estático del helper
@@ -1511,6 +1514,12 @@ function rtInsumosTarjeta(iconName, tono, etiqueta, valor, detalle) {
   const cuerpo = rtEl('div');
   cuerpo.appendChild(rtEl('div', { className:'rt-ins-card-label', text: etiqueta }));
   cuerpo.appendChild(rtEl('div', { className:'rt-ins-card-valor', text: valor }));
+  if (lista) {
+    // Desglose visible: una línea por artículo con pedido > 0 (o el texto de "sin compra").
+    const ul = rtEl('ul', { className:'rt-ins-desglose', attrs:{ 'aria-label':'Desglose del pedido sugerido' } });
+    lista.forEach(t => ul.appendChild(rtEl('li', { text: t })));
+    cuerpo.appendChild(ul);
+  }
   cuerpo.appendChild(rtEl('div', { className:'rt-ins-card-detalle', text: detalle }));
   card.appendChild(cuerpo);
   return card;
@@ -1595,9 +1604,15 @@ function renderRTInsumos(host) {
     umbral + ' días de cobertura o menos' + (res.conDatosARevisar ? ' · ' + res.conDatosARevisar + ' con datos a revisar' : '')));
   cards.appendChild(rtInsumosTarjeta('warehouse', 'info', 'Stock en depósito',
     nf.format(res.stockDeposito), 'Unidades disponibles en depósito 90 (sin fallados)'));
+  const lineasPedido = params
+    ? (res.desglose.length
+        ? res.desglose.map(it => it.codigo + ' · ' + it.nombre + ' — ' + nf.format(it.cantidad) + ' unidades')
+        : ['No se requiere compra con estos parámetros'])
+    : null;
   cards.appendChild(rtInsumosTarjeta('shoppingCart', 'violet', 'Pedido sugerido',
-    params ? nf.format(res.pedidoTotal) : '—',
-    params ? 'Para cubrir ' + params.dias + ' días · plazo ' + params.plazo + ' d · margen ' + params.margen + ' d' : 'Corregí los parámetros para calcular'));
+    params ? nf.format(res.pedidoTotal) + ' unidades' : '—',
+    params ? 'Para cubrir ' + params.dias + (params.dias === 1 ? ' día' : ' días') + ' · plazo del proveedor ' + params.plazo + ' d · margen de seguridad ' + params.margen + ' d' : 'Corregí los parámetros para calcular',
+    lineasPedido));
   zona.appendChild(cards);
 
   // ── Calculadora ──

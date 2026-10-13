@@ -96,7 +96,7 @@ test('textoPedido: incluye fecha, parametros, lineas > 0, total y aclaracion', (
   const t = C.textoPedido(filas, { dias: 90, plazo: 7, margen: 3 }, new Date(2026, 9, 13));
   assert.match(t, /13\/10\/2026/);
   assert.match(t, /Días a cubrir: 90 · Plazo del proveedor: 7 días · Margen de seguridad: 3 días/);
-  assert.match(t, /BAG90 · BOLSA ZAPAS: 900 unidades/);
+  assert.match(t, /- BAG90 · Bolsa zapas — 900 unidades/);
   assert.doesNotMatch(t, /BAG92/);
   assert.match(t, /Total: 900 unidades/);
   assert.match(t, /Estimación basada en el consumo reciente/);
@@ -105,6 +105,25 @@ test('textoPedido: incluye fecha, parametros, lineas > 0, total y aclaracion', (
 test('textoPedido: null si no hay nada que pedir; asunto con DD/MM', () => {
   assert.equal(C.textoPedido([fila({ stock_utilizable: 99999 })], P, new Date(2026, 9, 13)), null);
   assert.equal(C.asuntoCorreo(new Date(2026, 9, 3)), 'INSUMOS DE BOLSAS – 03/10');
+});
+
+test('desglosePedido: solo cantidades > 0, total = suma exacta y coincide con resumen y texto', () => {
+  const filas = [
+    fila({ codigo: 'BAG90', producto: 'BOLSA ZAPAS' }),
+    fila({ codigo: 'BAG91', producto: 'BOLSA REMERAS', consumo_diario_estimado: 38.6, stock_utilizable: 1382 }),
+    fila({ codigo: 'BAG92', producto: 'BOLSA ACCESORIOS', stock_utilizable: 99999 }),
+    fila({ codigo: 'BAG94', producto: 'BOLSA SIN VENTAS', consumo_diario_estimado: null, cobertura_dias: null, cobertura_estado: 'sin_consumo_medible' }),
+    fila({ codigo: 'BAG95', producto: 'BOLSA REVISAR', cobertura_estado: 'datos_a_revisar' }),
+  ];
+  const d = C.desglosePedido(filas, P);
+  assert.deepEqual(d.items.map(i => i.codigo), ['BAG90', 'BAG91']);
+  assert.equal(d.items[0].nombre, 'Bolsa zapas');
+  assert.equal(d.total, d.items.reduce((a, i) => a + i.cantidad, 0));
+  assert.equal(C.resumen(filas, P, 60).pedidoTotal, d.total);
+  const t = C.textoPedido(filas, P, new Date(2026, 9, 13));
+  assert.match(t, new RegExp('Total: ' + C.formatoMiles(d.total) + ' unidades'));
+  d.items.forEach(i => assert.ok(t.includes('- ' + i.codigo + ' · ' + i.nombre + ' — ' + C.formatoMiles(i.cantidad) + ' unidades')));
+  assert.deepEqual(C.desglosePedido([filas[2]], P), { items: [], total: 0 });
 });
 
 test('nombreCorto y formato de miles es-AR', () => {

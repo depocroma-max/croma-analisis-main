@@ -63,20 +63,45 @@
     return { clave: 'ok', color: 'verde', texto: 'Cobertura suficiente' };
   }
 
+  // "BOLSA ZAPAS" -> "Bolsa zapas" (nombre legible para el desglose y los textos).
+  function nombreBolsa(fila) {
+    var n = (fila.producto || fila.codigo || '').trim().toLowerCase();
+    return n.replace(/^./, function (c) { return c.toUpperCase(); }) || fila.codigo;
+  }
+
+  // Desglose del pedido: solo artículos con cantidad sugerida > 0, en el orden de la
+  // tabla. total = suma exacta de las cantidades listadas (única fuente para tarjeta,
+  // textos de copiar/correo y resumen).
+  function desglosePedido(filas, params) {
+    var items = [], total = 0;
+    filas.forEach(function (f) {
+      var p = pedidoSugerido(f, params);
+      if (p.estado === 'ok' && p.cantidad > 0) {
+        items.push({ codigo: f.codigo, nombre: nombreBolsa(f), cantidad: p.cantidad });
+        total += p.cantidad;
+      }
+    });
+    return { items: items, total: total };
+  }
+
   // Resumen para las tarjetas. Con parámetros inválidos, pedidoTotal es null.
   function resumen(filas, params, umbral) {
     var u = umbral || 60;
-    var paraReponer = 0, stockDeposito = 0, pedidoTotal = params ? 0 : null, conAlerta = 0;
+    var paraReponer = 0, stockDeposito = 0, conAlerta = 0;
     filas.forEach(function (f) {
       if (f.cobertura_estado === 'calculada' && f.cobertura_dias <= u) paraReponer++;
       stockDeposito += f.stock_deposito_90 || 0;
       if (f.cobertura_estado === 'datos_a_revisar') conAlerta++;
-      if (params) {
-        var p = pedidoSugerido(f, params);
-        if (p.estado === 'ok') pedidoTotal += p.cantidad;
-      }
     });
-    return { paraReponer: paraReponer, stockDeposito: stockDeposito, pedidoTotal: pedidoTotal, conDatosARevisar: conAlerta };
+    // El total sale del mismo desglose que se muestra en la tarjeta y en los textos:
+    // una sola fuente, no pueden diferir.
+    var desglose = params ? desglosePedido(filas, params) : null;
+    return {
+      paraReponer: paraReponer, stockDeposito: stockDeposito,
+      pedidoTotal: desglose ? desglose.total : null,
+      desglose: desglose ? desglose.items : null,
+      conDatosARevisar: conAlerta,
+    };
   }
 
   // Artículo prioritario: menor cobertura válida (no cuenta sin consumo ni a revisar).
@@ -104,14 +129,10 @@
 
   // Texto del pedido (solo artículos con cantidad > 0). null si no hay nada que pedir.
   function textoPedido(filas, params, fecha) {
-    var lineas = [];
-    var total = 0;
-    filas.forEach(function (f) {
-      var p = pedidoSugerido(f, params);
-      if (p.estado === 'ok' && p.cantidad > 0) {
-        lineas.push('- ' + f.codigo + ' · ' + (f.producto || f.codigo) + ': ' + formatoMiles(p.cantidad) + ' unidades');
-        total += p.cantidad;
-      }
+    var d = desglosePedido(filas, params);
+    var total = d.total;
+    var lineas = d.items.map(function (it) {
+      return '- ' + it.codigo + ' · ' + it.nombre + ' — ' + formatoMiles(it.cantidad) + ' unidades';
     });
     if (!lineas.length) return null;
     var cuerpo = [
@@ -139,6 +160,8 @@
     pedidoSugerido: pedidoSugerido,
     estadoCobertura: estadoCobertura,
     resumen: resumen,
+    desglosePedido: desglosePedido,
+    nombreBolsa: nombreBolsa,
     prioritario: prioritario,
     textoPedido: textoPedido,
     asuntoCorreo: asuntoCorreo,
