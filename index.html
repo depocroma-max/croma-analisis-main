@@ -128,8 +128,70 @@
        quedaban pegados unos con otros (reportado 2026-07-21). Una sola regla general en
        vez de parchear cada panel individualmente. */
     #rtPanelHost > * + *{margin-top:1.5rem}
-    .rt-insumos-reglas ul{margin:6px 0 0;padding-left:1.1em}
-    .rt-insumos-reglas li{margin-bottom:4px}
+    /* Insumos (rediseño 2026-10-13) */
+    .rt-ins-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;margin:var(--space-2) 0 var(--space-1)}
+    .rt-ins-titulo{font-family:var(--font-display);font-size:30px;letter-spacing:.5px;line-height:1.1;margin:0}
+    .rt-ins-sub{margin:2px 0 0;font-size:13.5px;color:var(--gray-500);line-height:1.45}
+    .rt-ins-cab-der{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap}
+    .rt-ins-hora{font-size:12px;color:var(--gray-400)}
+    .rt-ins-periodo{margin:0 0 var(--space-4);font-size:12px;color:var(--gray-400)}
+    .rt-ins-bloque{margin-bottom:var(--space-4);padding:var(--space-4) var(--space-5)}
+    .rt-ins-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3);margin-bottom:var(--space-4)}
+    .rt-ins-card{display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4) var(--space-5)}
+    .rt-ins-card-icon{width:52px;height:52px;border-radius:50%;flex:none}
+    .rt-ins-card-icon svg{width:24px;height:24px}
+    .rt-ins-card-label{font-size:13px;color:var(--gray-600)}
+    .rt-ins-card-valor{font-size:30px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+    .rt-ins-card-detalle{font-size:12.5px;color:var(--gray-500);line-height:1.4}
+    .rt-ins-calc-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap}
+    .rt-ins-params{display:flex;gap:var(--space-3);flex-wrap:wrap}
+    .rt-ins-param{display:flex;flex-direction:column;gap:4px;width:170px}
+    .rt-ins-param .form-control{font-variant-numeric:tabular-nums}
+    .rt-ins-invalido{border-color:var(--danger)!important}
+    .rt-ins-nota{border-top:none;padding:var(--space-2) 0 0}
+    .rt-ins-acciones{display:flex;gap:var(--space-2);flex-wrap:wrap}
+    .rt-ins-aviso{min-height:18px;margin:var(--space-2) 0 var(--space-3);font-size:12.5px;color:var(--gray-600)}
+    table.rt-ins-tabla td{vertical-align:middle;padding:12px}
+    .rt-ins-num,table.rt-table th.rt-ins-num,table.rt-table td.rt-ins-num{text-align:right;font-variant-numeric:tabular-nums}
+    table.rt-ins-tabla td.rt-ins-pedido{font-weight:700}
+    tr.rt-ins-urgente{background:var(--danger-bg)}
+    td.rt-ins-neg{color:var(--danger);font-weight:700}
+    .rt-ins-cob{white-space:nowrap}
+    .rt-ins-estado{display:block;margin-top:3px;font-size:11px;color:var(--gray-500)}
+    .rt-ins-accion{width:44px;text-align:right}
+    .rt-ins-btn-detalle{padding:6px 8px}
+    .rt-ins-alerta-texto{flex:1;min-width:0}
+    .alert.rt-ins-bloque{align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .rt-ins-como summary{cursor:pointer;font-weight:700;font-size:14px}
+    .rt-ins-como ul{margin:var(--space-3) 0 0;padding-left:1.2em}
+    .rt-ins-como li{margin-bottom:6px}
+    table.rt-ins-tabla-detalle th,table.rt-ins-tabla-detalle td{padding:8px 8px}
+    .rt-ins-modal-chico{max-width:380px}
+    .rt-ins-modal-grande{max-width:640px}
+    .rt-ins-dl{display:grid;grid-template-columns:minmax(150px,auto) 1fr;gap:6px 14px;margin:0 0 var(--space-4);font-size:13px}
+    .rt-ins-dl dt{color:var(--gray-500)}
+    .rt-ins-dl dd{margin:0;font-weight:600}
+    .rt-ins-cuerpo{width:100%;font-family:inherit;font-size:13px;line-height:1.5}
+    .rt-ins-overlay .alert{margin-bottom:var(--space-3)}
+    @media (max-width:900px){
+      .rt-ins-cards{grid-template-columns:1fr}
+      .rt-ins-param{width:calc(33% - 8px);min-width:130px}
+    }
+    .rt-ins-cod-nombre{display:none}
+    @media (max-width:700px){
+      .rt-ins-sec,.rt-ins-bolsa{display:none}
+      .rt-ins-cod-nombre{display:block;font-size:11px;color:var(--gray-500)}
+      table.rt-ins-tabla td,table.rt-ins-tabla th{padding:8px 6px}
+      table.rt-table.rt-ins-tabla td.rt-ins-cob,table.rt-table.rt-ins-tabla th{white-space:normal}
+      table.rt-table.rt-ins-tabla td.rt-ins-cob{max-width:112px}
+      .rt-ins-cob .badge{white-space:normal;text-align:center;line-height:1.25}
+      .rt-ins-accion{width:36px}
+      .rt-ins-bloque{padding:var(--space-3)}
+      .rt-ins-param{width:100%}
+      .rt-ins-acciones .btn{flex:1}
+      .rt-ins-dl{grid-template-columns:1fr}
+      .rt-ins-dl dd{margin-bottom:6px}
+    }
     .rt-rot-card{padding:16px}
     .rt-rot-cantidad{width:100%;max-width:60px;padding:4px 6px;box-sizing:border-box}
     .rt-rot-cantidad-alerta{border-color:var(--warning,#c77700);background:color-mix(in srgb, var(--warning,#c77700) 12%, transparent)}
@@ -739,6 +801,7 @@
 </div>
 
 <script src="croma-icons.js?v=20260729-1"></script>
+<script src="insumos-calc.js?v=20261013-1"></script>
 <script>
 'use strict';
 
@@ -1200,15 +1263,26 @@ async function rtCargarCatalogo() {
   }
 }
 
-async function rtCargarInsumos() {
+// ── Insumos ──────────────────────────────────────────────────────────────────
+// Rediseño 2026-10-13. Datos: GET /analisis/insumos (stock utilizable, consumo y
+// cobertura calculados en croma-api). Los parámetros de la calculadora son una
+// SIMULACIÓN del lado del cliente (insumos-calc.js): no escriben stock ni generan
+// compras. El período global de arriba no afecta esta pestaña.
+let RT_INSUMOS_PARAMS = { dias:'90', plazo:'0', margen:'0' };
+let RT_INSUMOS_AVISO = '', RT_INSUMOS_AVISO_TIMER = null;
+let RT_INSUMOS_GUARDANDO = false;
+
+async function rtCargarInsumos(forzar) {
+  if (RT_INSUMOS_LOADING) return;
   RT_INSUMOS_LOADING = true; RT_INSUMOS_ERROR = null;
   rtRenderVistaActual();
   try {
-    const resp = await fetch(STOCK_API_URL + '/analisis/insumos');
+    const resp = await fetch(STOCK_API_URL + '/analisis/insumos' + (forzar ? '?refresh=1' : ''));
     const data = await resp.json();
     if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
     RT_INSUMOS = data;
   } catch (err) {
+    // Si ya había datos se conservan (se muestran como "anteriores", ver render).
     RT_INSUMOS_ERROR = err.message;
   } finally {
     RT_INSUMOS_LOADING = false;
@@ -1216,132 +1290,470 @@ async function rtCargarInsumos() {
   }
 }
 
-function rtInsumosCeldaCobertura(f) {
-  if (f.cobertura_estado === 'sin_consumo_medible') return 'sin salidas recientes';
-  return nf1.format(f.cobertura_dias) + ' días';
+function rtInsumosFechaHora(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+}
+function rtInsumosHora(iso) {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? '—' : d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+}
+function rtInsumosTextoCobertura(f) {
+  return f.cobertura_dias === null || f.cobertura_dias === undefined ? '—' : nf1.format(f.cobertura_dias) + ' días';
+}
+function rtInsumosTextoInconsistencia(codigo, fila) {
+  const nombreLocal = (c) => { const s = (fila.sucursales || []).find(x => x.centro === c); return s ? s.nombre : 'centro ' + c; };
+  if (codigo === 'deposito_90_negativo') return 'El depósito 90 da negativo (el depósito central es menor que los fallados 93). Revisar en Sysneo.';
+  if (codigo.indexOf('stock_negativo:') === 0) return 'Stock negativo en ' + nombreLocal(codigo.split(':')[1]) + '. Revisar en Sysneo.';
+  if (codigo.indexOf('centro_desconocido:') === 0) return 'Hay stock en un centro no reconocido (' + codigo.split(':')[1] + ').';
+  return codigo;
 }
 
-// Tamaño/medidas: editables en linea (PUT /analisis/insumos/:codigo/medidas, solo admin --
-// la pagina entera ya exige rol admin, ver init()). RT_INSUMOS_EDITANDO guarda el codigo
-// de la fila en edicion; las filas del resto se muestran normales.
-let RT_INSUMOS_EDITANDO = null, RT_INSUMOS_GUARDANDO = false;
-
-function rtInsumosCeldasMedidas(tr, f) {
-  if (RT_INSUMOS_EDITANDO !== f.codigo) {
-    tr.appendChild(rtEl('td', { text: f.tamano || '—' }));
-    const td = rtEl('td');
-    td.appendChild(rtEl('span', { text: f.medidas || '—' }));
-    const btn = rtEl('button', { className:'btn-sm', text:'Editar', attrs:{ type:'button', 'aria-label':'Editar medidas de ' + f.codigo } });
-    btn.style.marginLeft = '8px';
-    btn.addEventListener('click', () => { RT_INSUMOS_EDITANDO = f.codigo; rtRenderVistaActual(); });
-    td.appendChild(btn);
-    tr.appendChild(td);
-    return;
-  }
-  const inTamano = rtEl('input', { className:'form-control', attrs:{ type:'text', maxlength:'40', placeholder:'Ej: ZAPAS', 'aria-label':'Tamaño de ' + f.codigo } });
-  inTamano.value = f.tamano || '';
-  const inMedidas = rtEl('input', { className:'form-control', attrs:{ type:'text', maxlength:'40', placeholder:'Ej: 30X12X41', 'aria-label':'Medidas de ' + f.codigo } });
-  inMedidas.value = f.medidas || '';
-  const tdT = rtEl('td'); tdT.appendChild(inTamano); tr.appendChild(tdT);
-  const tdM = rtEl('td'); tdM.appendChild(inMedidas);
-  const guardar = rtEl('button', { className:'btn-sm', text:'Guardar', attrs:{ type:'button' } });
-  const cancelar = rtEl('button', { className:'btn-sm', text:'Cancelar', attrs:{ type:'button' } });
-  guardar.style.marginLeft = cancelar.style.marginLeft = '8px';
-  guardar.addEventListener('click', () => rtGuardarMedidasInsumo(f.codigo, inTamano.value, inMedidas.value));
-  cancelar.addEventListener('click', () => { RT_INSUMOS_EDITANDO = null; rtRenderVistaActual(); });
-  [inTamano, inMedidas].forEach(inp => inp.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') guardar.click();
-    if (e.key === 'Escape') cancelar.click();
-  }));
-  tdM.appendChild(guardar); tdM.appendChild(cancelar);
-  tr.appendChild(tdM);
-}
-
-async function rtGuardarMedidasInsumo(codigo, tamano, medidas) {
-  if (RT_INSUMOS_GUARDANDO) return;
-  RT_INSUMOS_GUARDANDO = true;
+async function rtInsumosCopiarTexto(texto) {
+  try { await navigator.clipboard.writeText(texto); return true; } catch (e) { /* cae al plan B */ }
   try {
-    const resp = await fetch(STOCK_API_URL + '/analisis/insumos/' + encodeURIComponent(codigo) + '/medidas', {
-      method: 'PUT',
-      headers: { ...rtRotAuthHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tamano, medidas }),
-    });
-    const data = await resp.json();
-    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
-    const fila = RT_INSUMOS && RT_INSUMOS.data.find(x => x.codigo === codigo);
-    if (fila) { fila.tamano = data.tamano; fila.medidas = data.medidas; }
-    RT_INSUMOS_EDITANDO = null;
-  } catch (err) {
-    alert('No se pudieron guardar las medidas: ' + err.message);
-  } finally {
-    RT_INSUMOS_GUARDANDO = false;
-    rtRenderVistaActual();
+    const ta = document.createElement('textarea');
+    ta.value = texto; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch (e) { return false; }
+}
+function rtInsumosAvisar(msg) {
+  RT_INSUMOS_AVISO = msg;
+  const el = document.getElementById('rtInsAviso');
+  if (el) el.textContent = msg;
+  clearTimeout(RT_INSUMOS_AVISO_TIMER);
+  RT_INSUMOS_AVISO_TIMER = setTimeout(() => {
+    RT_INSUMOS_AVISO = '';
+    const e2 = document.getElementById('rtInsAviso');
+    if (e2) e2.textContent = '';
+  }, 3500);
+}
+
+// ── Modales (se agregan a document.body: sobreviven a los re-render del panel) ──
+function rtInsumosCerrarModal(overlay) {
+  if (overlay && overlay.parentNode) overlay.remove();
+  const previo = document.querySelector('.rt-ins-overlay:last-of-type');
+  if (previo) { const f = previo.querySelector('button,input,textarea'); if (f) f.focus(); }
+}
+function rtInsumosCrearModal(titulo, opts) {
+  const overlay = rtEl('div', { className:'rt-modal-overlay rt-ins-overlay' });
+  const box = rtEl('div', { className:'card rt-modal-box' + (opts && opts.chico ? ' rt-ins-modal-chico' : ' rt-ins-modal-grande'),
+    attrs:{ role:'dialog', 'aria-modal':'true', 'aria-label': titulo } });
+  box.appendChild(rtEl('h3', { className:'rt-subtitulo', text: titulo }));
+  overlay.appendChild(box);
+  overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) rtInsumosCerrarModal(overlay); });
+  overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); rtInsumosCerrarModal(overlay); } });
+  document.body.appendChild(overlay);
+  return { overlay, box };
+}
+
+function rtInsumosAbrirEdicionMedidas(f, alGuardar) {
+  const { overlay, box } = rtInsumosCrearModal('Editar medidas · ' + f.codigo, { chico:true });
+  const grp1 = rtEl('div', { className:'form-group' });
+  grp1.appendChild(rtEl('label', { className:'form-label', text:'Tamaño', attrs:{ for:'rtInsMedTam' } }));
+  const inTam = rtEl('input', { className:'form-control', attrs:{ id:'rtInsMedTam', type:'text', maxlength:'40', placeholder:'Ej: ZAPAS' } });
+  inTam.value = f.tamano || '';
+  grp1.appendChild(inTam);
+  const grp2 = rtEl('div', { className:'form-group' });
+  grp2.appendChild(rtEl('label', { className:'form-label', text:'Medidas (cm)', attrs:{ for:'rtInsMedMed' } }));
+  const inMed = rtEl('input', { className:'form-control', attrs:{ id:'rtInsMedMed', type:'text', maxlength:'40', placeholder:'Ej: 30X12X41' } });
+  inMed.value = f.medidas || '';
+  grp2.appendChild(inMed);
+  box.appendChild(grp1); box.appendChild(grp2);
+
+  const error = rtEl('p', { className:'form-error', attrs:{ role:'alert' } });
+  box.appendChild(error);
+
+  const acciones = rtEl('div', { className:'rt-modal-acciones' });
+  const cancelar = rtEl('button', { className:'btn-sm', text:'Cancelar', attrs:{ type:'button' } });
+  const guardar = rtEl('button', { className:'btn-sm rt-modal-confirmar', text:'Guardar', attrs:{ type:'button' } });
+  cancelar.addEventListener('click', () => rtInsumosCerrarModal(overlay));
+  guardar.addEventListener('click', async () => {
+    if (RT_INSUMOS_GUARDANDO) return;
+    RT_INSUMOS_GUARDANDO = true; guardar.disabled = true; cancelar.disabled = true;
+    guardar.textContent = 'Guardando…'; error.textContent = '';
+    try {
+      const resp = await fetch(STOCK_API_URL + '/analisis/insumos/' + encodeURIComponent(f.codigo) + '/medidas', {
+        method:'PUT',
+        headers: { ...rtRotAuthHeaders(), 'Content-Type':'application/json' },
+        body: JSON.stringify({ tamano: inTam.value, medidas: inMed.value }),
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+      f.tamano = data.tamano; f.medidas = data.medidas;
+      rtInsumosCerrarModal(overlay);
+      if (alGuardar) alGuardar();
+      rtRenderVistaActual();
+    } catch (err) {
+      error.textContent = 'No se pudieron guardar las medidas: ' + err.message;
+      guardar.disabled = false; cancelar.disabled = false; guardar.textContent = 'Guardar';
+    } finally {
+      RT_INSUMOS_GUARDANDO = false;
+    }
+  });
+  [inTam, inMed].forEach(inp => inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') guardar.click(); }));
+  acciones.appendChild(cancelar); acciones.appendChild(guardar);
+  box.appendChild(acciones);
+  inTam.focus();
+}
+
+function rtInsumosAbrirDetalle(codigo) {
+  const f = RT_INSUMOS && RT_INSUMOS.data.find(x => x.codigo === codigo);
+  if (!f) return;
+  const { overlay, box } = rtInsumosCrearModal(f.codigo + ' · ' + (f.producto || ''));
+  const C = InsumosCalc;
+  const umbral = RT_INSUMOS.umbral_cobertura_dias;
+  const est = C.estadoCobertura(f, umbral);
+
+  const datos = rtEl('dl', { className:'rt-ins-dl' });
+  const par = (k, v) => { datos.appendChild(rtEl('dt', { text:k })); datos.appendChild(rtEl('dd', { text:v })); };
+  par('Tamaño', f.tamano || '—');
+  // Medidas con su acción de edición aparte (no se mezcla con las columnas de stock).
+  datos.appendChild(rtEl('dt', { text:'Medidas (cm)' }));
+  const ddMed = rtEl('dd');
+  ddMed.appendChild(rtEl('span', { text: f.medidas || '—' }));
+  const btnEd = rtEl('button', { className:'btn-sm', text:'Editar medidas', attrs:{ type:'button' } });
+  btnEd.style.marginLeft = '10px';
+  ddMed.appendChild(btnEd);
+  datos.appendChild(ddMed);
+  par('Stock utilizable total', nf.format(f.stock_utilizable) + ' u.');
+  par('Depósito 90', nf.format(f.stock_deposito_90_crudo !== undefined ? f.stock_deposito_90_crudo : f.stock_deposito_90) + ' u.');
+  par('Locales activos', nf.format(f.stock_locales_crudo !== undefined ? f.stock_locales_crudo : f.stock_locales) + ' u.');
+  par('Fallados 93 (no cuenta)', nf.format(f.stock_fallados_93) + ' u.');
+  if (f.stock_no_operativo) par('Sucursales cerradas (no cuenta)', nf.format(f.stock_no_operativo) + ' u.');
+  par('Consumo (últimos ' + RT_INSUMOS.ventana_consumo_dias + ' días)', nf.format(f.salidas_90d) + ' u. · ' + (f.consumo_diario_estimado !== null ? nf1.format(f.consumo_diario_estimado) + ' por día' : 'sin consumo reciente'));
+  par('Cobertura total', rtInsumosTextoCobertura(f) + ' · ' + est.texto);
+  par('Último ingreso (informativo)', f.ultimo_ingreso ? new Date(f.ultimo_ingreso).toLocaleDateString('es-AR') : '—');
+  par('Cantidad recibida (informativo)', f.cantidad_ultimo_ingreso != null ? nf.format(f.cantidad_ultimo_ingreso) + ' u.' : '—');
+  box.appendChild(datos);
+
+  if (f.inconsistencias && f.inconsistencias.length) {
+    const al = rtEl('div', { className:'alert alert-warning', attrs:{ role:'alert' } });
+    al.appendChild(rtEl('div', { text: f.inconsistencias.map(c => rtInsumosTextoInconsistencia(c, f)).join(' ') }));
+    box.appendChild(al);
   }
+
+  box.appendChild(rtEl('h4', { className:'rt-subtitulo', text:'Detalle por sucursal' }));
+  if (f.sucursales && f.sucursales.length) {
+    box.appendChild(rtTabla(
+      ['Local', { text:'Stock', className:'rt-ins-num' }, { text:'Consumo diario', className:'rt-ins-num' }, { text:'Cobertura local', className:'rt-ins-num' }],
+      f.sucursales,
+      (s) => {
+        const tr = rtEl('tr');
+        tr.appendChild(rtEl('td', { text: s.nombre }));
+        tr.appendChild(rtEl('td', { className:'rt-ins-num', text: nf.format(s.stock) }));
+        tr.appendChild(rtEl('td', { className:'rt-ins-num', text: s.consumo_diario_estimado !== null ? nf1.format(s.consumo_diario_estimado) : 'sin consumo' }));
+        tr.appendChild(rtEl('td', { className:'rt-ins-num', text: s.cobertura_dias !== null ? nf1.format(s.cobertura_dias) + ' días' : '—' }));
+        return tr;
+      },
+      { tableClassName:'rt-ins-tabla-detalle' }
+    ));
+    box.appendChild(rtEl('p', { className:'rt-note rt-ins-nota', text:'Consumo real de cada local (ventas y salidas de ese local en los últimos ' + RT_INSUMOS.ventana_consumo_dias + ' días), sin repartir el consumo global. No incluye sugerencias de distribución.' }));
+  } else {
+    box.appendChild(rtEl('p', { className:'rt-note', text:'No hay detalle por sucursal disponible.' }));
+  }
+
+  const acciones = rtEl('div', { className:'rt-modal-acciones' });
+  const cerrar = rtEl('button', { className:'btn-sm rt-modal-confirmar', text:'Cerrar', attrs:{ type:'button' } });
+  cerrar.addEventListener('click', () => rtInsumosCerrarModal(overlay));
+  acciones.appendChild(cerrar);
+  box.appendChild(acciones);
+
+  btnEd.addEventListener('click', () => {
+    rtInsumosAbrirEdicionMedidas(f, () => { rtInsumosCerrarModal(overlay); rtInsumosAbrirDetalle(codigo); });
+  });
+  cerrar.focus();
+}
+
+function rtInsumosAbrirCorreo(texto, fecha) {
+  const C = InsumosCalc;
+  const { overlay, box } = rtInsumosCrearModal('Preparar correo');
+  box.appendChild(rtEl('p', { className:'rt-note rt-ins-nota', text:'Vista previa editable. No se envía nada automáticamente: copiá el texto y pegalo en tu correo.' }));
+  const g1 = rtEl('div', { className:'form-group' });
+  g1.appendChild(rtEl('label', { className:'form-label', text:'Asunto', attrs:{ for:'rtInsCorreoAsunto' } }));
+  const asunto = rtEl('input', { className:'form-control', attrs:{ id:'rtInsCorreoAsunto', type:'text' } });
+  asunto.value = C.asuntoCorreo(fecha);
+  g1.appendChild(asunto);
+  const g2 = rtEl('div', { className:'form-group' });
+  g2.appendChild(rtEl('label', { className:'form-label', text:'Cuerpo', attrs:{ for:'rtInsCorreoCuerpo' } }));
+  const cuerpo = rtEl('textarea', { className:'form-textarea rt-ins-cuerpo', attrs:{ id:'rtInsCorreoCuerpo', rows:'12' } });
+  cuerpo.value = texto;
+  g2.appendChild(cuerpo);
+  box.appendChild(g1); box.appendChild(g2);
+
+  const estado = rtEl('p', { className:'rt-ins-aviso', attrs:{ role:'status', 'aria-live':'polite' } });
+  box.appendChild(estado);
+
+  const acciones = rtEl('div', { className:'rt-modal-acciones' });
+  const cerrar = rtEl('button', { className:'btn-sm', text:'Cerrar', attrs:{ type:'button' } });
+  const copiar = rtEl('button', { className:'btn-sm rt-modal-confirmar', text:'Copiar', attrs:{ type:'button' } });
+  cerrar.addEventListener('click', () => rtInsumosCerrarModal(overlay));
+  copiar.addEventListener('click', async () => {
+    const ok = await rtInsumosCopiarTexto('Asunto: ' + asunto.value + '\n\n' + cuerpo.value);
+    estado.textContent = ok ? 'Correo copiado al portapapeles.' : 'No se pudo copiar automáticamente: seleccioná el texto y copialo a mano.';
+  });
+  acciones.appendChild(cerrar); acciones.appendChild(copiar);
+  box.appendChild(acciones);
+  asunto.focus();
+}
+
+// ── Vista ────────────────────────────────────────────────────────────────────
+function rtInsumosTarjeta(iconName, tono, etiqueta, valor, detalle) {
+  const card = rtEl('div', { className:'card rt-ins-card' });
+  const ic = rtEl('div', { className:'rt-kpi-icon rt-kpi-icon-' + tono + ' rt-ins-card-icon', attrs:{ 'aria-hidden':'true' } });
+  ic.innerHTML = icon(iconName, ''); // icono estático del helper
+  card.appendChild(ic);
+  const cuerpo = rtEl('div');
+  cuerpo.appendChild(rtEl('div', { className:'rt-ins-card-label', text: etiqueta }));
+  cuerpo.appendChild(rtEl('div', { className:'rt-ins-card-valor', text: valor }));
+  cuerpo.appendChild(rtEl('div', { className:'rt-ins-card-detalle', text: detalle }));
+  card.appendChild(cuerpo);
+  return card;
+}
+
+function rtInsumosCampoParam(clave, etiqueta, ayuda, error) {
+  const wrap = rtEl('div', { className:'rt-ins-param' });
+  const id = 'rtInsP_' + clave;
+  wrap.appendChild(rtEl('label', { className:'form-label', text: etiqueta, attrs:{ for: id } }));
+  const input = rtEl('input', { className:'form-control' + (error ? ' rt-ins-invalido' : ''),
+    attrs:{ id, type:'text', inputmode:'numeric', autocomplete:'off', 'aria-describedby': id + '_ayuda',
+      'aria-invalid': error ? 'true' : 'false' } });
+  input.value = RT_INSUMOS_PARAMS[clave];
+  input.addEventListener('input', () => {
+    const cursor = input.selectionStart;
+    RT_INSUMOS_PARAMS[clave] = input.value;
+    rtRenderVistaActual();
+    const nuevo = document.getElementById(id);
+    if (nuevo) { nuevo.focus(); try { nuevo.setSelectionRange(cursor, cursor); } catch (e) {} }
+  });
+  wrap.appendChild(input);
+  wrap.appendChild(rtEl('div', { className: error ? 'form-error' : 'form-hint', text: error || ayuda, attrs:{ id: id + '_ayuda' } }));
+  return wrap;
 }
 
 function renderRTInsumos(host) {
-  host.appendChild(rtEl('h3', { text:'Insumos', className:'rt-subtitulo' }));
-  host.appendChild(rtEl('p', { className:'rt-note', text:'Bolsas de entrega (rubros INSUMOS / ART REGALOS Y PROMOS) -- independiente del período elegido arriba, usa el historial completo de ingresos para estimar cuándo reponer.' }));
+  const C = InsumosCalc;
+  if (!RT_INSUMOS && !RT_INSUMOS_LOADING && !RT_INSUMOS_ERROR) rtCargarInsumos();
 
-  const btnActualizar = rtEl('button', { className:'btn-sm', text:'Actualizar' });
-  btnActualizar.type = 'button';
-  btnActualizar.addEventListener('click', () => { RT_INSUMOS = null; rtCargarInsumos(); });
-  host.appendChild(btnActualizar);
+  // Encabezado: título + subtítulo, hora de actualización y botón propio.
+  const cab = rtEl('div', { className:'rt-ins-cab' });
+  const tit = rtEl('div');
+  tit.appendChild(rtEl('h2', { className:'rt-ins-titulo', text:'Insumos de bolsas' }));
+  tit.appendChild(rtEl('p', { className:'rt-ins-sub', text:'Control de stock y planificación de compras' }));
+  cab.appendChild(tit);
+  const der = rtEl('div', { className:'rt-ins-cab-der' });
+  if (RT_INSUMOS) der.appendChild(rtEl('span', { className:'rt-ins-hora', text:'Actualizado ' + rtInsumosHora(RT_INSUMOS.generado_en) }));
+  const btnAct = rtEl('button', { className:'btn btn-secondary', attrs:{ type:'button' } });
+  btnAct.innerHTML = icon('refresh', '') + ' '; // icono estático del helper
+  btnAct.appendChild(document.createTextNode(RT_INSUMOS_LOADING ? 'Actualizando…' : 'Actualizar insumos'));
+  btnAct.disabled = RT_INSUMOS_LOADING;
+  btnAct.addEventListener('click', () => rtCargarInsumos(true));
+  der.appendChild(btnAct);
+  cab.appendChild(der);
+  host.appendChild(cab);
 
-  if (!RT_INSUMOS && !RT_INSUMOS_LOADING) rtCargarInsumos();
-  if (RT_INSUMOS_LOADING && !RT_INSUMOS) return rtEstado(host, 'loading', 'Calculando cobertura de insumos...');
-  if (RT_INSUMOS_ERROR) return rtEstado(host, 'error', 'No se pudo calcular. ' + RT_INSUMOS_ERROR, rtCargarInsumos);
-  if (!RT_INSUMOS) return rtEstado(host, 'loading', 'Calculando...');
+  const nota = rtEl('p', { className:'rt-ins-periodo' });
+  nota.textContent = 'El consumo se estima con los últimos ' + (RT_INSUMOS ? RT_INSUMOS.ventana_consumo_dias : 90) + ' días. El período global de arriba no modifica este cálculo.';
+  host.appendChild(nota);
 
-  const datos = RT_INSUMOS.data;
-  if (!datos.length) return rtEstado(host, 'vacio', 'Sin bolsas con actividad para mostrar.');
+  const zona = rtEl('div');
+  host.appendChild(zona);
 
-  const aRevisar = datos.filter(f => f.revisar_reposicion);
-  if (aRevisar.length) {
-    const nota = rtEl('p', { className:'rt-note rt-oport-ventas-neg' });
-    nota.textContent = aRevisar.length === 1
-      ? aRevisar[0].producto + ' (' + aRevisar[0].codigo + '): revisar para reponer -- cobertura estimada ' + nf1.format(aRevisar[0].cobertura_dias) + ' días.'
-      : aRevisar.length + ' insumos con cobertura por debajo de ' + RT_INSUMOS.umbral_cobertura_dias + ' días: revisar para reponer.';
-    host.appendChild(nota);
+  if (!RT_INSUMOS) {
+    if (RT_INSUMOS_LOADING) return rtEstado(zona, 'loading', 'Calculando cobertura de insumos...');
+    if (RT_INSUMOS_ERROR) return rtEstado(zona, 'error', 'No se pudo calcular. ' + RT_INSUMOS_ERROR, () => rtCargarInsumos(true));
+    return rtEstado(zona, 'loading', 'Calculando...');
   }
 
-  host.appendChild(rtTabla(
-    ['Código', 'Producto', 'Tamaño', 'Medidas (cm)', 'Stock total', 'Stock sucursales', 'Depósito 90', 'Último ingreso', 'Cantidad recibida', 'Consumo diario est.', 'Cobertura estimada', 'Estado'],
-    datos,
-    (f) => {
-      const tr = rtEl('tr');
-      tr.appendChild(rtEl('td', { text: f.codigo }));
-      tr.appendChild(rtEl('td', { text: f.producto || '—' }));
-      rtInsumosCeldasMedidas(tr, f);
-      tr.appendChild(rtEl('td', { text: nf.format(f.stock) }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.stock_sucursales || 0) }));
-      tr.appendChild(rtEl('td', { text: nf.format(f.stock_deposito || 0) }));
-      tr.appendChild(rtEl('td', { text: f.ultimo_ingreso ? new Date(f.ultimo_ingreso).toLocaleDateString('es-AR') : '—' }));
-      tr.appendChild(rtEl('td', { text: f.cantidad_ultimo_ingreso != null ? nf.format(f.cantidad_ultimo_ingreso) : '—' }));
-      tr.appendChild(rtEl('td', { text: f.consumo_diario_estimado != null ? nf1.format(f.consumo_diario_estimado) : '—' }));
-      tr.appendChild(rtEl('td', { text: rtInsumosCeldaCobertura(f) }));
-      tr.appendChild(rtEl('td', { className: f.revisar_reposicion ? 'rt-oport-ventas-neg' : '', text: f.revisar_reposicion ? 'Revisar para reponer' : (f.cobertura_estado === 'calculada' ? 'OK' : '—') }));
-      return tr;
-    }
-  ));
+  // Datos anteriores tras una actualización fallida: se identifican con su fecha.
+  if (RT_INSUMOS_ERROR) {
+    const al = rtEl('div', { className:'alert alert-warning rt-ins-bloque', attrs:{ role:'alert' } });
+    al.appendChild(rtEl('div', { text:'Datos anteriores del ' + rtInsumosFechaHora(RT_INSUMOS.generado_en) + ': no se pudieron actualizar los insumos (' + RT_INSUMOS_ERROR + ').' }));
+    const reint = rtEl('button', { className:'btn-sm', text:'Reintentar', attrs:{ type:'button' } });
+    reint.addEventListener('click', () => rtCargarInsumos(true));
+    al.appendChild(reint);
+    zona.appendChild(al);
+  }
 
-  // Reglas del calculo, a la vista -- la cobertura estimada no es obvia (no es "dias
-  // de stock del periodo elegido", se basa en el ultimo ingreso real), mismo criterio de
-  // transparencia que ya usa Oportunidades para mostrar el "por que" al lado de los numeros.
-  const reglas = rtEl('div', { className:'rt-insumos-reglas' });
-  reglas.appendChild(rtEl('h4', { text:'Cómo se calcula', className:'rt-subtitulo' }));
+  const datos = RT_INSUMOS.data;
+  if (!datos.length) return rtEstado(zona, 'vacio', 'Sin bolsas con actividad para mostrar.');
+
+  const umbral = RT_INSUMOS.umbral_cobertura_dias;
+  const val = C.validarParametros(RT_INSUMOS_PARAMS);
+  const params = val.ok ? val.valores : null;
+  const res = C.resumen(datos, params, umbral);
+
+  // ── Tarjetas de resumen ──
+  const cards = rtEl('div', { className:'rt-ins-cards' });
+  cards.appendChild(rtInsumosTarjeta('alertTriangle', 'danger', 'Para reponer',
+    nf.format(res.paraReponer) + (res.paraReponer === 1 ? ' modelo' : ' modelos'),
+    umbral + ' días de cobertura o menos' + (res.conDatosARevisar ? ' · ' + res.conDatosARevisar + ' con datos a revisar' : '')));
+  cards.appendChild(rtInsumosTarjeta('warehouse', 'info', 'Stock en depósito',
+    nf.format(res.stockDeposito), 'Unidades disponibles en depósito 90 (sin fallados)'));
+  cards.appendChild(rtInsumosTarjeta('shoppingCart', 'violet', 'Pedido sugerido',
+    params ? nf.format(res.pedidoTotal) : '—',
+    params ? 'Para cubrir ' + params.dias + ' días · plazo ' + params.plazo + ' d · margen ' + params.margen + ' d' : 'Corregí los parámetros para calcular'));
+  zona.appendChild(cards);
+
+  // ── Calculadora ──
+  const calc = rtEl('div', { className:'card rt-ins-bloque' });
+  const calcCab = rtEl('div', { className:'rt-ins-calc-cab' });
+  const calcTit = rtEl('div');
+  calcTit.appendChild(rtEl('h3', { className:'rt-subtitulo', text:'Planificar reposición' }));
+  calcTit.appendChild(rtEl('p', { className:'rt-ins-sub', text:'Simulá escenarios de compra. Días calendario; no modifica stock ni genera compras.' }));
+  calcCab.appendChild(calcTit);
+  const params3 = rtEl('div', { className:'rt-ins-params' });
+  params3.appendChild(rtInsumosCampoParam('dias', 'Días a cubrir', 'Cobertura objetivo después del plazo de entrega', val.errores.dias));
+  params3.appendChild(rtInsumosCampoParam('plazo', 'Plazo del proveedor', 'Días hasta que llega el pedido', val.errores.plazo));
+  params3.appendChild(rtInsumosCampoParam('margen', 'Margen de seguridad', 'Días extra de resguardo', val.errores.margen));
+  calcCab.appendChild(params3);
+  calc.appendChild(calcCab);
+  calc.appendChild(rtEl('p', { className:'rt-note rt-ins-nota', text:'Pedido = consumo diario × (días a cubrir + plazo + margen) − stock utilizable. El plazo y el margen se suman al horizonte del cálculo.' }));
+  zona.appendChild(calc);
+
+  // ── Tabla principal ──
+  const tabla = rtEl('div', { className:'card rt-ins-bloque' });
+  const tCab = rtEl('div', { className:'rt-ins-calc-cab' });
+  const tTit = rtEl('div');
+  tTit.appendChild(rtEl('h3', { className:'rt-subtitulo', text:'Stock y reposición' }));
+  tTit.appendChild(rtEl('p', { className:'rt-ins-sub', text:'Estado actual de stock, cobertura y sugerencia de pedido por tipo de bolsa.' }));
+  tCab.appendChild(tTit);
+
+  const fecha = new Date();
+  const texto = params ? C.textoPedido(datos, params, fecha) : null;
+  const acc = rtEl('div', { className:'rt-ins-acciones' });
+  const btnCopiar = rtEl('button', { className:'btn btn-outline', attrs:{ type:'button' } });
+  btnCopiar.innerHTML = icon('fileText', '') + ' '; // icono estático del helper
+  btnCopiar.appendChild(document.createTextNode('Copiar pedido'));
+  const btnCorreo = rtEl('button', { className:'btn btn-secondary', attrs:{ type:'button' } });
+  btnCorreo.innerHTML = icon('mail', '') + ' '; // icono estático del helper
+  btnCorreo.appendChild(document.createTextNode('Preparar correo'));
+  btnCopiar.disabled = btnCorreo.disabled = !texto;
+  btnCopiar.addEventListener('click', async () => {
+    const ok = await rtInsumosCopiarTexto(texto);
+    rtInsumosAvisar(ok ? 'Pedido copiado al portapapeles.' : 'No se pudo copiar automáticamente. Usá "Preparar correo" y copiá el texto.');
+  });
+  btnCorreo.addEventListener('click', () => rtInsumosAbrirCorreo(texto, new Date()));
+  acc.appendChild(btnCopiar); acc.appendChild(btnCorreo);
+  tCab.appendChild(acc);
+  tabla.appendChild(tCab);
+
+  // Explicación breve cuando las acciones están deshabilitadas + confirmación (aria-live).
+  let porQue = '';
+  if (!params) porQue = 'Corregí los parámetros de la calculadora para generar el pedido.';
+  else if (!texto) {
+    const hayRevisar = datos.some(f => f.cobertura_estado === 'datos_a_revisar');
+    porQue = hayRevisar
+      ? 'No hay pedido sugerido: hay artículos con datos a revisar y el resto tiene stock suficiente para los días indicados.'
+      : 'No hay pedido sugerido: el stock utilizable alcanza para los días indicados (o no hay consumo reciente).';
+  }
+  const aviso = rtEl('p', { className:'rt-ins-aviso', attrs:{ id:'rtInsAviso', role:'status', 'aria-live':'polite' } });
+  aviso.textContent = RT_INSUMOS_AVISO || porQue;
+  tabla.appendChild(aviso);
+
+  const headers = [
+    'COD', { text:'Bolsa', className:'rt-ins-bolsa' },
+    { text:'Stock locales', className:'rt-ins-num rt-ins-sec' },
+    { text:'Depósito 90', className:'rt-ins-num rt-ins-sec' },
+    { text:'Consumo / día', className:'rt-ins-num rt-ins-sec' },
+    { text:'Cobertura total', className:'rt-ins-cob' },
+    { text:'Pedido sugerido', className:'rt-ins-num' },
+    { text:'Detalle', className:'rt-ins-accion' },
+  ];
+  tabla.appendChild(rtTabla(headers, datos, (f) => {
+    const est = C.estadoCobertura(f, umbral);
+    const ped = params ? C.pedidoSugerido(f, params) : { estado:'invalido', cantidad:null };
+    const tr = rtEl('tr', { className: est.color === 'rojo' ? 'rt-ins-urgente' : '' });
+    // En móvil la columna "Bolsa" se oculta y el nombre baja debajo del código.
+    const tdCod = rtEl('td', { text: f.codigo });
+    tdCod.appendChild(rtEl('span', { className:'rt-ins-cod-nombre', text: C.nombreCorto(f) }));
+    tr.appendChild(tdCod);
+    tr.appendChild(rtEl('td', { className:'rt-ins-bolsa', text: C.nombreCorto(f) }));
+    // Valores crudos: un stock negativo se ve (y se marca), nunca se convierte en 0 en silencio.
+    const locCrudo = f.stock_locales_crudo !== undefined ? f.stock_locales_crudo : f.stock_locales;
+    const depCrudo = f.stock_deposito_90_crudo !== undefined ? f.stock_deposito_90_crudo : f.stock_deposito_90;
+    tr.appendChild(rtEl('td', { className:'rt-ins-num rt-ins-sec' + (locCrudo < 0 ? ' rt-ins-neg' : ''), text: nf.format(locCrudo), attrs: locCrudo < 0 ? { title:'Stock negativo: revisar en Sysneo' } : {} }));
+    tr.appendChild(rtEl('td', { className:'rt-ins-num rt-ins-sec' + (depCrudo < 0 ? ' rt-ins-neg' : ''), text: nf.format(depCrudo), attrs: depCrudo < 0 ? { title:'Stock negativo: revisar en Sysneo' } : {} }));
+    tr.appendChild(rtEl('td', { className:'rt-ins-num rt-ins-sec', text: f.consumo_diario_estimado !== null ? nf1.format(f.consumo_diario_estimado) : '—' }));
+
+    const tdCob = rtEl('td', { className:'rt-ins-cob' });
+    const clasesBadge = { rojo:'badge-danger', ambar:'badge-warning', verde:'badge-success', gris:'badge-neutral' };
+    const esGris = est.color === 'gris';
+    // Gris: el badge lleva el texto del estado (sin consumo / datos a revisar); el
+    // resto muestra los días y el texto del estado debajo -- nunca solo color.
+    tdCob.appendChild(rtEl('span', { className:'badge ' + clasesBadge[est.color], text: esGris ? est.texto : rtInsumosTextoCobertura(f) }));
+    if (!esGris) tdCob.appendChild(rtEl('span', { className:'rt-ins-estado', text: est.texto }));
+    tr.appendChild(tdCob);
+
+    let textoPedido = '—', titulo = '';
+    if (ped.estado === 'ok') textoPedido = nf.format(ped.cantidad);
+    else if (ped.estado === 'sin_consumo') titulo = 'Sin consumo reciente: no se genera compra automática';
+    else if (ped.estado === 'datos_a_revisar') titulo = 'Datos a revisar: no se recomienda un pedido';
+    const tdPed = rtEl('td', { className:'rt-ins-num rt-ins-pedido', text: textoPedido });
+    if (titulo) tdPed.title = titulo;
+    tr.appendChild(tdPed);
+
+    const tdAcc = rtEl('td', { className:'rt-ins-accion' });
+    const btn = rtEl('button', { className:'btn-sm rt-ins-btn-detalle', attrs:{ type:'button', 'aria-label':'Ver detalle de ' + f.codigo + ' ' + C.nombreCorto(f) } });
+    btn.innerHTML = icon('chevronRight', ''); // icono estático del helper
+    btn.addEventListener('click', () => rtInsumosAbrirDetalle(f.codigo));
+    tdAcc.appendChild(btn);
+    tr.appendChild(tdAcc);
+    return tr;
+  }, { tableClassName:'rt-ins-tabla' }));
+  zona.appendChild(tabla);
+
+  // ── Alerta prioritaria ──
+  const prio = C.prioritario(datos);
+  const hayRevisar = datos.some(f => f.cobertura_estado === 'datos_a_revisar');
+  const hayDetalle = (f) => f && f.sucursales && f.sucursales.length;
+  let alerta;
+  if (prio && prio.cobertura_dias <= umbral) {
+    alerta = rtEl('div', { className:'alert alert-danger rt-ins-bloque', attrs:{ role:'status' } });
+    const t = rtEl('div', { className:'rt-ins-alerta-texto' });
+    t.appendChild(rtEl('strong', { text:'Prioridad: ' + prio.codigo + ' · ' + (prio.producto || '') }));
+    const dias = prio.cobertura_dias < 1 ? 'menos de 1 día' : 'aproximadamente ' + nf.format(Math.round(prio.cobertura_dias)) + (Math.round(prio.cobertura_dias) === 1 ? ' día' : ' días');
+    t.appendChild(rtEl('div', { text:'Quedan ' + dias + ' de cobertura.' }));
+    alerta.appendChild(t);
+    if (hayDetalle(prio)) {
+      const b = rtEl('button', { className:'btn btn-outline', text:'Ver sucursales', attrs:{ type:'button' } });
+      b.addEventListener('click', () => rtInsumosAbrirDetalle(prio.codigo));
+      alerta.appendChild(b);
+    }
+  } else if (prio) {
+    alerta = rtEl('div', { className:'alert alert-success rt-ins-bloque', attrs:{ role:'status' } });
+    alerta.appendChild(rtEl('div', { text:'Los artículos con consumo reciente tienen cobertura suficiente (más de ' + umbral + ' días).' + (hayRevisar ? ' Hay artículos con datos a revisar: no están incluidos en esta conclusión.' : '') }));
+  } else {
+    alerta = rtEl('div', { className:'alert alert-warning rt-ins-bloque', attrs:{ role:'status' } });
+    alerta.appendChild(rtEl('div', { text: hayRevisar
+      ? 'No se puede estimar la cobertura: hay artículos con datos a revisar y el resto no tiene consumo reciente.'
+      : 'No hay consumo reciente medible: no se puede estimar la cobertura de ningún artículo.' }));
+  }
+  zona.appendChild(alerta);
+
+  // ── Cómo se calcula (desplegable) ──
+  const det = rtEl('details', { className:'card rt-ins-bloque rt-ins-como' });
+  det.appendChild(rtEl('summary', { text:'Cómo se calcula' }));
   const lista = rtEl('ul', { className:'rt-note' });
+  const excl = RT_INSUMOS.centros_excluidos ? Object.keys(RT_INSUMOS.centros_excluidos).map(c => RT_INSUMOS.centros_excluidos[c]).join(', ') : '';
   [
     'Universo: rubros INSUMOS / ART REGALOS Y PROMOS, solo productos con "BOLSA" en el nombre.',
-    'Stock: sucursales + depósito 90 (fuente confiable centro=0000, no la tabla de Sysneo que puede estar desactualizada).',
-    'Consumo diario estimado = salidas reales (ventas + salidas de sucursal) de los últimos 90 días ÷ 90 -- no cuenta transferencias internas entre depósito y sucursal.',
-    'Cobertura estimada = stock actual ÷ consumo diario estimado.',
-    'Umbral de aviso: ' + RT_INSUMOS.umbral_cobertura_dias + ' días de cobertura o menos → "Revisar para reponer".',
-    '"Último ingreso"/"Cantidad recibida" son solo informativos (última compra registrada al proveedor) -- ya no se usan para calcular el consumo.',
-    '"Sin salidas recientes": no hubo ventas ni salidas de sucursal en los últimos 90 días -- nunca se inventa un consumo.',
-  ].forEach(texto => lista.appendChild(rtEl('li', { text: texto })));
-  reglas.appendChild(lista);
-  host.appendChild(reglas);
+    'Consumo: salidas reales de los últimos ' + RT_INSUMOS.ventana_consumo_dias + ' días (ventas y salidas de sucursal). No cuenta transferencias internas entre depósito y sucursal, ni ajustes de inventario.',
+    'Consumo diario estimado = salidas válidas ÷ ' + RT_INSUMOS.ventana_consumo_dias + '.',
+    'Stock utilizable = depósito 90 + locales activos. Depósito 90 = depósito central menos fallados 93 (los fallados no cuentan como disponibilidad). Excluye sucursales cerradas o inactivas' + (excl ? ' (' + excl + ')' : '') + ', tanto del stock como del consumo.',
+    'Cobertura total = stock utilizable ÷ consumo diario estimado.',
+    'Pedido sugerido = máximo entre 0 y redondeo hacia arriba de [consumo diario × (días a cubrir + plazo + margen) − stock utilizable]. Se calcula con precisión completa y se redondea solo al final.',
+    'Umbral de aviso: ' + umbral + ' días de cobertura o menos → "Para reponer". Estados por color con su texto: urgente (15 días o menos), reponer pronto (hasta ' + umbral + '), cobertura suficiente (más de ' + umbral + ').',
+    'Sin consumo reciente: no hubo salidas válidas en la ventana; no se calcula cobertura ni se genera compra automática. Datos a revisar: stock negativo o inconsistente; tampoco se recomienda un pedido.',
+    'Último ingreso y cantidad recibida son solo informativos (última compra registrada al proveedor): no se usan para calcular.',
+  ].forEach(t => lista.appendChild(rtEl('li', { text: t })));
+  det.appendChild(lista);
+  zona.appendChild(det);
 }
 
 // ── Rotaciones ───────────────────────────────────────────────────────────────
@@ -3006,7 +3418,7 @@ function renderRTInsights(host, t, tAnterior) {
 
   // 6) Insumos a reponer (reusa el mismo estado/fetch que la pestaña Insumos -- el
   // endpoint ya cachea 15 min del lado del servidor, no hace falta un cache propio aca).
-  if (!RT_INSUMOS && !RT_INSUMOS_LOADING) rtCargarInsumos();
+  if (!RT_INSUMOS && !RT_INSUMOS_LOADING && !RT_INSUMOS_ERROR) rtCargarInsumos();
   if (RT_INSUMOS_LOADING && !RT_INSUMOS) {
     lista.appendChild(rtInsightFila('shoppingBag', '', 'Calculando cobertura de insumos…'));
   } else if (RT_INSUMOS_ERROR) {
