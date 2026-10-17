@@ -973,6 +973,9 @@ let RT_FILTRO_ABIERTO = { marca:false, rubro:false, subrubro:false, talle:false,
 // Texto de busqueda por campo dentro de cada dropdown -- necesario en produccion (129
 // marcas, 310 rubros, 405 colores), ver rtFiltroDropdown.
 let RT_FILTRO_BUSQUEDA = { marca:'', rubro:'', subrubro:'', talle:'', color:'' };
+// scrollTop de cada panel de rtFiltroDropdown (clave: id del buscador, o el titulo si no
+// tiene) -- sobrevive al re-render que dispara cada tilde. Ver rtFiltroDropdown.
+const RT_FILTRO_SCROLL = {};
 // Pestaña Insumos (/analisis/insumos) -- independiente de RT_DESDE/RT_HASTA, ver
 // comentario del endpoint en croma-api. Se pide una vez y se reutiliza (cache de 15 min
 // ya la tiene el backend); "Actualizar" del header no la refresca a proposito, tiene su
@@ -3983,16 +3986,46 @@ function rtFiltroOpcionesTalle() {
   return rtFiltroOpcionesPorRubro(RT_CATALOGO ? RT_CATALOGO.talles_por_rubro : {}, RT_CATALOGO ? RT_CATALOGO.talles : []);
 }
 
+// Cambiar el Rubro puede dejar tildes de Subrubro/Talle que ya no pertenecen a ningun
+// rubro seleccionado -- un filtro "fantasma" tildado pero invisible en la lista. Se
+// podan apenas cambia el rubro, no recien al aplicar.
+function rtFiltroPodarDependientes() {
+  const subOk = new Set(rtFiltroOpcionesSubrubro());
+  [...RT_FILTRO_BORRADOR.subrubro].forEach(s => { if (!subOk.has(s)) RT_FILTRO_BORRADOR.subrubro.delete(s); });
+  const talleOk = new Set(rtFiltroOpcionesTalle());
+  [...RT_FILTRO_BORRADOR.talle].forEach(t => { if (!talleOk.has(t)) RT_FILTRO_BORRADOR.talle.delete(t); });
+}
+
 function rtFiltroBorradorToggle(campo, valor, marcado) {
   if (marcado) RT_FILTRO_BORRADOR[campo].add(valor); else RT_FILTRO_BORRADOR[campo].delete(valor);
-  // Cambiar el Rubro puede dejar tildes de Subrubro/Talle que ya no pertenecen a ningun
-  // rubro seleccionado -- un filtro "fantasma" tildado pero invisible en la lista. Se
-  // podan apenas cambia el rubro, no recien al aplicar.
-  if (campo === 'rubro') {
-    const subOk = new Set(rtFiltroOpcionesSubrubro());
-    [...RT_FILTRO_BORRADOR.subrubro].forEach(s => { if (!subOk.has(s)) RT_FILTRO_BORRADOR.subrubro.delete(s); });
-    const talleOk = new Set(rtFiltroOpcionesTalle());
-    [...RT_FILTRO_BORRADOR.talle].forEach(t => { if (!talleOk.has(t)) RT_FILTRO_BORRADOR.talle.delete(t); });
+  if (campo === 'rubro') rtFiltroPodarDependientes();
+  rtRenderVistaActual();
+}
+
+// Opciones que coinciden con el texto del buscador -- mismo criterio exacto que usa
+// rtFiltroDropdown para filtrar la lista visible (sin texto: ninguna coincide).
+function rtFiltroCoincidencias(opciones, texto) {
+  if (!texto) return [];
+  const q = texto.toLocaleLowerCase('es');
+  return opciones.filter(o => o.toLocaleLowerCase('es').includes(q));
+}
+
+// Auto-seleccion al escribir en el buscador (pedido 2026-10-17): cada vez que cambia el
+// texto se tildan TODAS las opciones que coinciden, y la persona destilda las que no
+// quiere. Al afinar la busqueda ("zap" -> "zapas") se destildan las que coincidian con
+// el texto anterior y ya no coinciden con el nuevo (si no, quedarian tildadas pero
+// invisibles, filtros "fantasma"); lo tildado a mano que nunca coincidio con la busqueda
+// no se toca. Con el buscador vacio no se selecciona nada (seria tildar todo el catalogo)
+// y se conserva la seleccion actual.
+function rtFiltroBorradorAutoSeleccion(campo, opciones, textoPrevio, textoNuevo) {
+  if (textoNuevo) {
+    const nuevas = rtFiltroCoincidencias(opciones, textoNuevo);
+    const nuevasSet = new Set(nuevas);
+    rtFiltroCoincidencias(opciones, textoPrevio).forEach(v => {
+      if (!nuevasSet.has(v)) RT_FILTRO_BORRADOR[campo].delete(v);
+    });
+    nuevas.forEach(v => RT_FILTRO_BORRADOR[campo].add(v));
+    if (campo === 'rubro') rtFiltroPodarDependientes();
   }
   rtRenderVistaActual();
 }
@@ -4063,7 +4096,11 @@ function rtFormularioFiltro(host, alAplicar, opts) {
       (valor, marcado) => rtFiltroBorradorToggle(campo, valor, marcado),
       () => rtFiltroBorradorLimpiarCampo(campo),
       { id:'rtFiltroBuscar_' + campo, valor: RT_FILTRO_BUSQUEDA[campo],
-        onBuscar: (texto) => { RT_FILTRO_BUSQUEDA[campo] = texto; rtRenderVistaActual(); } }
+        onBuscar: (texto) => {
+          const previo = RT_FILTRO_BUSQUEDA[campo];
+          RT_FILTRO_BUSQUEDA[campo] = texto;
+          rtFiltroBorradorAutoSeleccion(campo, opciones, previo, texto);
+        } }
     ));
     form.appendChild(fc);
   };
@@ -4749,6 +4786,17 @@ function rtFiltroDropdown(titulo, opciones, seleccionados, abierto, onToggleAbie
   details.appendChild(summary);
 
   const panel = rtEl('div', { className:'rt-sv-filtro-panel' });
+  // Scroll del panel: cada tilde reconstruye todo el DOM (rtRenderVistaActual), y un
+  // panel nuevo arranca con scrollTop=0 -- tildar algo a mitad de una lista larga te
+  // mandaba arriba de todo. Se guarda el scroll por dropdown (RT_FILTRO_SCROLL) y se
+  // restaura apenas el panel nuevo queda en el DOM (requestAnimationFrame: corre antes
+  // del siguiente pintado, no se nota el salto). Al escribir en el buscador la lista
+  // cambia de contenido, ahi se vuelve arriba a proposito.
+  const claveScroll = busqueda ? busqueda.id : titulo;
+  panel.addEventListener('scroll', () => { RT_FILTRO_SCROLL[claveScroll] = panel.scrollTop; });
+  if (abierto && RT_FILTRO_SCROLL[claveScroll]) {
+    requestAnimationFrame(() => { panel.scrollTop = RT_FILTRO_SCROLL[claveScroll]; });
+  }
   if (seleccionados.size) {
     const limpiar = rtEl('button', { className:'rt-sv-filtro-limpiar', text:'Limpiar selección' });
     limpiar.type = 'button';
@@ -4762,6 +4810,7 @@ function rtFiltroDropdown(titulo, opciones, seleccionados, abierto, onToggleAbie
     inputBusqueda.value = busqueda.valor || '';
     inputBusqueda.addEventListener('input', () => {
       const cursor = inputBusqueda.selectionStart;
+      RT_FILTRO_SCROLL[busqueda.id] = 0; // la lista cambia de contenido: arranca desde arriba
       busqueda.onBuscar(inputBusqueda.value);
       const nuevo = document.getElementById(busqueda.id);
       if (nuevo) { nuevo.focus(); try { nuevo.setSelectionRange(cursor, cursor); } catch (e) {} }
