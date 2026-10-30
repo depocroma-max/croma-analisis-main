@@ -822,7 +822,7 @@ function getUser() {
   setup();
   // Diferido: RT_DESDE/RT_HASTA (let, más abajo en el mismo script) todavía no
   // están inicializadas cuando este IIFE corre de forma síncrona al parsear.
-  setTimeout(iniciarModoRT, 0);
+  setTimeout(() => { rtSucursalesInit(); iniciarModoRT(); }, 0);
 })();
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
@@ -839,7 +839,6 @@ function setup() {
   });
   document.getElementById('rtDesde').addEventListener('change', rtCambiarPeriodo);
   document.getElementById('rtHasta').addEventListener('change', rtCambiarPeriodo);
-  rtSucursalesInit();
 }
 
 // ── Tiempo real (croma-api) ─────────────────────────────────────────────────
