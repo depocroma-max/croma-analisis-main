@@ -375,6 +375,26 @@
     .rt-btn-actualizar{background:var(--croma-black);color:#fff;border-color:var(--croma-black);
       padding:8px 15px;border-radius:10px}
     .rt-btn-actualizar:hover{border-color:var(--croma-black);background:#222}
+    /* Seleccion de sucursales (2026-10-30): boton + popover en la barra de periodo. */
+    .rt-suc-wrap{position:relative}
+    .rt-btn-sucursales{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:10px}
+    .rt-suc-parcial{background:var(--amber-s);border-color:var(--amber);color:#92400e}
+    .rt-suc-alerta{background:var(--risk-s);border-color:var(--risk);color:#991b1b}
+    .rt-suc-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:30;width:min(340px,86vw);
+      background:var(--white);border:1px solid var(--gray-100);border-radius:12px;
+      box-shadow:0 8px 28px rgba(0,0,0,.16);padding:14px}
+    .rt-suc-panel[hidden]{display:none}
+    .rt-suc-titulo{font-size:13px;font-weight:700;color:var(--black);margin-bottom:4px}
+    .rt-suc-nota{font-size:11.5px;color:var(--gray-400);line-height:1.5;margin:0 0 10px}
+    .rt-suc-pie{margin:10px 0 0;padding-top:8px;border-top:1px solid var(--gray-100)}
+    .rt-suc-lista{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+    .rt-suc-opcion{display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:6px;cursor:pointer}
+    .rt-suc-opcion:hover{background:var(--gray-50)}
+    .rt-suc-etiqueta{font-size:11px;color:var(--gray-400);font-style:italic}
+    .rt-suc-aviso{min-height:16px;font-size:11.5px;color:var(--risk);margin-bottom:4px}
+    .rt-suc-acciones{display:flex;gap:8px;justify-content:flex-end}
+    .rt-suc-aplicar{background:var(--croma-black);color:#fff;border-color:var(--croma-black)}
+    .rt-suc-aplicar:disabled{opacity:.45;cursor:not-allowed}
 
     /* Fila 1 de KPIs: hero (Ventas) mas ancha + 6 tarjetas iguales */
     .rt-dash-kpis{display:grid;grid-template-columns:minmax(240px,1.9fr) repeat(6,minmax(120px,1fr));gap:var(--space-3)}
@@ -819,6 +839,7 @@ function setup() {
   });
   document.getElementById('rtDesde').addEventListener('change', rtCambiarPeriodo);
   document.getElementById('rtHasta').addEventListener('change', rtCambiarPeriodo);
+  rtSucursalesInit();
 }
 
 // ── Tiempo real (croma-api) ─────────────────────────────────────────────────
@@ -827,7 +848,12 @@ function setup() {
 // Fuentes: /analisis/resumen (dashboard, marcas, rubros, subrubros, sucursales —
 // agregados en el servidor, nunca se baja el detalle completo) y /analisis/stock-ventas
 // (productos, talles y colores, oportunidades — exige filtro, pagina de a 100/500).
-const RT_CENTROS = ['0001','0005','0009','0010','0012','0014'];
+// Las 6 sucursales de venta. RT_CENTROS_TODOS es fija (catalogo completo: selectores de
+// Rotaciones, campos de ordenamiento). RT_CENTROS es la LISTA ACTIVA que usa el resto de la
+// app (columnas, tablas, sumas) y se muta EN SITIO al cambiar la seleccion de sucursales
+// (ver "Seleccion de sucursales" mas abajo) -- por eso sigue siendo const.
+const RT_CENTROS_TODOS = ['0001','0005','0009','0010','0012','0014'];
+const RT_CENTROS = RT_CENTROS_TODOS.slice();
 const RT_CENTRO_NOMBRE = {
   '0001':'01 Paseo', '0005':'05 Wave', '0009':'09 Cipo San Martín',
   '0010':'10 Perito Moreno', '0012':'12 Centenario', '0014':'14 Roca',
@@ -854,7 +880,7 @@ const RT_STOCKVENTAS_CAMPOS_NUMERICOS = {
   stock_deposito: f => f.Stock_ctro_0000 || 0,
   stock_fallas: f => f.Stock_fallados || 0,
 };
-RT_CENTROS.forEach(c => {
+RT_CENTROS_TODOS.forEach(c => {
   RT_STOCKVENTAS_CAMPOS_NUMERICOS['venta_' + c] = f => f['Ventas_ctro_' + c] || 0;
   RT_STOCKVENTAS_CAMPOS_NUMERICOS['stock_' + c] = f => f['Stock_ctro_' + c] || 0;
 });
@@ -880,6 +906,171 @@ function rtSucursalBadge(centro) {
 function rtSucursalColorVar(centro) {
   const cls = RT_CENTRO_CLS[centro];
   return cls ? 'var(--suc-' + cls.slice(1) + ')' : 'var(--gray-400)';
+}
+
+// ── Seleccion de sucursales (2026-10-30) ─────────────────────────────────────────
+// Pedido: poder elegir que sucursales entran en los calculos (una cerro y su stock/ventas
+// no deben contar) y que la eleccion quede guardada, pudiendo volver a incluirla despues.
+//   - Se guarda en localStorage (por navegador/equipo), no en el servidor.
+//   - Sin nada guardado se parte de RT_SUCURSALES_EXCLUIDAS_POR_DEFECTO. Cipo (0009) cerro
+//     el 2026-09-25 (misma decision que croma-api/config/insumos.js CENTROS_EXCLUIDOS).
+//   - El filtro lo aplica croma-api: cada pedido a /analisis/{resumen,stock-ventas,
+//     oportunidades,series} lleva ?sucursales=0001,0005,... SOLO cuando falta alguna (con las
+//     6 no se manda nada = comportamiento historico). El servidor devuelve eco "sucursales";
+//     si no viene, el servidor desplegado es viejo y NO esta filtrando -- se avisa en el boton.
+//   - NO afecta Rotaciones (plan operativo/envios fisicos: el stock que sigue en una sucursal
+//     cerrada hay que poder moverlo) ni Insumos (ya excluye Cipo por su propia config).
+const RT_SUCURSALES_KEY = 'rt_sucursales';
+const RT_SUCURSALES_EXCLUIDAS_POR_DEFECTO = ['0009'];
+const RT_SUCURSALES_NOTA = { '0009': 'cerrada' };
+let RT_SUCURSALES_SIN_SOPORTE = false;
+let RT_SUCURSALES_BORRADOR = null; // Set de centros tildados mientras el panel esta abierto
+
+function rtSucursalesLeerGuardadas() {
+  try {
+    const raw = localStorage.getItem(RT_SUCURSALES_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) {
+        const validas = RT_CENTROS_TODOS.filter(c => arr.includes(c));
+        if (validas.length) return validas;
+      }
+    }
+  } catch (e) { /* localStorage bloqueado o JSON roto: se usa el valor por defecto */ }
+  return RT_CENTROS_TODOS.filter(c => !RT_SUCURSALES_EXCLUIDAS_POR_DEFECTO.includes(c));
+}
+function rtSucursalesGuardar(activas) {
+  try { localStorage.setItem(RT_SUCURSALES_KEY, JSON.stringify(activas)); } catch (e) { /* sin persistencia, sigue funcionando en esta sesion */ }
+}
+function rtSucursalesEsSubconjunto() { return RT_CENTROS.length < RT_CENTROS_TODOS.length; }
+// Fragmento para URLs armadas a mano ('&sucursales=...') o '' si estan todas.
+function rtSucursalesQS() { return rtSucursalesEsSubconjunto() ? '&sucursales=' + encodeURIComponent(RT_CENTROS.join(',')) : ''; }
+// Para URLSearchParams (devuelve el mismo objeto, encadenable).
+function rtSucursalesParams(params) { if (rtSucursalesEsSubconjunto()) params.set('sucursales', RT_CENTROS.join(',')); return params; }
+RT_CENTROS.splice(0, RT_CENTROS.length, ...rtSucursalesLeerGuardadas());
+
+// Si el servidor no devuelve el eco "sucursales" teniendo una seleccion parcial, es una version
+// vieja de croma-api que IGNORA el parametro: los numeros incluyen todas las sucursales. Se marca
+// en el boton para no dar por buena una exclusion que no se esta aplicando.
+function rtSucursalesVerificarEco(data) {
+  const sinSoporte = rtSucursalesEsSubconjunto() && !Array.isArray(data.sucursales);
+  if (sinSoporte !== RT_SUCURSALES_SIN_SOPORTE) { RT_SUCURSALES_SIN_SOPORTE = sinSoporte; rtSucursalesRenderBoton(); }
+}
+
+function rtSucursalesNombres(lista) { return lista.map(c => RT_CENTRO_NOMBRE_DIMINUTIVO[c] || c).join(', '); }
+
+function rtSucursalesRenderBoton() {
+  const btn = document.getElementById('rtBtnSucursales');
+  if (!btn) return;
+  const parcial = rtSucursalesEsSubconjunto();
+  btn.className = 'btn-sm rt-btn-sucursales' + (parcial ? ' rt-suc-parcial' : '') + (RT_SUCURSALES_SIN_SOPORTE ? ' rt-suc-alerta' : '');
+  btn.replaceChildren();
+  const ico = rtEl('span', { className:'rt-boton-icono-svg' });
+  ico.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg>'; // icono estatico
+  btn.appendChild(ico);
+  btn.appendChild(document.createTextNode(' Sucursales ' + RT_CENTROS.length + '/' + RT_CENTROS_TODOS.length));
+  const excluidas = RT_CENTROS_TODOS.filter(c => !RT_CENTROS.includes(c));
+  btn.title = RT_SUCURSALES_SIN_SOPORTE
+    ? 'El servidor todavía no aplica la selección de sucursales: los números incluyen todas.'
+    : (parcial ? 'Sin considerar: ' + rtSucursalesNombres(excluidas) : 'Se consideran todas las sucursales');
+}
+
+function rtSucursalesAbrirCerrar(abrir) {
+  const panel = document.getElementById('rtSucursalesPanel');
+  const btn = document.getElementById('rtBtnSucursales');
+  if (!panel || !btn) return;
+  if (abrir) { RT_SUCURSALES_BORRADOR = new Set(RT_CENTROS); rtSucursalesRenderPanel(); }
+  panel.hidden = !abrir;
+  btn.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+}
+
+function rtSucursalesRenderPanel() {
+  const panel = document.getElementById('rtSucursalesPanel');
+  if (!panel) return;
+  panel.replaceChildren();
+  panel.appendChild(rtEl('div', { className:'rt-suc-titulo', text:'Sucursales a considerar' }));
+  panel.appendChild(rtEl('p', { className:'rt-suc-nota', text:'El stock y las ventas de las sucursales destildadas no entran en ningún cálculo. Podés volver a incluirlas cuando quieras; la elección queda guardada en este navegador.' }));
+
+  const btnAplicar = rtEl('button', { className:'btn-sm rt-suc-aplicar', text:'Aplicar', attrs:{ type:'button' } });
+  const aviso = rtEl('div', { className:'rt-suc-aviso', attrs:{ role:'status' } });
+  const refrescarEstado = () => {
+    const nuevas = RT_CENTROS_TODOS.filter(c => RT_SUCURSALES_BORRADOR.has(c));
+    const igual = nuevas.length === RT_CENTROS.length && nuevas.every((c, i) => c === RT_CENTROS[i]);
+    btnAplicar.disabled = !nuevas.length || igual;
+    aviso.textContent = nuevas.length ? '' : 'Elegí al menos una sucursal.';
+  };
+
+  const lista = rtEl('div', { className:'rt-suc-lista' });
+  RT_CENTROS_TODOS.forEach(c => {
+    const lbl = rtEl('label', { className:'rt-suc-opcion' });
+    const chk = rtEl('input', { attrs:{ type:'checkbox' } });
+    chk.checked = RT_SUCURSALES_BORRADOR.has(c);
+    chk.addEventListener('change', () => {
+      if (chk.checked) RT_SUCURSALES_BORRADOR.add(c); else RT_SUCURSALES_BORRADOR.delete(c);
+      refrescarEstado();
+    });
+    lbl.appendChild(chk);
+    lbl.appendChild(rtSucursalBadge(c));
+    if (RT_SUCURSALES_NOTA[c]) lbl.appendChild(rtEl('span', { className:'rt-suc-etiqueta', text: RT_SUCURSALES_NOTA[c] }));
+    lista.appendChild(lbl);
+  });
+  panel.appendChild(lista);
+  panel.appendChild(aviso);
+
+  const acciones = rtEl('div', { className:'rt-suc-acciones' });
+  const btnTodas = rtEl('button', { className:'btn-sm', text:'Todas', attrs:{ type:'button' } });
+  btnTodas.addEventListener('click', () => { RT_SUCURSALES_BORRADOR = new Set(RT_CENTROS_TODOS); rtSucursalesRenderPanel(); });
+  const btnCancelar = rtEl('button', { className:'btn-sm', text:'Cancelar', attrs:{ type:'button' } });
+  btnCancelar.addEventListener('click', () => { rtSucursalesAbrirCerrar(false); document.getElementById('rtBtnSucursales').focus(); });
+  btnAplicar.addEventListener('click', () => {
+    rtSucursalesAplicar([...RT_SUCURSALES_BORRADOR]);
+    rtSucursalesAbrirCerrar(false);
+  });
+  acciones.appendChild(btnTodas);
+  acciones.appendChild(btnCancelar);
+  acciones.appendChild(btnAplicar);
+  panel.appendChild(acciones);
+  panel.appendChild(rtEl('p', { className:'rt-suc-nota rt-suc-pie', text:'Afecta Dashboard, Marcas, Productos, Talles y colores, Stock Ventas y Oportunidades. No cambia Rotaciones (envíos reales) ni Insumos.' }));
+  refrescarEstado();
+}
+
+// Aplica la seleccion: la guarda, y descarta TODO lo cargado o cacheado con la anterior
+// (mismo criterio que rtCambiarPeriodo) antes de volver a pedir lo que se ve en pantalla.
+function rtSucursalesAplicar(seleccion) {
+  const nuevas = RT_CENTROS_TODOS.filter(c => seleccion.includes(c));
+  if (!nuevas.length) return;
+  RT_CENTROS.splice(0, RT_CENTROS.length, ...nuevas);
+  rtSucursalesGuardar(nuevas);
+  RT_SUCURSALES_SIN_SOPORTE = false;
+  rtSucursalesRenderBoton();
+  RT_COMPLETO = null; RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_EXPANDIDO = null;
+  if (RT_COMPLETO_ABORT) { RT_COMPLETO_ABORT.abort(); RT_COMPLETO_ABORT = null; }
+  if (RT_OPORTUNIDADES_ABORT) { RT_OPORTUNIDADES_ABORT.abort(); RT_OPORTUNIDADES_ABORT = null; }
+  RT_RESUMEN_ANTERIOR_CACHE.clear(); RT_SERIES_CACHE.clear();
+  RT_INSIGHT_OPP_ALTA_CACHE.clear(); RT_INSIGHT_OPP_ALTA_KEY = null;
+  RT_ACELERACION_CACHE.clear();
+  RT_MARCAS_PAGINA = 0; RT_MARCAS_SELECCIONADA = null;
+  RT_PRODUCTOS_PAGINA = 0; RT_PRODUCTOS_EXPANDIDO = null;
+  rtCargarResumen();
+  rtCargarResumenAnterior(); // en paralelo, nunca bloquea el dashboard principal
+  rtCargarSeries();
+}
+
+// Arma el boton + popover dentro de la barra de periodo (una vez, desde setup()).
+function rtSucursalesInit() {
+  const fin = document.querySelector('#rtBar .fbar-end');
+  if (!fin || document.getElementById('rtBtnSucursales')) return;
+  const wrap = rtEl('div', { className:'rt-suc-wrap', attrs:{ id:'rtSucursalesWrap' } });
+  const btn = rtEl('button', { attrs:{ id:'rtBtnSucursales', type:'button', 'aria-haspopup':'dialog', 'aria-expanded':'false' } });
+  const panel = rtEl('div', { className:'rt-suc-panel', attrs:{ id:'rtSucursalesPanel', role:'dialog', 'aria-label':'Sucursales a considerar' } });
+  panel.hidden = true;
+  wrap.appendChild(btn);
+  wrap.appendChild(panel);
+  fin.insertBefore(wrap, fin.firstChild);
+  btn.addEventListener('click', e => { e.stopPropagation(); rtSucursalesAbrirCerrar(panel.hidden); });
+  document.addEventListener('click', e => { if (!panel.hidden && !wrap.contains(e.target)) rtSucursalesAbrirCerrar(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { rtSucursalesAbrirCerrar(false); btn.focus(); } });
+  rtSucursalesRenderBoton();
 }
 
 let RT_DESDE = null, RT_HASTA = null;
@@ -1673,8 +1864,8 @@ function rtRotacionesHistorialFormularioFiltro(host) {
   const f = RT_ROTACIONES_HISTORIAL_FILTRO;
   const inDesde = campoFecha('rtHistDesde', 'Desde', f.desde);
   const inHasta = campoFecha('rtHistHasta', 'Hasta', f.hasta);
-  const selOrigen = campoSelect('rtHistOrigen', 'Origen', f.origen, [['', 'Todas'], ...RT_CENTROS.map(c => [c, RT_CENTRO_NOMBRE[c]])]);
-  const selDestino = campoSelect('rtHistDestino', 'Destino', f.destino, [['', 'Todas'], ...RT_CENTROS.map(c => [c, RT_CENTRO_NOMBRE[c]])]);
+  const selOrigen = campoSelect('rtHistOrigen', 'Origen', f.origen, [['', 'Todas'], ...RT_CENTROS_TODOS.map(c => [c, RT_CENTRO_NOMBRE[c]])]);
+  const selDestino = campoSelect('rtHistDestino', 'Destino', f.destino, [['', 'Todas'], ...RT_CENTROS_TODOS.map(c => [c, RT_CENTRO_NOMBRE[c]])]);
   const inUsuario = campoTexto('rtHistUsuario', 'Usuario', f.usuario);
   const inCodigo = campoTexto('rtHistCodigo', 'Código exacto', f.codigo);
   const selEstado = campoSelect('rtHistEstado', 'Estado', f.estado, [['', 'Todos'], ['completada', 'Completada'], ['cancelada', 'Cancelada']]);
@@ -1922,7 +2113,7 @@ function rtRotacionesFormularioFiltro(host) {
   const sugerenciasMarca = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.marcas) : null;
   const sugerenciasRubro = RT_CATALOGO ? sugerenciasUnicas(RT_CATALOGO.rubros) : null;
 
-  const centrosOpciones = c => [['', c], ...RT_CENTROS.map(cc => [cc, RT_CENTRO_NOMBRE[cc]])];
+  const centrosOpciones = c => [['', c], ...RT_CENTROS_TODOS.map(cc => [cc, RT_CENTRO_NOMBRE[cc]])];
   const selOrigen = campoSelect('rtRotOrigen', 'Origen', RT_ROTACIONES_FILTRO.origen, centrosOpciones('Todas'));
   const selDestino = campoSelect('rtRotDestino', 'Destino', RT_ROTACIONES_FILTRO.destino, centrosOpciones('Todas'));
   const inMarca = campoTexto('rtRotMarca', 'Marca', RT_ROTACIONES_FILTRO.marca, sugerenciasMarca);
@@ -2118,11 +2309,12 @@ async function rtCargarResumen() {
   RT_RESUMEN_LOADING = true; RT_RESUMEN_ERROR = null; RT_RESUMEN = null;
   rtRenderVistaActual();
   try {
-    const url = STOCK_API_URL + '/analisis/resumen?desde=' + encodeURIComponent(RT_DESDE) + '&hasta=' + encodeURIComponent(RT_HASTA);
+    const url = STOCK_API_URL + '/analisis/resumen?desde=' + encodeURIComponent(RT_DESDE) + '&hasta=' + encodeURIComponent(RT_HASTA) + rtSucursalesQS();
     const resp = await fetch(url, { signal: controller.signal });
     const data = await resp.json();
     if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
     RT_RESUMEN = data;
+    rtSucursalesVerificarEco(data);
     document.getElementById('rtUltimaActualizacion').textContent =
       'Actualizado ' + new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
   } catch (err) {
@@ -2165,7 +2357,7 @@ async function rtCargarResumenAnterior() {
   RT_RESUMEN_ANTERIOR_LOADING = true; RT_RESUMEN_ANTERIOR_ERROR = null; RT_RESUMEN_ANTERIOR = null;
   rtRenderVistaActual();
   try {
-    const url = STOCK_API_URL + '/analisis/resumen?desde=' + encodeURIComponent(desde) + '&hasta=' + encodeURIComponent(hasta);
+    const url = STOCK_API_URL + '/analisis/resumen?desde=' + encodeURIComponent(desde) + '&hasta=' + encodeURIComponent(hasta) + rtSucursalesQS();
     const resp = await fetch(url, { signal: controller.signal });
     const data = await resp.json();
     if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
@@ -2193,7 +2385,7 @@ async function rtCargarSeries(opts) {
   RT_SERIES_ABORT = controller;
   RT_SERIES = null; RT_SERIES_LOADING = true;
   try {
-    const params = new URLSearchParams({ metricas:'ventas', desde: RT_DESDE, hasta: RT_HASTA, agrupar:'sucursal' });
+    const params = rtSucursalesParams(new URLSearchParams({ metricas:'ventas', desde: RT_DESDE, hasta: RT_HASTA, agrupar:'sucursal' }));
     const resp = await fetch(STOCK_API_URL + '/analisis/series?' + params.toString(), { signal: controller.signal });
     const data = await resp.json();
     if (!resp.ok || !data.ok || !Array.isArray(data.series)) throw new Error(data.error || ('HTTP ' + resp.status));
@@ -2219,7 +2411,7 @@ function rtSerieVentasSucursal(centro) {
 // client-side; el backend define Ventas_total exactamente como esa suma).
 function rtSerieVentasTotal() {
   if (!RT_SERIES) return null;
-  const sucursales = RT_SERIES.series.filter(x => x.metrica === 'ventas' && x.dimension === 'sucursal');
+  const sucursales = RT_SERIES.series.filter(x => x.metrica === 'ventas' && x.dimension === 'sucursal' && RT_CENTROS.includes(x.clave));
   if (!sucursales.length) return null;
   const total = RT_SERIES.fechas.map(() => 0);
   sucursales.forEach(s => s.valores.forEach((v, i) => { total[i] += (v || 0); }));
@@ -2768,7 +2960,7 @@ function rtCargarInsightOportunidadesAlta() {
   RT_INSIGHT_OPP_ALTA_KEY = key; RT_INSIGHT_OPP_ALTA_LOADING = true; RT_INSIGHT_OPP_ALTA_ERROR = null;
   (async () => {
     try {
-      const params = new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, prioridad: 'alta', limit: '1' });
+      const params = rtSucursalesParams(new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, prioridad: 'alta', limit: '1' }));
       const resp = await fetch(STOCK_API_URL + '/analisis/oportunidades?' + params.toString(), { signal: controller.signal });
       const data = await resp.json();
       if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
@@ -4031,6 +4223,7 @@ async function rtCargarCompleto() {
     for (let pagina = 0; pagina < RT_LIMITE_PAGINAS_COMPLETO; pagina++) {
       const params = new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, limit: '500', offset: String(offset) });
       rtFiltroAParams(params, RT_FILTRO);
+      rtSucursalesParams(params);
       const resp = await fetch(STOCK_API_URL + '/analisis/stock-ventas?' + params.toString(), { signal: controller.signal });
       const data = await resp.json();
       if (seq !== RT_COMPLETO_SEQ) return; // el filtro cambio, se descarta
@@ -4594,7 +4787,7 @@ async function rtCargarOportunidades() {
   RT_OPORTUNIDADES_LOADING = true; RT_OPORTUNIDADES_ERROR = null;
   rtRenderVistaActual();
   try {
-    const params = new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, limit: String(RT_OPORTUNIDADES_LIMITE), offset: String(RT_OPORTUNIDADES_OFFSET) });
+    const params = rtSucursalesParams(new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, limit: String(RT_OPORTUNIDADES_LIMITE), offset: String(RT_OPORTUNIDADES_OFFSET) }));
     if (RT_FILTRO) rtFiltroAParams(params, RT_FILTRO, ['talle', 'color']);
     if (RT_OPORTUNIDADES_ESTADO) params.set('estado', RT_OPORTUNIDADES_ESTADO);
     if (RT_OPORTUNIDADES_PRIORIDAD) params.set('prioridad', RT_OPORTUNIDADES_PRIORIDAD);
@@ -4661,7 +4854,7 @@ async function rtCargarAceleracion(codigo) {
   try {
     const hasta = RT_HASTA;
     const desde = rtRestarDias(hasta, 13); // 14 dias: 7 previos + 7 recientes
-    const params = new URLSearchParams({ metricas: 'ventas', desde, hasta, codigo });
+    const params = rtSucursalesParams(new URLSearchParams({ metricas: 'ventas', desde, hasta, codigo }));
     const resp = await fetch(STOCK_API_URL + '/analisis/series?' + params.toString());
     const data = await resp.json();
     if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
