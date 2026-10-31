@@ -1,0 +1,83 @@
+/* Reglas de Oportunidades (Fase 5): estilos del modulo oportunidades-reglas.js. Prefijo rr- para no chocar con rt-*.
+   Usa los tokens de croma-ds.css (sin colores nuevos). */
+.rr-intro{font-size:13px;color:var(--gray-600);margin:0 0 12px;max-width:80ch}
+.rr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:14px}
+.rr-card{background:var(--white);border:1px solid var(--gray-100);border-radius:10px;padding:14px 16px}
+.rr-card h4{margin:0 0 6px;font-size:13px;font-weight:700}
+.rr-card p{margin:4px 0;font-size:13px}
+.rr-sec{margin:18px 0 8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400)}
+.rr-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.rr-row.rr-end{justify-content:flex-end}
+.rr-muted{color:var(--gray-400);font-size:12px}
+.rr-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+.rr-aviso{display:flex;gap:10px;align-items:flex-start;border-left:4px solid var(--warning);background:var(--warning-bg);color:var(--gray-800);
+  border-radius:8px;padding:10px 12px;margin:10px 0;font-size:13px;line-height:1.45}
+.rr-aviso.rr-peligro{border-left-color:var(--danger);background:var(--danger-bg)}
+.rr-aviso.rr-ok{border-left-color:var(--success);background:var(--success-bg)}
+.rr-aviso.rr-info{border-left-color:var(--gray-400);background:var(--gray-50)}
+.rr-aviso b{font-weight:700}
+.rr-aviso ul{margin:4px 0 0 18px;padding:0}
+.rr-aviso .btn-sm{margin-top:6px}
+.rr-acciones{display:flex;gap:6px;flex-wrap:wrap}
+.rr-tabla td.rr-wrap{white-space:normal;min-width:140px;max-width:340px;line-height:1.4}
+.rr-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--gray-100);color:var(--gray-600);margin:0 4px 2px 0}
+.rr-tag.rr-warn{background:var(--warning-bg);color:var(--warning)}
+.rr-tag.rr-bad{background:var(--danger-bg);color:var(--danger)}
+.rr-tag.rr-good{background:var(--success-bg);color:var(--success)}
+
+/* formularios */
+.rr-form{background:var(--white);border:1px solid var(--gray-100);border-radius:10px;padding:16px;margin:10px 0}
+.rr-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:600;color:var(--gray-600)}
+.rr-form input[type=text],.rr-form input[type=date],.rr-form input[type=number],.rr-form select,.rr-form textarea{
+  font:inherit;font-size:13px;font-weight:400;color:var(--black);border:1px solid var(--gray-200);border-radius:7px;padding:7px 9px;background:var(--white);min-width:0}
+.rr-form textarea{min-height:64px;resize:vertical}
+.rr-form input:disabled,.rr-form select:disabled{background:var(--gray-50);color:var(--gray-400)}
+.rr-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:10px}
+.rr-error{color:var(--danger);font-size:12px;font-weight:600}
+.rr-grupo{border:1px solid var(--gray-100);border-radius:8px;margin:10px 0;background:var(--white)}
+.rr-grupo>summary{cursor:pointer;padding:10px 12px;font-weight:700;font-size:13px;list-style:none;display:flex;gap:8px;align-items:center}
+.rr-grupo>summary::-webkit-details-marker{display:none}
+.rr-grupo>summary::before{content:'▸';color:var(--gray-400)}
+.rr-grupo[open]>summary::before{content:'▾'}
+.rr-grupo-desc{padding:0 12px 6px;font-size:12px;color:var(--gray-400);margin:0}
+.rr-param{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(130px,1fr) minmax(0,1.2fr);gap:10px;align-items:start;padding:9px 12px;border-top:1px solid var(--gray-50)}
+.rr-param-nombre{font-size:13px;line-height:1.35}
+.rr-param-nombre small{display:block;color:var(--gray-400);font-size:11px;margin-top:2px}
+.rr-param-ctl{display:flex;flex-direction:column;gap:4px}
+.rr-param-ctl input[type=number]{width:100%}
+.rr-sobrescribir{flex-direction:row!important;align-items:center;gap:6px!important;font-weight:500!important;font-size:12px!important}
+.rr-param.rr-cambiado{background:var(--accent-s,#fde8e6)}
+.rr-param.rr-con-error{background:var(--danger-bg)}
+.rr-herencia{font-size:12px;color:var(--gray-600)}
+.rr-herencia b{font-weight:700}
+
+/* comparaciones */
+.rr-num-pos{color:var(--success);font-weight:700}
+.rr-num-neg{color:var(--danger);font-weight:700}
+.rr-kpi-cat{cursor:pointer}
+.rr-comparar{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rr-detalle-sim{background:var(--gray-50);padding:10px 12px;border-radius:8px;font-size:12.5px;line-height:1.5}
+.rr-detalle-sim dl{display:grid;grid-template-columns:140px 1fr;gap:4px 10px;margin:6px 0}
+.rr-detalle-sim dt{color:var(--gray-400);font-weight:600}
+.rr-detalle-sim dd{margin:0}
+
+/* Oportunidades: "Por que aparece" */
+.rt-oport-tabla td.rt-col-accion,.rt-oport-tabla th.rt-col-accion{white-space:normal;min-width:170px}
+.rr-porque{grid-column:1/-1;border:1px solid var(--gray-100);border-radius:8px;background:var(--white);margin:6px 0}
+.rr-porque>summary{cursor:pointer;padding:8px 10px;font-weight:700;font-size:12.5px}
+.rr-porque-cuerpo{padding:0 10px 10px}
+.rr-cond{display:grid;grid-template-columns:minmax(0,1.6fr) auto auto;gap:4px 12px;font-size:12.5px;padding:3px 0;border-bottom:1px dashed var(--gray-100);align-items:baseline}
+.rr-cond .rr-cumple{color:var(--success);font-weight:700}
+.rr-cond .rr-nota{grid-column:1/-1;color:var(--gray-600);font-style:italic}
+.rr-accion-cel{display:flex;flex-direction:column;gap:3px;min-width:120px}
+.rr-perfil-tec{font-size:11.5px;color:var(--gray-600)}
+.rr-senal{border-left:3px solid var(--warning);padding:6px 10px;background:var(--warning-bg);font-size:12.5px;margin:6px 0;border-radius:6px}
+
+@media (max-width:700px){
+  .rr-param{grid-template-columns:1fr}
+  .rr-comparar{grid-template-columns:1fr}
+  .rr-detalle-sim dl{grid-template-columns:1fr}
+  .rr-cond{grid-template-columns:1fr}
+  .rr-form{padding:12px}
+  .rr-tabla td.rr-wrap{max-width:200px}
+}

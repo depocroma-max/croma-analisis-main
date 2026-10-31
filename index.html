@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="croma-ds.css?v=20260714-1">
+  <link rel="stylesheet" href="oportunidades-reglas.css?v=20261031-1">
   <style>
     /* --black, --white, --gray-100..800 y --accent ya vienen de croma-ds.css (valores
        idénticos, una sola fuente de verdad). Acá solo lo que croma-ds.css no define:
@@ -748,6 +749,7 @@
         <button class="tab" data-view="talles-colores">Talles y colores</button>
         <button class="tab" data-view="stock-ventas">Stock Ventas</button>
         <button class="tab" data-view="oportunidades">Oportunidades</button>
+        <button class="tab" data-view="reglas" id="rtTabReglas">Reglas</button>
         <button class="tab" data-view="rotaciones">Rotaciones</button>
       </div>
       <div id="rtPanelHost"></div>
@@ -2647,6 +2649,7 @@ function rtRenderVistaActual() {
   else if (RT_VIEW === 'talles-colores') renderRTTallesColores(host);
   else if (RT_VIEW === 'stock-ventas') renderRTStockVentas(host);
   else if (RT_VIEW === 'oportunidades') renderRTOportunidades(host);
+  else if (RT_VIEW === 'reglas') renderRTReglas(host);
   else if (RT_VIEW === 'rotaciones') renderRTRotaciones(host);
 }
 
@@ -4881,7 +4884,7 @@ const RT_TEXTO_DESBALANCE = {
 
 function rtBadgeEstado(estadoPrincipal, texto) {
   const cls = RT_ESTADO_CLS[estadoPrincipal] || 'badge-neutral';
-  return rtEl('span', { className: 'badge ' + cls, text: texto || estadoPrincipal || '—' });
+  return rtEl('span', { className: 'badge ' + cls, text: rrTextoEstado(estadoPrincipal, texto) });
 }
 
 function rtTarjetaResumen(clave, etiqueta, valor, activo, onClick) {
@@ -4921,7 +4924,7 @@ const RT_TEXTO_ESTADO = {
   reponer_desde_deposito: 'Reponer desde depósito', reposicion_a_evaluar: 'Reposición a evaluar',
   posible_rotacion: 'Posible rotación',
   reposicion_proxima: 'Reposición próxima', venta_destacada: 'Venta destacada', bien_vendido: 'Bien vendido',
-  seguimiento: 'Seguimiento', posible_descuento: 'Posible descuento', stock_parado: 'Stock parado',
+  seguimiento: 'Ingreso reciente', posible_descuento: 'Posible descuento', stock_parado: 'Stock parado', // "Seguimiento" queda reservado para la futura seccion manual
 };
 
 const RT_TEXTO_TIPO_DESCUENTO = { sin_ventas: 'Sin ventas', rotacion_lenta: 'Rotación lenta' };
@@ -5120,6 +5123,7 @@ function rtOportunidadesPanelDetalle(f) {
   };
 
   panel.appendChild(bloque('Motivo', f.motivo || '—'));
+  rrDetalleOportunidad(panel, f, RT_OPORTUNIDADES, bloque); // accion, rendimiento, calidad, reglas aplicadas, "Por que aparece"
   if (f.estados_secundarios && f.estados_secundarios.length) {
     panel.appendChild(bloque('Etiquetas secundarias', rtBadgesSecundarios(f.estados_secundarios)));
   }
@@ -5130,7 +5134,7 @@ function rtOportunidadesPanelDetalle(f) {
   panel.appendChild(bloque('Ventas por semana', nf1.format(f.ventas_semana || 0)));
 
   const filasSucursal = rtEl('div', { className:'rt-oport-detalle-suc-lista' });
-  RT_CENTROS.forEach(c => {
+  RT_CENTROS.filter(c => !RT_OPORTUNIDADES.sucursales || RT_OPORTUNIDADES.sucursales.includes(c)).forEach(c => { // solo sucursales operativas evaluadas
     const s = f.por_sucursal[c] || { ventas:0, stock:0 };
     const filaSuc = rtEl('div', { className:'rt-oport-detalle-suc-fila' });
     filaSuc.appendChild(rtSucursalBadge(c));
@@ -5282,6 +5286,7 @@ function renderRTOportunidades(host) {
     kpis.appendChild(rtTarjetaResumen(estado, RT_TEXTO_ESTADO[estado], r.por_estado_principal[estado] || 0, RT_OPORTUNIDADES_ESTADO === estado, () => rtOportunidadesCambiarEstado(estado)));
   });
   host.appendChild(kpis);
+  rrCabeceraOportunidades(host, RT_OPORTUNIDADES); // aviso de sucursales no consideradas, periodo y conjunto de reglas
   host.appendChild(rtEl('p', { className:'rt-note', text: nf.format(r.total_clasificados) + ' de ' + nf.format(r.total_evaluados) + ' productos con alguna oportunidad detectada · reglas v' + RT_OPORTUNIDADES.version_reglas }));
   if (r.por_regla_cumplida.stock_parado > 0 && r.por_estado_principal.stock_parado === 0) {
     host.appendChild(rtEl('p', { className:'rt-note', text: nf.format(r.por_regla_cumplida.stock_parado) + ' productos cumplen la regla de stock parado, aunque su estado principal termine siendo otro (casi siempre posible_descuento, que es más específico). Filtrá por "Stock parado" para verlos.' }));
@@ -5379,6 +5384,7 @@ function renderRTOportunidades(host) {
   // croma-api (config/oportunidades.js + motor/oportunidades.js) -- acá solo se
   // muestran los campos que ya vienen calculados del backend.
   const columnas = rtOportunidadesGrupoColumnas(RT_OPORTUNIDADES_ESTADO, datos);
+  columnas.push(rrColumnaAccion()); // accion sugerida + rendimiento (campos del servidor, sin recalcular)
   const headers = columnas.map(c => c.className ? { text: c.header, className: c.className } : c.header);
   headers.push('Acción');
   const tablaWrap = rtEl('div', { className:'rt-oportunidades-tabla' });
@@ -5402,6 +5408,7 @@ function renderRTOportunidades(host) {
     card.appendChild(rtEl('div', { className:'rt-opp-card-titulo', text: f.Codigo_producto + ' · ' + f.Nombre_producto }));
     card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: f.Nombre_marca }));
     card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + (f.ratio_confiable === false ? ' (muestra chica)' : '') + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(rtOportunidadesStockDeposito(f)) + ' depósito 90' + (f.Stock_fallados ? ' · ' + nf.format(f.Stock_fallados) + ' fallados' : '') + ') · Total operativo ' + nf.format(f.Stock_total) }));
+    rrLineasTarjeta(card, f, RT_OPORTUNIDADES);
     const btnDetalle = rtEl('button', { className:'btn-sm', text: expandido ? 'Ocultar' : 'Ver detalle' });
     btnDetalle.type = 'button';
     btnDetalle.setAttribute('aria-expanded', expandido ? 'true' : 'false');
@@ -5426,6 +5433,8 @@ function renderRTOportunidades(host) {
 }
 
 </script>
+<script src="oportunidades-explicacion.js?v=20261031-1"></script>
+<script src="oportunidades-reglas.js?v=20261031-1"></script>
 <script>
   window.addEventListener('load', function() {
     var splash = document.getElementById('splashScreen');
