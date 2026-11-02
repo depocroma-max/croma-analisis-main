@@ -5122,16 +5122,7 @@ function rtOportunidadesPanelDetalle(f) {
     return b;
   };
 
-  panel.appendChild(bloque('Motivo', f.motivo || '—'));
-  rrDetalleOportunidad(panel, f, RT_OPORTUNIDADES, bloque); // accion, rendimiento, calidad, reglas aplicadas, "Por que aparece"
-  if (f.estados_secundarios && f.estados_secundarios.length) {
-    panel.appendChild(bloque('Etiquetas secundarias', rtBadgesSecundarios(f.estados_secundarios)));
-  }
-  if (f.advertencias && f.advertencias.length) {
-    panel.appendChild(bloque('Advertencias', f.advertencias.join(' ')));
-  }
-  panel.appendChild(bloque('Ratio y confiabilidad', (f.ratio_venta == null ? '—' : rtOportunidadesPct(f.ratio_venta)) + (f.ratio_confiable === false ? ' · muestra chica, poco confiable' : '')));
-  panel.appendChild(bloque('Ventas por semana', nf1.format(f.ventas_semana || 0)));
+  rrDetalleOportunidad(panel, f, RT_OPORTUNIDADES, bloque); // resumen (accion, rendimiento, ventas y stock) + "Por que aparece" + detalles tecnicos
 
   const filasSucursal = rtEl('div', { className:'rt-oport-detalle-suc-lista' });
   RT_CENTROS.filter(c => !RT_OPORTUNIDADES.sucursales || RT_OPORTUNIDADES.sucursales.includes(c)).forEach(c => { // solo sucursales operativas evaluadas
@@ -5142,7 +5133,6 @@ function rtOportunidadesPanelDetalle(f) {
     filasSucursal.appendChild(filaSuc);
   });
   panel.appendChild(bloque('Stock por sucursal', filasSucursal));
-  panel.appendChild(bloque('Depósito 90 / Fallados 93', nf.format(rtOportunidadesStockDeposito(f)) + ' / ' + nf.format(f.Stock_fallados || 0)));
 
   // Fase 5: desbalance de participacion por sucursal -- puramente matematico
   // sobre por_sucursal (ya cargado arriba), sin fetch adicional. Solo se
@@ -5408,7 +5398,7 @@ function renderRTOportunidades(host) {
     card.appendChild(rtEl('div', { className:'rt-opp-card-titulo', text: f.Codigo_producto + ' · ' + f.Nombre_producto }));
     card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: f.Nombre_marca }));
     card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + (f.ratio_confiable === false ? ' (muestra chica)' : '') + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(rtOportunidadesStockDeposito(f)) + ' depósito 90' + (f.Stock_fallados ? ' · ' + nf.format(f.Stock_fallados) + ' fallados' : '') + ') · Total operativo ' + nf.format(f.Stock_total) }));
-    rrLineasTarjeta(card, f, RT_OPORTUNIDADES);
+    rrLineasTarjeta(card, f);
     const btnDetalle = rtEl('button', { className:'btn-sm', text: expandido ? 'Ocultar' : 'Ver detalle' });
     btnDetalle.type = 'button';
     btnDetalle.setAttribute('aria-expanded', expandido ? 'true' : 'false');

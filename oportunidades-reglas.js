@@ -147,11 +147,32 @@ async function rrCargarBase() {
   if (!es.ok) { RR.falla = es.falla; RR.base = null; return rrRender(); }
   const perfiles = pl.data.perfiles;
   RR.base = {
-    perfiles, esquema: es.data.esquema, general: perfiles.find(p => p.alcance.tipo === 'general') || null,
+    perfiles, esquema: rrLocalizarEsquema(es.data.esquema), general: perfiles.find(p => p.alcance.tipo === 'general') || null,
     vigente: vig.ok ? vig.data.vigente : null, vigenteFalla: vig.ok ? null : vig.falla,
     catalogo: cat && cat.ok ? cat : null,
   };
   rrRender();
+}
+// Etiquetas visibles de los parametros que miden el ratio de venta = ventas / (ventas + stock). Es solo presentacion: la ruta
+// (identificador), el calculo y los valores no cambian. Se aplica sobre el esquema recibido sin modificar la API.
+const RR_TEXTOS_RATIO = {
+  'venta_destacada.ratio_min': ['Ratio de venta mínimo de "Venta destacada"', 'Ventas ÷ (ventas + stock): 0,7 = 70 %. No es el porcentaje vendido de un ingreso.'],
+  'bien_vendido.ratio_min': ['Ratio de venta mínimo de "Bien vendido"', 'Ventas ÷ (ventas + stock): 0,5 = 50 %. No es el porcentaje vendido de un ingreso.'],
+  'stock_parado.ratio_max': ['Ratio de venta máximo de "Stock parado"', 'Ventas ÷ (ventas + stock) por debajo del cual rota poco. No es el porcentaje vendido de un ingreso.'],
+  'posible_descuento.ratio_max': ['Ratio de venta máximo de "Posible descuento"', 'Ventas ÷ (ventas + stock) por debajo del cual se evalúa un descuento. No es el porcentaje vendido de un ingreso.'],
+  'confiabilidad.ventas_min': [null, 'Con menos ventas que esto, el ratio de venta (ventas ÷ (ventas + stock)) se marca como poco confiable.'],
+};
+function rrLocalizarEsquema(es) {
+  const etiquetas = {};
+  const grupos = es.grupos.map(g => ({ ...g, parametros: g.parametros.map(p => {
+    const t = RR_TEXTOS_RATIO[p.ruta];
+    const np = t ? { ...p, etiqueta: t[0] || p.etiqueta, ayuda: t[1] } : p;
+    etiquetas[p.ruta] = np.etiqueta;
+    return np;
+  }) }));
+  // El texto de las relaciones lo arma el servidor con las etiquetas originales: se rearma con las visibles (misma ruta/operador).
+  const relaciones = (es.relaciones || []).map(r => ({ ...r, texto: (etiquetas[r.izq] || r.izq) + ' ' + r.op + ' ' + (etiquetas[r.der] || r.der) }));
+  return { ...es, grupos, relaciones };
 }
 const rrParamsEsquema = () => RR.base.esquema.grupos.flatMap(g => g.parametros);
 function rrEnVigente(perfilId) {
@@ -228,7 +249,7 @@ function rrVistaPerfiles(host) {
   if (!b.perfiles.length) return rrEstado(host, 'vacio', 'No hay perfiles guardados.');
   const generalUltimo = b.general ? b.general.version_actual : null;
   const filas = [...b.perfiles].sort((x, y) => (x.alcance.tipo === 'general' ? -1 : y.alcance.tipo === 'general' ? 1 : x.nombre.localeCompare(y.nombre, 'es')));
-  host.appendChild(rtTabla(['Perfil', 'Alcance', 'Última versión', 'En el conjunto vigente', 'Estado y avisos', ''], filas, p => {
+  const tablaEscritorio = rtTabla(['Perfil', 'Alcance', 'Última versión', 'En el conjunto vigente', 'Estado y avisos', ''], filas, p => {
     const tr = rtEl('tr');
     tr.appendChild(rtEl('td', { className: 'rr-wrap', text: p.nombre }));
     tr.appendChild(rtEl('td', { className: 'rr-wrap', text: rrAlcanceTexto(p.alcance) }));
@@ -251,7 +272,39 @@ function rrVistaPerfiles(host) {
     tdA.appendChild(ac);
     tr.appendChild(tdA);
     return tr;
-  }, { tableClassName: 'rr-tabla' }));
+  }, { tableClassName: 'rr-tabla' });
+  const envTabla = rtEl('div', { className: 'rr-perfiles-tabla' });
+  envTabla.appendChild(tablaEscritorio);
+  host.appendChild(envTabla);
+  // Mobile: la misma informacion como tarjetas (el CSS alterna tabla/tarjetas por ancho).
+  const tarjetas = rtEl('div', { className: 'rr-perfiles-tarjetas' });
+  filas.forEach(p => tarjetas.appendChild(rrTarjetaPerfil(p, generalUltimo)));
+  host.appendChild(tarjetas);
+}
+
+function rrTarjetaPerfil(p, generalUltimo) {
+  const b = RR.base;
+  const card = rtEl('div', { className: 'rr-perfil-card' });
+  card.appendChild(rtEl('h4', { text: p.nombre }));
+  const dl = rtEl('dl');
+  const fila = (t, v) => { dl.appendChild(rtEl('dt', { text: t })); const dd = rtEl('dd'); if (typeof v === 'object') dd.appendChild(v); else dd.textContent = v; dl.appendChild(dd); };
+  fila('Alcance', rrAlcanceTexto(p.alcance));
+  fila('Versión guardada', 'v' + p.version_actual);
+  const vg = rrEnVigente(p.perfil_id);
+  if (b.vigente) fila('Versión vigente', vg ? rrTag('v' + vg, vg === p.version_actual ? 'good' : 'warn') : rtEl('span', { className: 'rr-muted', text: 'No incluido en el conjunto vigente' }));
+  else fila('Versión vigente', rtEl('span', { className: 'rr-muted', text: 'Sin conjunto vigente' }));
+  const estado = rtEl('div');
+  estado.appendChild(rrTag(RR_TXT_ESTADO_PERFIL[p.estado] || p.estado, p.estado === 'archivado' ? 'bad' : ''));
+  if (vg && vg !== p.version_actual) estado.appendChild(rrTag('Hay v' + p.version_actual + ' más nueva que la del conjunto vigente (v' + vg + ')', 'warn'));
+  if (p.alcance.tipo !== 'general' && p.estado !== 'archivado' && generalUltimo && p.general_version_referenciada < generalUltimo) estado.appendChild(rrTag('Vinculado al General v' + p.general_version_referenciada + ' (hay v' + generalUltimo + ')', 'warn'));
+  if (p.estado === 'archivado' && p.archivado) estado.appendChild(rtEl('div', { className: 'rr-muted', text: 'Archivado ' + rrFecha(p.archivado.en) + ' por ' + p.archivado.nombre + ': ' + p.archivado.motivo }));
+  fila('Estado', estado);
+  card.appendChild(dl);
+  const ac = rtEl('div', { className: 'rr-acciones' });
+  ac.appendChild(rrBtn('Ver versiones', () => rrAbrirDetalle(p.perfil_id)));
+  if (p.estado !== 'archivado') ac.appendChild(rrBtn('Nueva versión', () => rrAbrirForm(p.alcance.tipo === 'general' ? 'general' : 'version', p)));
+  card.appendChild(ac);
+  return card;
 }
 
 // ── Detalle de un perfil: versiones y parametros efectivos ──────────────────────────────────────

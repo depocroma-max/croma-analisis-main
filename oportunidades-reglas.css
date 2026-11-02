@@ -46,7 +46,7 @@
 .rr-param-ctl{display:flex;flex-direction:column;gap:4px}
 .rr-param-ctl input[type=number]{width:100%}
 .rr-sobrescribir{flex-direction:row!important;align-items:center;gap:6px!important;font-weight:500!important;font-size:12px!important}
-.rr-param.rr-cambiado{background:var(--accent-s,#fde8e6)}
+.rr-param.rr-cambiado{background:color-mix(in srgb,var(--info-bg) 40%,transparent);box-shadow:inset 3px 0 0 var(--info)}
 .rr-param.rr-con-error{background:var(--danger-bg)}
 .rr-herencia{font-size:12px;color:var(--gray-600)}
 .rr-herencia b{font-weight:700}
@@ -71,9 +71,22 @@
 .rr-cond .rr-nota{grid-column:1/-1;color:var(--gray-600);font-style:italic}
 .rr-accion-cel{display:flex;flex-direction:column;gap:3px;min-width:120px}
 .rr-perfil-tec{font-size:11.5px;color:var(--gray-600)}
+.rr-tecnico>summary{font-weight:600;color:var(--gray-600)}
+.rr-tecnico .rr-perfil-tec{margin:4px 0;word-break:break-word}
+
+/* Perfiles: tabla en escritorio, tarjetas en mobile (se alternan por ancho) */
+.rr-perfiles-tarjetas{display:none}
+.rr-perfil-card{background:var(--white);border:1px solid var(--gray-100);border-radius:10px;padding:12px 14px;margin:8px 0}
+.rr-perfil-card h4{margin:0 0 6px;font-size:14px;font-weight:700;word-break:break-word}
+.rr-perfil-card dl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 10px;margin:6px 0;font-size:13px}
+.rr-perfil-card dt{color:var(--gray-400);font-weight:600}
+.rr-perfil-card dd{margin:0;word-break:break-word}
+.rr-perfil-card .rr-acciones .btn-sm{min-height:40px}
 .rr-senal{border-left:3px solid var(--warning);padding:6px 10px;background:var(--warning-bg);font-size:12.5px;margin:6px 0;border-radius:6px}
 
 @media (max-width:700px){
+  .rr-perfiles-tarjetas{display:block}
+  .rr-perfiles-tabla{display:none}
   .rr-param{grid-template-columns:1fr}
   .rr-comparar{grid-template-columns:1fr}
   .rr-detalle-sim dl{grid-template-columns:1fr}

@@ -341,7 +341,7 @@ test('Oportunidades: "seguimiento" se muestra como "Ingreso reciente" y nunca co
 
 test('Oportunidades: rendimiento sin clasificar no se rotula "normal" ni "bajo"; solo destacado/bueno', () => {
   const env = crearEntorno();
-  assert.equal(env.ev(`rrTextoRendimiento(${JSON.stringify(producto())})`), 'Sin clasificar');
+  assert.equal(env.ev(`rrTextoRendimiento(${JSON.stringify(producto())})`), 'Sin clasificación de rendimiento');
   assert.equal(env.ev("rrTextoRendimiento({ rendimiento: { nivel: 'bueno' } })"), 'Bueno');
   assert.equal(env.ev("rrTextoRendimiento({ rendimiento: { nivel: 'destacado' } })"), 'Destacado');
   const celda = env.ev(`(() => { const d = rrColumnaAccion().render(${JSON.stringify(producto())}); return d.textContent; })()`);
@@ -386,4 +386,108 @@ test('Oportunidades: aviso visible de sucursales no consideradas (ignoradas por 
   assert.match(aviso(RESP), /Sucursales no consideradas: 09 Cipo San Martín/, 'seleccionada en la app pero no evaluada por el servidor');
   assert.match(aviso(RESP), /Reglas: conjunto activo #4/);
   assert.match(aviso({ ...RESP, conjunto: { origen: 'compat-operativo' } }), /Reglas: estándar/);
+});
+
+// ── Ajustes de presentacion (revision visual de la Fase 5) ───────────────────────────────────────
+const panelDe = (env, f, resp = RESP) => env.ev(`(() => { const panel = rtEl('div'); const bloque = (e, v) => { const b = rtEl('div'); b.appendChild(rtEl('b', { text: e })); const x = rtEl('div'); if (typeof v === 'string') x.textContent = v; else x.appendChild(v); b.appendChild(x); return b; }; rrDetalleOportunidad(panel, ${JSON.stringify(f)}, ${JSON.stringify(resp)}, bloque); return panel; })()`);
+// Texto de lo que queda VISIBLE (fuera de los <details> cerrados).
+const textoVisible = n => n.tagName === 'DETAILS' && !n.open ? '' : (n._texto || '') + n.children.map(textoVisible).join('|');
+
+test('resumen visible: acción, rendimiento, ventas y stock; huellas y explicación larga quedan en desplegables cerrados', () => {
+  const env = crearEntorno();
+  const panel = panelDe(env, producto({ Ventas_total: 12, Stock_sucursales: 7, Stock_deposito: 5, Stock_fallados: 1, ventas_semana: 1.3, ratio_venta: 0.6 }));
+  const visible = textoVisible(panel);
+  assert.match(visible, /Acción sugerida/);
+  assert.match(visible, /Sin clasificación de rendimiento/);
+  assert.match(visible, /Ventas del período: 12/);
+  assert.match(visible, /Stock en sucursales: 7/);
+  assert.match(visible, /Depósito 90: 5/);
+  assert.match(visible, /Ratio de venta: 60\.0%/);
+  assert.doesNotMatch(visible, /huella|Perfil #|conjunto #|El motor solo distingue/, 'metadatos y explicación extensa no son visibles sin abrir el detalle');
+  const detalles = panel.buscar(n => n.tagName === 'DETAILS');
+  assert.deepEqual(detalles.map(d => d.querySelector('summary').textContent), ['Por qué aparece', 'Detalles técnicos']);
+  assert.ok(detalles.every(d => !d.open), 'ambos desplegables cerrados por defecto');
+  assert.match(detalles[1].textContent, /Perfil #2 v3 \(sobre General v1\) · conjunto #4/);
+  assert.match(detalles[0].textContent, /El motor solo distingue rendimiento destacado o bueno/, 'la explicación extensa sigue disponible');
+  assert.equal(panel.buscar(n => n.tagName === 'B' && n.textContent === 'Motivo').length, 0, 'sin bloque Motivo repetido');
+});
+
+test('la celda y la tarjeta muestran "Sin clasificación de rendimiento" sin repetir el prefijo ni las reglas aplicadas', () => {
+  const env = crearEntorno();
+  const celda = env.ev(`rrColumnaAccion().render(${JSON.stringify(producto())}).textContent`);
+  assert.match(celda, /Sin clasificación de rendimiento/);
+  assert.doesNotMatch(celda, /Rendimiento: Sin/);
+  const tarjeta = env.ev(`(() => { const c = rtEl('div'); rrLineasTarjeta(c, ${JSON.stringify(producto())}); return c; })()`).textContent;
+  assert.match(tarjeta, /Sin clasificación de rendimiento/);
+  assert.doesNotMatch(tarjeta, /Reglas:|huella/);
+  assert.match(env.ev(`rrColumnaAccion().render({ ...${JSON.stringify(producto())}, rendimiento: { nivel: 'destacado' } }).textContent`), /Rendimiento: Destacado/);
+});
+
+test('sucursales en la explicación: nombre del catálogo junto al código (datos estructurados) y solo el código si falta el nombre', () => {
+  const env = crearEntorno();
+  const conPar = (d, o) => ({ diagnostico_rotacion: { par_sugerido: { destino: { sucursal: d, ventas: 5, stock: 0 }, origen: { sucursal: o, stock: 9, ventas: 0 } } } });
+  const linea = f => panelDe(env, f).buscar(n => n.className.includes('rr-sucursales')).map(n => n.textContent);
+  assert.match(linea(producto(conPar('0010', '0001')))[0], /destino 10 Perito Moreno \(0010\) · origen 01 Paseo \(0001\)/);
+  assert.match(linea(producto(conPar('0010', '9999')))[0], /origen 9999\./, 'sin nombre en el catálogo queda el código');
+  assert.equal(linea(producto()).length, 0, 'sin par de rotación no hay línea de sucursales');
+  assert.match(panelDe(env, producto()).textContent, /Ventas en la sucursal destino 0010/, 'el texto del motor no se reescribe');
+});
+
+test('"Rotación mínima" se muestra como "Ratio de venta mínimo" y aclara que no es el porcentaje vendido de un ingreso; los identificadores no cambian', async () => {
+  const env = await entornoBase();
+  const p = JSON.parse(env.ev('JSON.stringify(rrParamsEsquema().find(p => p.ruta === "bien_vendido.ratio_min"))'));
+  assert.equal(p.etiqueta, 'Ratio de venta mínimo de "Bien vendido"');
+  assert.match(p.ayuda, /Ventas ÷ \(ventas \+ stock\)/);
+  assert.match(p.ayuda, /No es el porcentaje vendido de un ingreso/);
+  assert.equal(p.ruta, 'bien_vendido.ratio_min');
+  assert.equal(p.tipo, 'fraccion');
+  assert.deepEqual(plano(env.ev('RR.base.esquema.grupos.flatMap(g => g.parametros.map(x => x.ruta))')), ['bien_vendido.ventas_min', 'bien_vendido.ratio_min', 'reposicion.cobertura_reponer_max', 'reposicion.cobertura_proxima_max']);
+  await env.ev("rrAbrirForm('crear')");
+  assert.doesNotMatch(env.host().textContent, /Rotación mínima/);
+  assert.match(env.host().textContent, /Ratio de venta mínimo de "Bien vendido"/);
+});
+
+test('las relaciones entre parámetros se rearman con las etiquetas visibles (misma ruta y operador)', async () => {
+  const env = await entornoBase();
+  const rel = plano(env.ev('RR.base.esquema.relaciones'));
+  assert.equal(rel[0].izq, 'reposicion.cobertura_reponer_max');
+  assert.equal(rel[0].op, '<');
+  assert.equal(rel[0].texto, 'Cobertura hasta la cual hay que reponer < Cobertura hasta la cual la reposición es próxima');
+});
+
+test('condiciones del motor: el ratio se rotula "Ratio de venta" por coincidencia exacta y se aclara que no es % vendido de un ingreso', () => {
+  const env = crearEntorno();
+  const exp = { periodo_dias: 91, condiciones_por_estado: { bien_vendido: [{ condicion: 'Rotación sobre venta + stock', valor: 0.55, operador: '>=', umbral: 0.5, unidad: 'proporción', cumple: true }] }, datos_faltantes: [] };
+  const txt = panelDe(env, producto({ estado_principal: 'bien_vendido', etiquetas_secundarias: [], explicacion: exp })).textContent;
+  assert.match(txt, /Ratio de venta \(ventas ÷ \(ventas \+ stock\)\)/);
+  assert.match(txt, /No es el porcentaje vendido de un ingreso/);
+  assert.equal(env.ev("RR_CONDICION_TEXTO['Condición desconocida'] || 'Condición desconocida'"), 'Condición desconocida');
+});
+
+test('perfiles: tabla de escritorio y tarjetas mobile con alcance, versión guardada, versión vigente y botones', async () => {
+  const env = await entornoBase();
+  const host = env.host();
+  assert.equal(host.buscar(n => n.className === 'rr-perfiles-tabla').length, 1, 'la tabla de escritorio se conserva');
+  const tarjetas = host.buscar(n => n.className === 'rr-perfil-card');
+  assert.equal(tarjetas.length, 2);
+  const zapas = tarjetas.find(t => t.textContent.includes('Zapas'));
+  assert.match(zapas.textContent, /Alcance/);
+  assert.match(zapas.textContent, /Versión guardada/);
+  assert.match(zapas.textContent, /v3/);
+  assert.match(zapas.textContent, /Versión vigente/);
+  assert.deepEqual(zapas.buscar(n => n.tagName === 'BUTTON').map(b => b.textContent), ['Ver versiones', 'Nueva versión']);
+  assert.equal(env.reg.innerHTML.length, 0, 'sin innerHTML con datos de la API');
+  zapas.botones('Ver versiones')[0].click();
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(env.ev('RR.detalle && RR.detalle.id'), 2, 'los botones de la tarjeta funcionan igual que los de la tabla');
+});
+
+test('estilos: las sobrescrituras usan azul suave (no rojo) y el rojo queda para errores; las tarjetas solo aparecen en mobile', () => {
+  const css = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'oportunidades-reglas.css'), 'utf8');
+  const cambiado = css.match(/\.rr-param\.rr-cambiado\{([^}]*)\}/)[1];
+  assert.match(cambiado, /--info/);
+  assert.doesNotMatch(cambiado, /accent|danger|fde8e6/);
+  assert.match(css, /\.rr-param\.rr-con-error\{background:var\(--danger-bg\)\}/);
+  assert.match(css, /\.rr-perfiles-tarjetas\{display:none\}/);
+  assert.match(css, /@media \(max-width:700px\)\{[^@]*\.rr-perfiles-tarjetas\{display:block\}[^@]*\.rr-perfiles-tabla\{display:none\}/);
 });
