@@ -403,7 +403,7 @@ function rrTablaParametrosEfectivos(host, v) {
 // ── Formulario: crear perfil / nueva version ────────────────────────────────────────────────────
 async function rrAbrirForm(modo, perfil) {
   const b = RR.base;
-  const f = RR.form = { modo, perfil: perfil || null, cargando: true, falla: null, nombre: '', rubro: '', alcanceTipo: 'rubro', subrubro: '', marca: '', motivo: '',
+  const f = RR.form = { modo, perfil: perfil || null, cargando: true, falla: null, nombre: '', rubro: '', alcanceTipo: 'rubro', rubrosExtra: [], subrubro: '', marca: '', motivo: '',
     generalVersion: b.general ? b.general.version_actual : 1, generalBase: null, versionBase: null, sobrescribe: {}, valores: {}, valoresBase: {}, errores: { campos: {}, resumen: [] }, conflicto: null, guardando: false };
   rrRender();
   try {
@@ -466,7 +466,7 @@ function rrRenderForm(host) {
     const cat = RR.base.catalogo;
     if (!cat) campos.appendChild(rrAviso('', 'No se pudo consultar el catálogo de rubros y marcas: no se puede definir el alcance ahora. Reintentá más tarde.'));
     const rubros = cat ? cat.rubros : [];
-    campos.appendChild(rrCampo('Rubro', rrSelect([['', 'Elegí un rubro'], ...rubros.map(r => [r, r])], f.rubro, v => { f.rubro = v; f.subrubro = ''; rrRender(); }), rrErrorForm(f, 'alcance.rubro')));
+    campos.appendChild(rrCampo('Rubro', rrSelect([['', 'Elegí un rubro'], ...rubros.map(r => [r, r])], f.rubro, v => { f.rubro = v; f.subrubro = ''; f.rubrosExtra = f.rubrosExtra.filter(x => x !== v); rrRender(); }), rrErrorForm(f, 'alcance.rubro')));
     campos.appendChild(rrCampo('Aplicar a', rrSelect([['rubro', 'Todo el rubro'], ['rubro_subrubro', 'Un subrubro del rubro'], ['rubro_marca', 'Una marca dentro del rubro']], f.alcanceTipo, v => { f.alcanceTipo = v; rrRender(); })));
     if (f.alcanceTipo === 'rubro_subrubro') {
       const subs = (cat && cat.subrubros_por_rubro && cat.subrubros_por_rubro[f.rubro]) || [];
@@ -479,6 +479,23 @@ function rrRenderForm(host) {
     campos.appendChild(rrAviso('info', rrNegrita('Alcance (no se edita): '), rrAlcanceTexto(f.perfil.alcance)));
   }
   form.appendChild(campos);
+  if (f.modo === 'crear' && f.alcanceTipo === 'rubro' && RR.base.catalogo) {
+    const otros = RR.base.catalogo.rubros.filter(r => r !== f.rubro);
+    const det = rtEl('details', { className: 'rr-grupo rr-rubros-extra' });
+    if (f.rubrosExtra.length) det.setAttribute('open', '');
+    det.appendChild(rtEl('summary', { text: 'Aplicar el mismo perfil también a otros rubros' + (f.rubrosExtra.length ? ' (' + f.rubrosExtra.length + ' elegido' + (f.rubrosExtra.length === 1 ? '' : 's') + ')' : '') }));
+    det.appendChild(rtEl('p', { className: 'rr-grupo-desc', text: 'Se crea un perfil por rubro, con los mismos parámetros y el rubro agregado al nombre. Después cada perfil se versiona por separado.' }));
+    const lista = rtEl('div', { className: 'rr-rubros-lista' });
+    otros.forEach(r => {
+      const l = rtEl('label', { className: 'rr-sobrescribir' });
+      const cb = rtEl('input', { attrs: { type: 'checkbox' } }); cb.checked = f.rubrosExtra.includes(r);
+      cb.addEventListener('change', () => { f.rubrosExtra = cb.checked ? [...f.rubrosExtra, r] : f.rubrosExtra.filter(x => x !== r); rrRender(); });
+      l.appendChild(cb); l.appendChild(document.createTextNode(r));
+      lista.appendChild(l);
+    });
+    det.appendChild(lista);
+    form.appendChild(det);
+  }
   if (f.alcanceTipo === 'rubro_marca' && f.modo === 'crear') form.appendChild(rrAviso('info', 'El catálogo actual valida la marca y el rubro por separado, pero no que esa marca exista en ese rubro. Si no hay productos en esa combinación, el perfil simplemente no se aplicará a ninguno.'));
   if (f.modo === 'crear' && f.alcanceTipo !== 'rubro') form.appendChild(rtEl('p', { className: 'rr-muted', text: 'Si un producto coincide con varios perfiles, rige el de mayor precedencia: rubro + subrubro, luego rubro + marca, luego rubro, luego el General. Nunca se combinan.' }));
 
@@ -586,6 +603,36 @@ function rrPreviewCambioGeneral(form, f) {
   form.appendChild(a);
 }
 
+// Un perfil por rubro con los mismos parametros (el modelo sigue siendo un rubro por perfil). Se crean en orden; si uno falla se
+// frena, se conservan los ya creados y el formulario queda con los que faltan para reintentar sin duplicar.
+async function rrGuardarVariosRubros(f, parametros) {
+  const rubros = [f.rubro, ...f.rubrosExtra.filter(r => r !== f.rubro)];
+  const nombreDe = r => f.nombre.trim() + ' · ' + r;
+  const largo = rubros.find(r => nombreDe(r).length > 80);
+  if (largo) { f.errores.campos.nombre = 'Con el rubro agregado el nombre supera los 80 caracteres ("' + nombreDe(largo).slice(0, 30) + '…"). Acortalo.'; f.errores.resumen = ['Completá los campos marcados.']; return rrRender(); }
+  f.guardando = true; rrRender();
+  const creados = [];
+  for (const rubro of rubros) {
+    const r = await rrApi('POST', '/perfiles', { nombre: nombreDe(rubro), alcance: { tipo: 'rubro', rubro }, parametros: rrAnidar(parametros), motivo: f.motivo.trim() });
+    if (r.ok) { creados.push(rubro); continue; }
+    f.guardando = false;
+    const falla = r.falla;
+    if (falla.tipo === 'sesion' || falla.tipo === 'permiso') { RR.form = null; RR.falla = falla; return rrRender(); }
+    const motivo = falla.tipo === 'validacion' && falla.errores && falla.errores[0] ? falla.errores[0].mensaje : falla.mensaje;
+    if (creados.length) { // los ya creados salen de la seleccion: reintentar no los duplica
+      const faltan = rubros.filter(x => !creados.includes(x));
+      f.rubro = faltan[0]; f.rubrosExtra = faltan.slice(1);
+      f.errores.resumen.push('Se crearon ' + creados.length + ' perfil(es): ' + creados.join(', ') + '.');
+      await rrCargarBase();
+    }
+    f.errores.resumen.push('No se pudo crear el perfil de "' + rubro + '": ' + motivo + (creados.length ? ' El formulario quedó con los rubros que faltan.' : ''));
+    return rrRender();
+  }
+  RR.form = null;
+  RR.mensaje = { tipo: 'ok', texto: creados.length + ' perfiles guardados como borrador (' + creados.join(', ') + '). Todavía no están activos: para usarlos hay que simularlos y activarlos.' };
+  await rrCargarBase();
+}
+
 async function rrGuardarForm() {
   const f = RR.form;
   f.errores = { campos: {}, resumen: [] }; f.conflicto = null;
@@ -609,6 +656,7 @@ async function rrGuardarForm() {
   if (!f.motivo.trim()) f.errores.campos.motivo = 'Contá brevemente qué cambia y por qué';
   if (Object.keys(f.errores.campos).length) { f.errores.resumen = ['Completá los campos marcados.']; return rrRender(); }
 
+  if (f.modo === 'crear' && f.alcanceTipo === 'rubro' && f.rubrosExtra.length) return rrGuardarVariosRubros(f, parametros);
   let ruta, cuerpo;
   if (f.modo === 'crear') {
     const alcance = { tipo: f.alcanceTipo, rubro: f.rubro };

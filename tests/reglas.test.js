@@ -491,3 +491,63 @@ test('estilos: las sobrescrituras usan azul suave (no rojo) y el rojo queda para
   assert.match(css, /\.rr-perfiles-tarjetas\{display:none\}/);
   assert.match(css, /@media \(max-width:700px\)\{[^@]*\.rr-perfiles-tarjetas\{display:block\}[^@]*\.rr-perfiles-tabla\{display:none\}/);
 });
+
+// ── Varios rubros a la vez (un perfil por rubro, mismos parámetros) ─────────────────────────────
+const prepararVarios = async (extra, extras = ['REMERAS']) => {
+  const env = await entornoBase(extra);
+  await env.ev("rrAbrirForm('crear')");
+  env.ev(`Object.assign(RR.form, { nombre: ' Verano ', rubro: 'ZAPAS', alcanceTipo: 'rubro', rubrosExtra: ${JSON.stringify(extras)}, motivo: 'mismo criterio' }); RR.form.sobrescribe['bien_vendido.ventas_min'] = true; RR.form.valores['bien_vendido.ventas_min'] = '2';`);
+  return env;
+};
+
+test('varios rubros: se crea un perfil por rubro con los mismos parámetros, nombre con el rubro y sin activar nada', async () => {
+  const env = await prepararVarios({ 'POST /perfiles': { status: 201, body: { ok: true, perfil: perfilZapas, versiones: [ver(1)] } } });
+  await env.ev('rrGuardarForm()');
+  const envios = posts(env);
+  assert.equal(envios.length, 2);
+  assert.deepEqual(envios.map(e => e.ruta), ['/perfiles', '/perfiles']);
+  assert.deepEqual(envios.map(e => e.cuerpo.nombre), ['Verano · ZAPAS', 'Verano · REMERAS']);
+  assert.deepEqual(envios.map(e => e.cuerpo.alcance), [{ tipo: 'rubro', rubro: 'ZAPAS' }, { tipo: 'rubro', rubro: 'REMERAS' }]);
+  assert.deepEqual(plano(envios[0].cuerpo.parametros), plano(envios[1].cuerpo.parametros));
+  assert.ok(!env.reg.llamadas.some(c => /activaciones|simulaciones/.test(c.ruta) && c.metodo !== 'GET'), 'no activa ni simula');
+  assert.match(env.ev('RR.mensaje.texto'), /2 perfiles guardados como borrador \(ZAPAS, REMERAS\)/);
+  assert.equal(env.ev('RR.form'), null);
+});
+
+test('varios rubros: si uno falla se conservan los creados, el formulario queda con los que faltan y reintentar no duplica', async () => {
+  let n = 0;
+  const env = await prepararVarios({ 'POST /perfiles': () => (++n === 2 ? { status: 400, body: { ok: false, error: 'validacion', errores: [{ ruta: 'nombre', mensaje: 'Ya existe un perfil con ese nombre' }] } } : { status: 201, body: { ok: true, perfil: perfilZapas, versiones: [ver(1)] } }) }, ['REMERAS', 'BUZOS']);
+  await env.ev('rrGuardarForm()');
+  assert.equal(posts(env).length, 2, 'frena en el primero que falla');
+  assert.deepEqual(plano(env.ev('[RR.form.rubro, ...RR.form.rubrosExtra]')), ['REMERAS', 'BUZOS']);
+  const texto = env.host().textContent;
+  assert.match(texto, /Se crearon 1 perfil\(es\): ZAPAS/);
+  assert.match(texto, /No se pudo crear el perfil de "REMERAS"/);
+  await env.ev('rrGuardarForm()');
+  const nombres = posts(env).map(e => e.cuerpo.nombre);
+  assert.deepEqual(nombres, ['Verano · ZAPAS', 'Verano · REMERAS', 'Verano · REMERAS', 'Verano · BUZOS'], 'ZAPAS no se vuelve a crear');
+});
+
+test('varios rubros: un nombre que con el rubro supera 80 caracteres se señala sin llamar al servidor; un solo rubro conserva el nombre tal cual', async () => {
+  const env = await prepararVarios({ 'POST /perfiles': { status: 201, body: { ok: true, perfil: perfilZapas, versiones: [ver(1)] } } });
+  env.ev("RR.form.nombre = 'x'.repeat(78)");
+  await env.ev('rrGuardarForm()');
+  assert.equal(posts(env).length, 0);
+  assert.match(env.ev('RR.form.errores.campos.nombre'), /supera los 80/);
+  env.ev("RR.form.nombre = ' Solo zapas '; RR.form.rubrosExtra = []; RR.form.errores = { campos: {}, resumen: [] }");
+  await env.ev('rrGuardarForm()');
+  assert.equal(posts(env).length, 1);
+  assert.equal(posts(env)[0].cuerpo.nombre, 'Solo zapas');
+});
+
+test('varios rubros: el selector solo aparece con "Todo el rubro" y no ofrece el rubro principal', async () => {
+  const env = await entornoBase();
+  await env.ev("rrAbrirForm('crear')");
+  env.ev("RR.form.rubro = 'ZAPAS'; rrRender();");
+  const det = env.host().buscar(n => n.className.includes('rr-rubros-extra'))[0];
+  assert.ok(det, 'visible con alcance por rubro');
+  const opciones = det.buscar(n => n.tagName === 'LABEL').map(l => l.textContent);
+  assert.deepEqual(opciones, ['REMERAS']);
+  env.ev("RR.form.alcanceTipo = 'rubro_marca'; rrRender();");
+  assert.equal(env.host().buscar(n => n.className.includes('rr-rubros-extra')).length, 0, 'con subrubro/marca sigue siendo un solo rubro');
+});

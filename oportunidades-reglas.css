@@ -48,6 +48,7 @@
 .rr-sobrescribir{flex-direction:row!important;align-items:center;gap:6px!important;font-weight:500!important;font-size:12px!important}
 .rr-param.rr-cambiado{background:color-mix(in srgb,var(--info-bg) 40%,transparent);box-shadow:inset 3px 0 0 var(--info)}
 .rr-param.rr-con-error{background:var(--danger-bg)}
+.rr-rubros-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px;padding:4px 12px 12px}
 .rr-herencia{font-size:12px;color:var(--gray-600)}
 .rr-herencia b{font-weight:700}
 
