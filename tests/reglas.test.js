@@ -344,7 +344,7 @@ test('Oportunidades: rendimiento sin clasificar no se rotula "normal" ni "bajo";
   assert.equal(env.ev(`rrTextoRendimiento(${JSON.stringify(producto())})`), 'Sin clasificación de rendimiento');
   assert.equal(env.ev("rrTextoRendimiento({ rendimiento: { nivel: 'bueno' } })"), 'Bueno');
   assert.equal(env.ev("rrTextoRendimiento({ rendimiento: { nivel: 'destacado' } })"), 'Destacado');
-  const celda = env.ev(`(() => { const d = rrColumnaAccion().render(${JSON.stringify(producto())}); return d.textContent; })()`);
+  const celda = env.ev(`ovCeldaAccion(${JSON.stringify(producto())}).textContent`);
   assert.doesNotMatch(celda, /normal|bajo/i);
   assert.match(celda, /Validar por variante/);
 });
@@ -379,13 +379,11 @@ test('Oportunidades: la señal de rotación enlaza a Rotaciones (sin crear enví
 
 test('Oportunidades: aviso visible de sucursales no consideradas (ignoradas por el servidor o seleccionadas pero no evaluadas)', () => {
   const env = crearEntorno();
-  const aviso = r => env.ev(`(() => { const h = rtEl('div'); rrCabeceraOportunidades(h, ${JSON.stringify(r)}); return h.textContent; })()`);
+  const aviso = r => env.ev(`(() => { const h = rtEl('div'); ovAvisoSucursalesNoConsideradas(h, ${JSON.stringify(r)}); return h.textContent; })()`);
   assert.doesNotMatch(aviso(RESP), /Sucursales no consideradas/);
   assert.match(aviso({ ...RESP, sucursales_ignoradas: ['0009'] }), /Sucursales no consideradas: 09 Cipo San Martín/);
   env.ev("RT_CENTROS.push('0009')");
   assert.match(aviso(RESP), /Sucursales no consideradas: 09 Cipo San Martín/, 'seleccionada en la app pero no evaluada por el servidor');
-  assert.match(aviso(RESP), /Reglas: conjunto activo #4/);
-  assert.match(aviso({ ...RESP, conjunto: { origen: 'compat-operativo' } }), /Reglas: estándar/);
 });
 
 // ── Ajustes de presentacion (revision visual de la Fase 5) ───────────────────────────────────────
@@ -405,22 +403,22 @@ test('resumen visible: acción, rendimiento, ventas y stock; huellas y explicaci
   assert.match(visible, /Ratio de venta: 60\.0%/);
   assert.doesNotMatch(visible, /huella|Perfil #|conjunto #|El motor solo distingue/, 'metadatos y explicación extensa no son visibles sin abrir el detalle');
   const detalles = panel.buscar(n => n.tagName === 'DETAILS');
-  assert.deepEqual(detalles.map(d => d.querySelector('summary').textContent), ['Por qué aparece', 'Detalles técnicos']);
+  assert.deepEqual(detalles.map(d => d.querySelector('summary').textContent), ['Por qué aparece', 'Detalles técnicos'], 'el administrador ve ambos desplegables');
   assert.ok(detalles.every(d => !d.open), 'ambos desplegables cerrados por defecto');
   assert.match(detalles[1].textContent, /Perfil #2 v3 \(sobre General v1\) · conjunto #4/);
   assert.match(detalles[0].textContent, /El motor solo distingue rendimiento destacado o bueno/, 'la explicación extensa sigue disponible');
   assert.equal(panel.buscar(n => n.tagName === 'B' && n.textContent === 'Motivo').length, 0, 'sin bloque Motivo repetido');
 });
 
-test('la celda y la tarjeta muestran "Sin clasificación de rendimiento" sin repetir el prefijo ni las reglas aplicadas', () => {
+test('la celda de acción muestra las dos dimensiones que entrega el motor sin deducir nada más', () => {
   const env = crearEntorno();
-  const celda = env.ev(`rrColumnaAccion().render(${JSON.stringify(producto())}).textContent`);
-  assert.match(celda, /Sin clasificación de rendimiento/);
-  assert.doesNotMatch(celda, /Rendimiento: Sin/);
-  const tarjeta = env.ev(`(() => { const c = rtEl('div'); rrLineasTarjeta(c, ${JSON.stringify(producto())}); return c; })()`).textContent;
-  assert.match(tarjeta, /Sin clasificación de rendimiento/);
-  assert.doesNotMatch(tarjeta, /Reglas:|huella/);
-  assert.match(env.ev(`rrColumnaAccion().render({ ...${JSON.stringify(producto())}, rendimiento: { nivel: 'destacado' } }).textContent`), /Rendimiento: Destacado/);
+  const celda = o => env.ev(`ovCeldaAccion({ ...${JSON.stringify(producto())}, ...${JSON.stringify(o)} }).textContent`);
+  assert.match(celda({}), /Sin clasificación de rendimiento/);
+  assert.doesNotMatch(celda({}), /Rendimiento: Sin|Reglas:|huella/);
+  assert.match(celda({ rendimiento: { nivel: 'destacado' } }), /Venta destacada/);
+  assert.match(celda({ rendimiento: { nivel: 'bueno' } }), /Bien vendido/);
+  assert.match(celda({ acciones: [] }), /Sin acción sugerida/);
+  assert.doesNotMatch(celda({ rendimiento: { nivel: null } }), /normal|bajo/i);
 });
 
 test('sucursales en la explicación: nombre del catálogo junto al código (datos estructurados) y solo el código si falta el nombre', () => {

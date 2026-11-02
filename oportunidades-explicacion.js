@@ -59,51 +59,7 @@ function rrPerfilTecnico(f, resp) {
   return base + conj + huella;
 }
 
-// ── Columna "Acción sugerida / Rendimiento" de la tabla ───────────────────────────────────────────
-function rrColumnaAccion() {
-  return {
-    header: 'Acción · rendimiento', className: 'rt-col-accion',
-    render: f => {
-      const wrap = rtEl('div', { className: 'rr-accion-cel' });
-      const a = rrAccionPrincipal(f);
-      wrap.appendChild(rtEl('strong', { text: a ? rrTextoAccion(a) : 'Sin acción sugerida' }));
-      wrap.appendChild(rtEl('span', { className: 'rr-muted', text: rrLineaRendimiento(f) }));
-      if (a && a.requiere_validacion_variante) wrap.appendChild(rtEl('span', { className: 'rr-tag rr-warn', text: 'Validar por variante' }));
-      return wrap;
-    },
-  };
-}
-
-// Linea extra de la tarjeta mobile (misma informacion resumida que la columna; las reglas aplicadas van en el detalle).
-function rrLineasTarjeta(card, f) {
-  const a = rrAccionPrincipal(f);
-  card.appendChild(rtEl('div', { className: 'rt-opp-card-linea', text: 'Acción: ' + (a ? rrTextoAccion(a) : 'sin acción sugerida') + ' · ' + rrLineaRendimiento(f) }));
-}
-
-// ── Cabecera de Oportunidades: sucursales ignoradas, periodo y conjunto de reglas ────────────────
-function rrCabeceraOportunidades(host, resp) {
-  const activas = resp.sucursales || [];
-  const ignoradas = new Set(resp.sucursales_ignoradas || []);
-  // Lo que la app tiene seleccionado pero el servidor NO evaluo (p. ej. Cipo, cerrada) tambien se avisa.
-  RT_CENTROS.forEach(c => { if (activas.length && !activas.includes(c)) ignoradas.add(c); });
-  if (ignoradas.size) {
-    const nombres = [...ignoradas].map(c => RT_CENTRO_NOMBRE[c] || c).join(', ');
-    const aviso = rtEl('div', { className: 'rr-aviso', attrs: { role: 'status' } });
-    const txt = rtEl('div');
-    txt.appendChild(rtEl('b', { text: 'Sucursales no consideradas: ' }));
-    txt.appendChild(document.createTextNode(nombres + '. Oportunidades solo evalúa sucursales operativas; las sucursales cerradas conservan su consulta histórica en las demás secciones, pero no son candidatas para reponer ni rotar.'));
-    aviso.appendChild(txt);
-    host.appendChild(aviso);
-  }
-  const c = resp.conjunto;
-  const dias = resp.periodo ? Math.round((new Date(resp.periodo.hasta) - new Date(resp.periodo.desde)) / 86400000) + 1 : null;
-  const partes = [];
-  if (resp.periodo) partes.push('Período analizado: ' + resp.periodo.desde + ' a ' + resp.periodo.hasta + (dias ? ' (' + dias + ' días)' : ''));
-  partes.push(c && c.origen === 'activacion' ? 'Reglas: conjunto activo #' + c.activacion_id + ' (huella ' + String(c.huella).slice(0, 8) + ')' : 'Reglas: estándar (no hay un conjunto personalizado activado)');
-  host.appendChild(rtEl('p', { className: 'rt-note', text: partes.join(' · ') }));
-}
-
-// ── Detalle expandido ────────────────────────────────────────────────────────────────────────────
+// ── Detalle expandido (la tabla, los grupos y la cabecera estan en oportunidades-vista.js) ──
 function rrFormatoValor(valor, unidad) {
   if (valor === null || valor === undefined) return '—';
   if (unidad === 'proporción') return rtOportunidadesPct(valor);
@@ -215,7 +171,7 @@ function rrDetalleOportunidad(panel, f, resp, bloque) {
     'Ventas del período: ' + nf.format(f.Ventas_total || 0) + ' (' + nf1.format(f.ventas_semana || 0) + ' por semana) · Stock en sucursales: ' + nf.format(f.Stock_sucursales || 0)
     + ' · Depósito 90: ' + nf.format(deposito) + ' · Fallados 93: ' + nf.format(f.Stock_fallados || 0) + ' · Ratio de venta: ' + ratio));
   panel.appendChild(rrBloquePorQue(f, resp));
-  panel.appendChild(rrBloqueTecnico(f, resp));
+  if (typeof rrEsAdmin === 'function' && rrEsAdmin()) panel.appendChild(rrBloqueTecnico(f, resp)); // huellas y perfiles: solo administradores
   const rot = acciones.find(a => a.requiere_validacion_variante);
   if (rot) {
     const caja = rtEl('div', { className: 'rr-senal' });

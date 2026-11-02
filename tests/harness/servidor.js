@@ -31,7 +31,8 @@ const aFilas = ps => ps.map(p => ({
   Codigo_producto: p.Codigo_producto, Nombre_producto: p.Nombre_producto, Nombre_marca: p.Nombre_marca, Nombre_rubro: p.Nombre_rubro, Nombre_subrubro: p.Nombre_subrubro,
   Ventas_total: p.Ventas_total, Stock_sucursales: p.Stock_sucursales, Stock_deposito: p.Stock_deposito, Stock_fallados: p.Stock_fallados, Ultimo_ingreso: p.Ultimo_ingreso,
   variantes: p.variantes, variantes_con_stock: p.variantes_con_stock, variantes_sin_stock: p.variantes_sin_stock,
-  ...Object.fromEntries(U.CENTROS.flatMap(c => [[`ventas_${c}`, p.por_sucursal[c].ventas], [`stock_${c}`, p.por_sucursal[c].stock]])),
+  // El SQL real excluye a Cipo (0009, cerrada) de stock y ventas: sus columnas llegan en 0 (el fixture las trae a proposito para otras pruebas).
+  ...Object.fromEntries(U.CENTROS.flatMap(c => [[`ventas_${c}`, U.OPERATIVAS.includes(c) ? p.por_sucursal[c].ventas : 0], [`stock_${c}`, U.OPERATIVAS.includes(c) ? p.por_sucursal[c].stock : 0]])),
 }));
 const CATALOGO_FILAS = [
   { marca: 'NIKE', rubro: 'REMERAS', subrubro: 'MANGA CORTA', talle: 'M' }, { marca: 'BILLABONG', rubro: 'REMERAS', subrubro: 'MANGA CORTA', talle: 'L' },

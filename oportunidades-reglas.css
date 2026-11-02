@@ -63,7 +63,6 @@
 .rr-detalle-sim dd{margin:0}
 
 /* Oportunidades: "Por que aparece" */
-.rt-oport-tabla td.rt-col-accion,.rt-oport-tabla th.rt-col-accion{white-space:normal;min-width:170px}
 .rr-porque{grid-column:1/-1;border:1px solid var(--gray-100);border-radius:8px;background:var(--white);margin:6px 0}
 .rr-porque>summary{cursor:pointer;padding:8px 10px;font-weight:700;font-size:12.5px}
 .rr-porque-cuerpo{padding:0 10px 10px}

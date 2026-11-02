@@ -68,9 +68,20 @@ function crearEntorno({ rutas = {}, usuario = { rol: 'admin', usuario: 'tester' 
   sandbox(`
     var RT_VIEW = 'reglas', RT_DESDE = '2026-08-01', RT_HASTA = '2026-10-30', RT_CENTROS = ['0001','0005','0010','0012','0014'], RT_CENTROS_TODOS = ['0001','0005','0009','0010','0012','0014'];
     var RT_CENTRO_NOMBRE = {'0001':'01 Paseo','0005':'05 Wave','0009':'09 Cipo San Martín','0010':'10 Perito Moreno','0012':'12 Centenario','0014':'14 Roca'};
-    var RT_TEXTO_ESTADO = { seguimiento: 'Seguimiento', posible_rotacion: 'Posible rotación', bien_vendido: 'Bien vendido', stock_parado: 'Stock parado' };
+    var RT_TEXTO_ESTADO = { seguimiento: 'Seguimiento', posible_rotacion: 'Posible rotación', bien_vendido: 'Bien vendido', stock_parado: 'Stock parado', posible_descuento: 'Posible descuento', reposicion_proxima: 'Reposición próxima', venta_destacada: 'Venta destacada' };
     var RT_OPORTUNIDADES = { marca: 'previo' }, RT_OPORTUNIDADES_EXPANDIDO = null, RT_ROTACIONES_FILTRO = {}, RT_ROTACIONES = 'previo', RT_ROTACIONES_SUBVISTA = '';
     var rotacionesAbiertas = 0, ultimaVista = null, HOST = null;
+    var RT_OPORTUNIDADES_GRUPO = 'todas', RT_OPORTUNIDADES_ESTADO = null, RT_OPORTUNIDADES_PRIORIDAD = null, RT_OPORTUNIDADES_CONFIANZA = null, RT_OPORTUNIDADES_OFFSET = 0, RT_OPORTUNIDADES_LIMITE = 50;
+    var RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' }, RT_FILTRO = null, RT_PRODUCTOS_FILTRO_ORIGEN = null, RT_OPORTUNIDADES_BASE = null, RT_OPORTUNIDADES_UNIONES = null;
+    var RT_ESTADO_CLS = { reposicion_urgente: 'badge-danger', reposicion_proxima: 'badge-warning', stock_parado: 'badge-neutral' }, periodoCambiado = 0, inputsFecha = { rtDesde: { value: '', focus() {} }, rtHasta: { value: '' } };
+    function rtOportunidadesStockDeposito(f) { return f.Stock_deposito ?? f.Stock_ctro_0000 ?? 0; }
+    function rtSucursalesEsSubconjunto() { return RT_CENTROS.length < RT_CENTROS_TODOS.length; }
+    function rtSucursalesParams(p) { if (rtSucursalesEsSubconjunto()) p.set('sucursales', RT_CENTROS.join(',')); return p; }
+    function rtFiltroAParams(p, f) { Object.keys(f).forEach(k => p.set(k, Array.isArray(f[k]) ? f[k].join(',') : f[k])); }
+    function rtRestarDias(iso, d) { const x = new Date(iso + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() - d); return x.toISOString().slice(0, 10); }
+    function rtCambiarPeriodo() { periodoCambiado++; RT_DESDE = inputsFecha.rtDesde.value; RT_HASTA = inputsFecha.rtHasta.value; }
+    function rtOportunidadesPanelDetalle() { return rtEl('div'); }
+    document.getElementById = id => inputsFecha[id] || null;
     const nf = { format: n => String(n) }, nf1 = { format: n => String(n) };
     const rtOportunidadesPct = v => (v * 100).toFixed(1) + '%';
     function rtEl(tag, opts) { const e = document.createElement(tag); if (opts) { if (opts.className != null) e.className = opts.className; if (opts.text != null) e.textContent = opts.text; if (opts.html != null) e.innerHTML = opts.html; if (opts.attrs) Object.keys(opts.attrs).forEach(k => e.setAttribute(k, opts.attrs[k])); } return e; }
@@ -80,7 +91,7 @@ function crearEntorno({ rutas = {}, usuario = { rol: 'admin', usuario: 'tester' 
     function rtCambiarVista(v) { RT_VIEW = v; ultimaVista = v; }
   `, 'auxiliares');
   const raiz = path.join(__dirname, '..');
-  for (const f of ['oportunidades-explicacion.js', 'oportunidades-reglas.js']) sandbox(fs.readFileSync(path.join(raiz, f), 'utf8'), f);
+  for (const f of ['oportunidades-explicacion.js', 'oportunidades-grupos.js', 'oportunidades-reglas.js', 'oportunidades-vista.js']) sandbox(fs.readFileSync(path.join(raiz, f), 'utf8'), f);
   sandbox('HOST = document.createElement("div");', 'host');
   return { ctx, reg, ev: c => vm.runInContext(c, ctx), host: () => vm.runInContext('HOST', ctx), Nodo };
 }

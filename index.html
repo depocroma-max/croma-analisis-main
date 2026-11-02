@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="croma-ds.css?v=20260714-1">
   <link rel="stylesheet" href="oportunidades-reglas.css?v=20261031-1">
+  <link rel="stylesheet" href="oportunidades-vista.css?v=20261103-1">
   <style>
     /* --black, --white, --gray-100..800 y --accent ya vienen de croma-ds.css (valores
        idénticos, una sola fuente de verdad). Acá solo lo que croma-ds.css no define:
@@ -224,52 +225,10 @@
       text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin:var(--space-3) 0 6px}
     .rt-filtros-titulo svg{width:14px;height:14px}
 
-    /* Oportunidades — tarjetas de resumen clickeables, tabla desktop / tarjetas mobile */
-    .rt-kpi-click{transition:box-shadow .15s,border-color .15s}
-    .rt-kpi-click:hover{box-shadow:var(--shadow-md,0 4px 16px rgba(0,0,0,.10))}
+    /* Oportunidades: la lista, los grupos y los filtros viven en oportunidades-vista.css; aca solo queda el panel de detalle
+       expandible (compartido por la tabla y las tarjetas). */
     .rt-kpi-activo{border:2px solid var(--croma-red,var(--accent));box-shadow:0 0 0 2px rgba(232,37,26,.12)}
-    .rt-oportunidades-cards{display:none}
-    .rt-opp-card{margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
-    .rt-opp-card-titulo{font-weight:700;font-size:14px}
-    .rt-opp-card-linea{font-size:13px;color:var(--gray-600)}
-    .rt-opp-card-motivo{font-size:12.5px;color:var(--gray-500);line-height:1.4}
-    .rt-badges-secundarios{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
-    .rt-badge-discreto{opacity:.65;font-size:10.5px;padding:2px 7px}
-    /* Debajo de 700px se usan tarjetas (.rt-oportunidades-cards), nunca la tabla --
-       evita scroll horizontal en mobile (pedido explicito, 2026-07-20). */
-    @media (max-width:700px){
-      .rt-oportunidades-tabla{display:none}
-      .rt-oportunidades-cards{display:block}
-    }
-
-    /* Oportunidades v2: tabla compacta con fila expandible (2026-07-20). min-height en
-       vez de height fija -- una fila puede crecer si el navegador esta con zoom/fuente
-       grande, pero motivo/advertencias/etiquetas secundarias NUNCA la agrandan porque
-       viven solo en el detalle expandido, no en la fila. */
-    .rt-oport-wrap{max-height:72vh;overflow:auto}
-    table.rt-oport-tabla{table-layout:fixed;width:100%}
-    table.rt-oport-tabla thead th{position:sticky;top:0;background:var(--white);z-index:1}
-    table.rt-oport-tabla td{padding:11px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    table.rt-oport-tabla td.rt-oport-num{text-align:right;font-variant-numeric:tabular-nums}
-    /* Estado va en badge (pill), no en texto plano -- con table-layout:fixed repartiendo
-       columnas por igual quedaba mas angosta que el texto mas largo ("Reposición o
-       compra urgente", "Reponer desde depósito (90)") y el badge se cortaba a mitad de
-       palabra sin elipsis visible (bug reportado 2026-07-20). Ancho fijo generoso para
-       que el badge siempre entre completo. */
-    table.rt-oport-tabla th.rt-col-estado, table.rt-oport-tabla td.rt-col-estado{width:220px;overflow:visible}
-    table.rt-oport-tabla td.rt-col-estado .badge{max-width:100%;overflow:hidden;text-overflow:ellipsis}
-    table.rt-oport-tabla tr.rt-oport-fila{min-height:64px;cursor:pointer}
-    table.rt-oport-tabla tr.rt-oport-fila:hover{background:var(--gray-50)}
-    table.rt-oport-tabla tr.rt-oport-fila:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-    table.rt-oport-tabla tr.rt-oport-fila-activa{background:var(--accent-s)}
-    table.rt-oport-tabla tr.rt-oport-fila-activa:hover{background:var(--accent-s)}
-    .rt-oport-producto{display:flex;flex-direction:column;gap:2px;white-space:normal}
-    .rt-oport-producto-nombre{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-      overflow:hidden;font-weight:500;line-height:1.3;font-size:13px}
-    .rt-oport-marca-inline{display:none;font-size:11px;color:var(--gray-400)}
-    .rt-oport-chica{font-size:10px;font-weight:600;color:var(--gray-400);margin-left:4px;white-space:nowrap}
     .rt-oport-ventas-neg{color:var(--danger);font-weight:700}
-    .rt-oport-fallado{color:var(--amber,var(--warning));font-weight:600}
     tr.rt-oport-detalle-fila > td{background:var(--gray-50);white-space:normal;padding:16px 20px;
       border-top:1px dashed var(--gray-200)}
     .rt-oport-detalle{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 24px}
@@ -281,12 +240,6 @@
     .rt-oport-detalle-suc-fila{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
     .rt-oport-detalle-acciones{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;
       padding-top:8px;border-top:1px solid var(--gray-200)}
-    @media (max-width:1024px){
-      .rt-col-marca{display:none}
-      .rt-oport-marca-inline{display:block}
-      .rt-col-ultimo-ingreso{display:none}
-      .rt-col-secundaria{display:none}
-    }
     .kl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:8px;line-height:1.3}
     .kv{font-family:var(--font-d);font-size:28px;letter-spacing:-.01em;line-height:1}
 
@@ -1219,6 +1172,11 @@ let RT_OPORTUNIDADES_OFFSET = 0;
 const RT_OPORTUNIDADES_LIMITE = 50;
 // Codigo_producto de la unica fila expandida (o null) -- una sola a la vez (2026-07-20).
 let RT_OPORTUNIDADES_EXPANDIDO = null;
+// Grupo elegido ('todas' | 'reposicion' | ..., ver oportunidades-grupos.js) y, dentro del grupo, un estado puntual (o null = todo el grupo).
+let RT_OPORTUNIDADES_GRUPO = 'todas';
+// Contadores: resumen de la ultima respuesta (no depende del grupo/estado/prioridad) y totales unicos de los grupos con varios estados.
+let RT_OPORTUNIDADES_BASE = null; // { clave, resumen }
+let RT_OPORTUNIDADES_UNIONES = null, RT_OPORTUNIDADES_UNIONES_SEQ = 0; // { clave, estado: 'loading'|'ok'|'error', valores }
 
 // Fase 5: cache de aceleracion por codigo -- se carga on-demand SOLO para el
 // codigo expandido (nunca para toda la pagina/lista), evita N+1. Valores:
@@ -2588,7 +2546,7 @@ function rtAplicarFiltroYVer(filtro, origen) {
   RT_PRODUCTOS_FILTRO_ORIGEN = origen || null;
   RT_COMPLETO = null;
   RT_PRODUCTOS_PAGINA = 0; RT_PRODUCTOS_EXPANDIDO = null; RT_PRODUCTOS_BUSQUEDA = '';
-  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_PRIORIDAD = null;
+  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_GRUPO = 'todas'; RT_OPORTUNIDADES_PRIORIDAD = null;
   RT_OPORTUNIDADES_CONFIANZA = null; RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
   RT_OPORTUNIDADES_EXPANDIDO = null;
   rtCambiarVista('productos');
@@ -2603,7 +2561,7 @@ function rtAplicarFiltroYVerTallesColores(filtro) {
   RT_FILTRO = filtro;
   RT_PRODUCTOS_FILTRO_ORIGEN = null;
   RT_COMPLETO = null;
-  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_PRIORIDAD = null;
+  RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_ESTADO = null; RT_OPORTUNIDADES_GRUPO = 'todas'; RT_OPORTUNIDADES_PRIORIDAD = null;
   RT_OPORTUNIDADES_CONFIANZA = null; RT_OPORTUNIDADES_ROTACION = { origen:'', destino:'', ventasDestinoMin:'', stockOrigenMin:'', coberturaOrigenMin:'' };
   RT_OPORTUNIDADES_EXPANDIDO = null;
   rtCambiarVista('talles-colores');
@@ -3709,6 +3667,7 @@ function rtFormularioFiltro(host, alAplicar, opts) {
   if (!RT_CATALOGO && !RT_CATALOGO_LOADING) rtCargarCatalogo();
   rtFiltroSincronizarBorrador();
   const sinTalleColor = Boolean(opts && opts.sinTalleColor);
+  const compacto = Boolean(opts && opts.compacto); // Oportunidades: una sola fila, botones Aplicar / Limpiar
   if (RT_PRODUCTOS_FILTRO_ORIGEN) {
     const badge = rtEl('div', { className:'rt-productos-origen' });
     badge.innerHTML = icon('info', ''); // icono estatico del helper
@@ -3717,7 +3676,7 @@ function rtFormularioFiltro(host, alAplicar, opts) {
   }
 
   // <form> real (no solo un botón) para que Enter (en Código) envie el filtro.
-  const form = rtEl('form', { className:'rt-productos-filtros' });
+  const form = rtEl('form', { className:'rt-productos-filtros' + (compacto ? ' ov-filtros' : '') });
   form.setAttribute('novalidate', 'novalidate');
 
   const fcCodigo = rtEl('div', { className:'fc' });
@@ -3763,9 +3722,9 @@ function rtFormularioFiltro(host, alAplicar, opts) {
   }
 
   const acciones = rtEl('div', { className:'rt-productos-filtros-acciones' });
-  const btnFiltrar = rtBotonIcono('btn-sm', 'filter', 'Filtrar');
+  const btnFiltrar = rtBotonIcono('btn-sm' + (compacto ? ' ov-aplicar' : ''), 'filter', (opts && opts.textoAplicar) || 'Filtrar');
   btnFiltrar.type = 'submit';
-  const btnLimpiar = rtEl('button', { className:'btn-sm', text:'Limpiar filtros' });
+  const btnLimpiar = rtEl('button', { className:'btn-sm', text:(opts && opts.textoLimpiar) || 'Limpiar filtros' });
   btnLimpiar.type = 'button';
   btnLimpiar.disabled = !RT_FILTRO;
   // rtQuitarFiltro() ya limpia RT_PRODUCTOS_FILTRO_ORIGEN -- tambien saca un filtro
@@ -3775,8 +3734,10 @@ function rtFormularioFiltro(host, alAplicar, opts) {
   form.appendChild(acciones);
 
   const hayBorrador = () => inCodigo.value.trim() || Object.keys(RT_FILTRO_BORRADOR).some(c => RT_FILTRO_BORRADOR[c].size);
-  btnFiltrar.disabled = !hayBorrador();
-  inCodigo.addEventListener('input', () => { btnFiltrar.disabled = !hayBorrador(); });
+  if (!compacto) { // en la version compacta se puede enviar vacio: se explica el error en vez de deshabilitar el boton
+    btnFiltrar.disabled = !hayBorrador();
+    inCodigo.addEventListener('input', () => { btnFiltrar.disabled = !hayBorrador(); });
+  }
 
   form.addEventListener('submit', e => {
     e.preventDefault();
@@ -3790,7 +3751,15 @@ function rtFormularioFiltro(host, alAplicar, opts) {
     ['marca', 'rubro', 'subrubro', 'talle', 'color'].forEach(c => {
       if (RT_FILTRO_BORRADOR[c].size) filtro[c] = [...RT_FILTRO_BORRADOR[c]].sort((a, b) => a.localeCompare(b, 'es'));
     });
-    if (!Object.keys(filtro).length) return;
+    // Oportunidades (compacto): aplicar sin filtros es valido = todas las oportunidades del periodo y las sucursales elegidas.
+    // Solo se rechaza un valor realmente invalido (opts.validar devuelve el mensaje).
+    if (compacto && opts.validar) { const msg = opts.validar(filtro); if (msg) { if (opts.onError) opts.onError(msg); return; } }
+    if (!Object.keys(filtro).length) {
+      if (!compacto) return;
+      RT_FILTRO = null; RT_FILTRO_BORRADOR_KEY = rtFiltroKey(); RT_PRODUCTOS_FILTRO_ORIGEN = null;
+      if (alAplicar) alAplicar();
+      return;
+    }
     RT_FILTRO = filtro;
     RT_FILTRO_BORRADOR_KEY = rtFiltroKey(); // el borrador ya representa este RT_FILTRO, no resincronizar
     RT_PRODUCTOS_FILTRO_ORIGEN = null; // filtro armado a mano reemplaza al precargado
@@ -4778,57 +4747,8 @@ function rtStockVentasTabla(host, todasLasFilas) {
   host.appendChild(wrap);
 }
 
-// ── Oportunidades ─────────────────────────────────────────────────────────────
-// Motor server-side a nivel producto (no variante) -- /analisis/oportunidades.
-// No depende de RT_COMPLETO/rtCargarCompleto (eso sigue siendo solo de Talles y colores).
-async function rtCargarOportunidades() {
-  if (RT_OPORTUNIDADES_ABORT) RT_OPORTUNIDADES_ABORT.abort();
-  const controller = new AbortController();
-  RT_OPORTUNIDADES_ABORT = controller;
-  const seq = ++RT_OPORTUNIDADES_SEQ;
-  RT_OPORTUNIDADES_LOADING = true; RT_OPORTUNIDADES_ERROR = null;
-  rtRenderVistaActual();
-  try {
-    const params = rtSucursalesParams(new URLSearchParams({ desde: RT_DESDE, hasta: RT_HASTA, limit: String(RT_OPORTUNIDADES_LIMITE), offset: String(RT_OPORTUNIDADES_OFFSET) }));
-    if (RT_FILTRO) rtFiltroAParams(params, RT_FILTRO, ['talle', 'color']);
-    if (RT_OPORTUNIDADES_ESTADO) params.set('estado', RT_OPORTUNIDADES_ESTADO);
-    if (RT_OPORTUNIDADES_PRIORIDAD) params.set('prioridad', RT_OPORTUNIDADES_PRIORIDAD);
-    if (RT_OPORTUNIDADES_CONFIANZA) params.set('confianza', RT_OPORTUNIDADES_CONFIANZA);
-    const rot = RT_OPORTUNIDADES_ROTACION;
-    if (rot.origen) params.set('rotacion_origen', rot.origen);
-    if (rot.destino) params.set('rotacion_destino', rot.destino);
-    if (rot.ventasDestinoMin) params.set('rotacion_ventas_destino_min', rot.ventasDestinoMin);
-    if (rot.stockOrigenMin) params.set('rotacion_stock_origen_min', rot.stockOrigenMin);
-    if (rot.coberturaOrigenMin) params.set('rotacion_cobertura_origen_min', rot.coberturaOrigenMin);
-    const resp = await fetch(STOCK_API_URL + '/analisis/oportunidades?' + params.toString(), { signal: controller.signal });
-    const data = await resp.json();
-    if (seq !== RT_OPORTUNIDADES_SEQ) return;
-    if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
-    RT_OPORTUNIDADES = data;
-  } catch (err) {
-    if (err.name === 'AbortError') return;
-    if (seq !== RT_OPORTUNIDADES_SEQ) return;
-    RT_OPORTUNIDADES_ERROR = err.message;
-  } finally {
-    if (seq === RT_OPORTUNIDADES_SEQ) { RT_OPORTUNIDADES_LOADING = false; rtRenderVistaActual(); }
-  }
-}
 
-function rtOportunidadesCambiarEstado(estado) {
-  RT_OPORTUNIDADES_ESTADO = (RT_OPORTUNIDADES_ESTADO === estado) ? null : estado;
-  RT_OPORTUNIDADES_OFFSET = 0;
-  RT_OPORTUNIDADES_EXPANDIDO = null;
-  rtCargarOportunidades();
-}
 
-function rtOportunidadesPagina(delta) {
-  if (!RT_OPORTUNIDADES) return;
-  const nuevoOffset = RT_OPORTUNIDADES_OFFSET + delta * RT_OPORTUNIDADES_LIMITE;
-  if (nuevoOffset < 0 || nuevoOffset >= RT_OPORTUNIDADES.paginacion.total) return;
-  RT_OPORTUNIDADES_OFFSET = nuevoOffset;
-  RT_OPORTUNIDADES_EXPANDIDO = null;
-  rtCargarOportunidades();
-}
 
 // Navega a Productos filtrado por codigo -- solo se llama desde el boton "Ver producto"
 // dentro del detalle expandido, nunca desde el clic en la fila (2026-07-20: antes el
@@ -4837,13 +4757,6 @@ function rtOportunidadesVerDetalle(codigo) {
   rtAplicarFiltroYVer({ codigo });
 }
 
-// Expande/colapsa el detalle de una fila -- una sola expandida a la vez. Es lo que
-// dispara el clic en la fila, Enter/Espacio con teclado, y el boton "Ver detalle".
-function rtOportunidadesToggleDetalle(codigo) {
-  RT_OPORTUNIDADES_EXPANDIDO = (RT_OPORTUNIDADES_EXPANDIDO === codigo) ? null : codigo;
-  if (RT_OPORTUNIDADES_EXPANDIDO) rtCargarAceleracion(RT_OPORTUNIDADES_EXPANDIDO);
-  rtRenderVistaActual();
-}
 
 // Fase 5: ventas de los ultimos 7 dias vs los 7 dias inmediatamente anteriores
 // (ventana retrospectiva, sin look-ahead), terminando en RT_HASTA -- una sola
@@ -4887,21 +4800,6 @@ function rtBadgeEstado(estadoPrincipal, texto) {
   return rtEl('span', { className: 'badge ' + cls, text: rrTextoEstado(estadoPrincipal, texto) });
 }
 
-function rtTarjetaResumen(clave, etiqueta, valor, activo, onClick) {
-  const card = rtEl('div', { className: 'card rt-kpi rt-kpi-click' + (activo ? ' rt-kpi-activo' : '') });
-  const iconName = RT_ESTADO_ICON[clave];
-  if (iconName) {
-    const cls = RT_BADGE_A_ICONO_CLS[RT_ESTADO_CLS[clave]] || '';
-    const iconChip = rtEl('div', { className:'rt-kpi-icon' + (cls ? ' rt-kpi-icon-' + cls : '') });
-    iconChip.innerHTML = icon(iconName, ''); // icono estatico del helper, no dato de API
-    card.appendChild(iconChip);
-  }
-  card.appendChild(rtEl('div', { className:'rt-kpi-label', text: etiqueta }));
-  card.appendChild(rtEl('div', { className:'rt-kpi-valor', text: nf.format(valor) }));
-  card.style.cursor = 'pointer';
-  card.addEventListener('click', onClick);
-  return card;
-}
 
 function rtOportunidadesCambiarConfianza(valor) {
   RT_OPORTUNIDADES_CONFIANZA = (RT_OPORTUNIDADES_CONFIANZA === valor) ? null : valor;
@@ -4929,13 +4827,6 @@ const RT_TEXTO_ESTADO = {
 
 const RT_TEXTO_TIPO_DESCUENTO = { sin_ventas: 'Sin ventas', rotacion_lenta: 'Rotación lenta' };
 
-function rtBadgesSecundarios(estadosSecundarios) {
-  const wrap = rtEl('span', { className:'rt-badges-secundarios' });
-  estadosSecundarios.forEach(e => {
-    wrap.appendChild(rtEl('span', { className:'badge badge-neutral rt-badge-discreto', text: RT_TEXTO_ESTADO[e] || e }));
-  });
-  return wrap;
-}
 
 // cantidad_sugerida de posible_rotacion: NUNCA como columna principal ni accion directa
 // (no verifica coincidencia de talle/color todavia) -- se muestra plegada, detras de un
@@ -4967,38 +4858,8 @@ function rtOportunidadesStockDeposito(f) {
   return f.Stock_deposito ?? f.Stock_ctro_0000 ?? 0;
 }
 
-// ── Oportunidades: celdas y columnas por estado (rediseño 2026-07-20) ──────────────
-// Ninguna de estas funciones calcula ni decide reglas de negocio -- solo formatean
-// campos que ya vienen resueltos del backend (ratio_confiable, tipo_descuento,
-// confianza_rotacion, etc.). Umbrales y logica de clasificacion viven exclusivamente
-// en croma-api (config/oportunidades.js + motor/oportunidades.js).
-function rtOportunidadesCeldaVentas(f) {
-  const wrap = rtEl('span');
-  wrap.appendChild(document.createTextNode(nf.format(f.Ventas_total)));
-  if (f.ratio_confiable === false) wrap.appendChild(rtEl('span', { className:'rt-oport-chica', text:'muestra chica' }));
-  return wrap;
-}
-function rtOportunidadesCeldaVentasNetas(f) {
-  return rtEl('span', { className: f.Ventas_total < 0 ? 'rt-oport-ventas-neg' : '', text: nf.format(f.Ventas_total) });
-}
-function rtOportunidadesCeldaFallados(f) {
-  const v = f.Stock_fallados || 0;
-  return rtEl('span', { className: v > 0 ? 'rt-oport-fallado' : '', text: nf.format(v) });
-}
-function rtOportunidadesCeldaCobertura(f) {
-  return f.cobertura_estado === 'sin_ventas' ? 'sin ventas' : nf1.format(f.cobertura_dias);
-}
 function rtOportunidadesPct(v) {
   return (v * 100).toFixed(1) + '%';
-}
-function rtOportunidadesCeldaRatio(f) {
-  return f.ratio_venta == null ? '—' : rtOportunidadesPct(f.ratio_venta);
-}
-function rtOportunidadesCeldaDias(f) {
-  return f.dias_desde_ultimo_ingreso == null ? '—' : nf.format(f.dias_desde_ultimo_ingreso);
-}
-function rtOportunidadesCeldaDiasUltimaVenta(f) {
-  return f.dias_desde_ultima_venta == null ? 'sin ventas' : nf.format(f.dias_desde_ultima_venta);
 }
 const RT_TEXTO_MOTIVO_EVALUACION = {
   ultima_venta_antigua: 'Última venta hace más de 30 días',
@@ -5006,107 +4867,7 @@ const RT_TEXTO_MOTIVO_EVALUACION = {
   ritmo_inferior_al_grupo: 'Ritmo reciente por debajo del grupo',
   muestra_insuficiente: 'Evidencia histórica todavía chica',
 };
-function rtOportunidadesColCodigo() {
-  return { header:'Código', render: f => f.Codigo_producto };
-}
-// Producto siempre incluye la marca como subtitulo (oculto en desktop ancho via CSS,
-// visible desde 1024px hacia abajo cuando la columna Marca se oculta -- ver
-// .rt-oport-marca-inline / .rt-col-marca en <style>).
-function rtOportunidadesColProducto() {
-  return { header:'Producto', render: f => {
-    const wrap = rtEl('div', { className:'rt-oport-producto' });
-    wrap.appendChild(rtEl('div', { className:'rt-oport-producto-nombre', text: f.Nombre_producto, attrs:{ title: f.Nombre_producto || '' } }));
-    wrap.appendChild(rtEl('div', { className:'rt-oport-marca-inline', text: f.Nombre_marca || '' }));
-    return wrap;
-  }};
-}
-function rtOportunidadesColMarca() {
-  return { header:'Marca', className:'rt-col-marca', render: f => f.Nombre_marca || '—' };
-}
 
-// Columnas por grupo de estado -- nunca las mismas 12 para todos los estados. "datos"
-// solo se usa para decidir si corresponde agregar la columna Fallados (revisar_devoluciones).
-function rtOportunidadesGrupoColumnas(estado, datos) {
-  if (estado === 'posible_rotacion') {
-    return [
-      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
-      { header:'Origen', render: f => { const o = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.origen; return o ? rtSucursalBadge(o.sucursal) : '—'; } },
-      { header:'Destino', render: f => { const d = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.destino; return d ? rtSucursalBadge(d.sucursal) : '—'; } },
-      { header:'Ventas destino', numeric:true, render: f => { const d = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.destino; return d ? nf.format(d.ventas) : '—'; } },
-      { header:'Stock origen', numeric:true, className:'rt-col-secundaria', render: f => { const o = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.origen; return o ? nf.format(o.stock) : '—'; } },
-      { header:'Cobertura origen', numeric:true, className:'rt-col-secundaria', render: f => {
-        const o = f.diagnostico_rotacion && f.diagnostico_rotacion.par_sugerido.origen;
-        if (!o) return '—';
-        return o.cobertura_estado === 'sin_ventas' ? 'sin ventas' : nf1.format(o.cobertura_dias);
-      } },
-      { header:'Confianza', render: f => f.confianza_rotacion || '—' },
-    ];
-  }
-  if (estado === 'revisar_devoluciones') {
-    const mostrarFallados = datos.some(f => (f.Stock_fallados || 0) > 0);
-    const columnas = [
-      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
-      { header:'Ventas netas', numeric:true, render: rtOportunidadesCeldaVentasNetas },
-      { header:'Stock operativo', numeric:true, render: f => nf.format(f.Stock_total) },
-    ];
-    if (mostrarFallados) columnas.push({ header:'Fallados 93', numeric:true, render: rtOportunidadesCeldaFallados });
-    columnas.push({ header:'Último ingreso', numeric:true, className:'rt-col-ultimo-ingreso', render: rtOportunidadesCeldaDias });
-    return columnas;
-  }
-  if (estado === 'reponer_desde_deposito' || estado === 'reposicion_proxima') {
-    return [
-      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
-      { header:'Ventas', numeric:true, render: rtOportunidadesCeldaVentas },
-      { header:'Stock sucursales', numeric:true, render: f => nf.format(f.Stock_sucursales) },
-      { header:'Depósito 90', numeric:true, render: f => nf.format(rtOportunidadesStockDeposito(f)) },
-      { header:'Cobertura', numeric:true, render: rtOportunidadesCeldaCobertura },
-      { header:'Ratio', numeric:true, className:'rt-col-secundaria', render: rtOportunidadesCeldaRatio },
-    ];
-  }
-  // reposicion_urgente/reposicion_a_evaluar (v1.3.0): stock operativo siempre 0 en las
-  // dos -- lo que las distingue es la demanda RECIENTE (ultimos 30 dias respecto de
-  // "hasta"), no cobertura_dias (que da 0 apenas el stock llega a cero, sin importar si
-  // el producto se agoto rapido o tardo meses). "Últimos 30 días" es relativo al "hasta"
-  // elegido, no a hoy -- ver nota en el panel de detalle.
-  if (estado === 'reposicion_urgente') {
-    return [
-      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
-      { header:'Ventas período', numeric:true, render: rtOportunidadesCeldaVentas },
-      { header:'Ventas 30 días', numeric:true, render: f => nf.format(f.Ventas_ultimos_30_dias || 0) },
-      { header:'Última venta (días)', numeric:true, render: rtOportunidadesCeldaDiasUltimaVenta },
-      { header:'Último ingreso', numeric:true, className:'rt-col-secundaria', render: rtOportunidadesCeldaDias },
-    ];
-  }
-  if (estado === 'reposicion_a_evaluar') {
-    return [
-      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
-      { header:'Ventas período', numeric:true, render: rtOportunidadesCeldaVentas },
-      { header:'Ventas 30 días', numeric:true, render: f => nf.format(f.Ventas_ultimos_30_dias || 0) },
-      { header:'Última venta (días)', numeric:true, render: rtOportunidadesCeldaDiasUltimaVenta },
-      { header:'Motivo', className:'rt-col-secundaria', render: f => f.motivo_evaluacion ? (RT_TEXTO_MOTIVO_EVALUACION[f.motivo_evaluacion] || f.motivo_evaluacion) : '—' },
-    ];
-  }
-  if (estado === 'stock_parado' || estado === 'posible_descuento') {
-    return [
-      rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
-      { header:'Ventas', numeric:true, render: rtOportunidadesCeldaVentas },
-      { header:'Stock operativo', numeric:true, render: f => nf.format(f.Stock_total) },
-      { header:'Días desde ingreso', numeric:true, className:'rt-col-ultimo-ingreso', render: rtOportunidadesCeldaDias },
-      { header:'Cobertura', numeric:true, render: rtOportunidadesCeldaCobertura },
-      { header:'Tipo', className:'rt-col-secundaria', render: f => f.tipo_descuento ? (RT_TEXTO_TIPO_DESCUENTO[f.tipo_descuento] || f.tipo_descuento) : '—' },
-    ];
-  }
-  // "Todos" (sin filtro de estado) y los estados sin set propio (venta_destacada,
-  // bien_vendido, seguimiento) usan el set generico con columna Estado.
-  return [
-    { header:'Estado', className:'rt-col-estado', render: f => rtBadgeEstado(f.estado_principal, f.texto_estado) },
-    rtOportunidadesColCodigo(), rtOportunidadesColProducto(), rtOportunidadesColMarca(),
-    { header:'Ventas', numeric:true, render: rtOportunidadesCeldaVentas },
-    { header:'Stock operativo', numeric:true, render: f => nf.format(f.Stock_total) },
-    { header:'Cobertura', numeric:true, render: rtOportunidadesCeldaCobertura },
-    { header:'Último ingreso', numeric:true, className:'rt-col-ultimo-ingreso', render: rtOportunidadesCeldaDias },
-  ];
-}
 
 // Panel de detalle expandible -- toda la informacion extensa (motivo completo,
 // etiquetas secundarias, advertencias, ratio, stock por sucursal, diagnostico de
@@ -5215,216 +4976,13 @@ function rtOportunidadesPanelDetalle(f) {
   return panel;
 }
 
-// Una fila (mas la fila de detalle si esta expandida) -- devuelve un DocumentFragment
-// para que rtTabla() pueda insertar ambos <tr> con un solo appendChild.
-function rtOportunidadesFila(f, columnas) {
-  const expandido = RT_OPORTUNIDADES_EXPANDIDO === f.Codigo_producto;
-  const tr = rtEl('tr', { className:'rt-oport-fila' + (expandido ? ' rt-oport-fila-activa' : '') });
-  tr.setAttribute('tabindex', '0');
-  tr.setAttribute('role', 'button');
-  tr.setAttribute('aria-expanded', expandido ? 'true' : 'false');
-  tr.setAttribute('aria-label', 'Ver detalle de ' + f.Codigo_producto);
-  tr.addEventListener('click', () => rtOportunidadesToggleDetalle(f.Codigo_producto));
-  tr.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rtOportunidadesToggleDetalle(f.Codigo_producto); }
-  });
-  columnas.forEach(col => {
-    const td = rtEl('td', { className: (col.className || '') + (col.numeric ? ' rt-oport-num' : '') });
-    const val = col.render(f);
-    if (val instanceof Node) td.appendChild(val); else td.textContent = val;
-    tr.appendChild(td);
-  });
-  const tdAccion = rtEl('td');
-  const btnDetalle = rtEl('button', { className:'btn-sm', text: expandido ? 'Ocultar' : 'Ver detalle' });
-  btnDetalle.type = 'button';
-  btnDetalle.setAttribute('aria-expanded', expandido ? 'true' : 'false');
-  btnDetalle.addEventListener('click', e => { e.stopPropagation(); rtOportunidadesToggleDetalle(f.Codigo_producto); });
-  tdAccion.appendChild(btnDetalle);
-  tr.appendChild(tdAccion);
 
-  const frag = document.createDocumentFragment();
-  frag.appendChild(tr);
-  if (expandido) {
-    const trDetalle = rtEl('tr', { className:'rt-oport-detalle-fila' });
-    const tdDetalle = rtEl('td', { attrs:{ colspan: String(columnas.length + 1) } });
-    tdDetalle.appendChild(rtOportunidadesPanelDetalle(f));
-    trDetalle.appendChild(tdDetalle);
-    frag.appendChild(trDetalle);
-  }
-  return frag;
-}
-
-function renderRTOportunidades(host) {
-  host.appendChild(rtEl('h3', { text:'Oportunidades', className:'rt-subtitulo' }));
-
-  rtFormularioFiltro(host, () => {
-    RT_OPORTUNIDADES = null; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_EXPANDIDO = null;
-    rtCargarOportunidades();
-  }, { sinTalleColor: true });
-
-  if (RT_FILTRO) rtFiltroChip(host);
-  else host.appendChild(rtEl('p', { className:'rt-note', text:'Panorama general del período. Aplicá un filtro arriba para acotar.' }));
-
-  if (!RT_OPORTUNIDADES && !RT_OPORTUNIDADES_LOADING) rtCargarOportunidades();
-  if (RT_OPORTUNIDADES_LOADING && !RT_OPORTUNIDADES) return rtEstado(host, 'loading', 'Calculando oportunidades del período...');
-  if (RT_OPORTUNIDADES_ERROR) return rtEstado(host, 'error', 'No se pudieron calcular las oportunidades. ' + RT_OPORTUNIDADES_ERROR, rtCargarOportunidades);
-  if (!RT_OPORTUNIDADES) return rtEstado(host, 'loading', 'Calculando...');
-
-  const r = RT_OPORTUNIDADES.resumen;
-  const kpis = rtEl('div', { className:'rt-kpis' });
-  Object.keys(RT_TEXTO_ESTADO).forEach(estado => {
-    kpis.appendChild(rtTarjetaResumen(estado, RT_TEXTO_ESTADO[estado], r.por_estado_principal[estado] || 0, RT_OPORTUNIDADES_ESTADO === estado, () => rtOportunidadesCambiarEstado(estado)));
-  });
-  host.appendChild(kpis);
-  rrCabeceraOportunidades(host, RT_OPORTUNIDADES); // aviso de sucursales no consideradas, periodo y conjunto de reglas
-  host.appendChild(rtEl('p', { className:'rt-note', text: nf.format(r.total_clasificados) + ' de ' + nf.format(r.total_evaluados) + ' productos con alguna oportunidad detectada · reglas v' + RT_OPORTUNIDADES.version_reglas }));
-  if (r.por_regla_cumplida.stock_parado > 0 && r.por_estado_principal.stock_parado === 0) {
-    host.appendChild(rtEl('p', { className:'rt-note', text: nf.format(r.por_regla_cumplida.stock_parado) + ' productos cumplen la regla de stock parado, aunque su estado principal termine siendo otro (casi siempre posible_descuento, que es más específico). Filtrá por "Stock parado" para verlos.' }));
-  }
-
-  // Filtro de prioridad (chips simples, ademas de las tarjetas por estado)
-  const tituloFiltros = rtEl('div', { className:'rt-filtros-titulo' });
-  tituloFiltros.innerHTML = icon('filter', '') + '<span>Filtros</span>'; // icono + rotulo estaticos
-  host.appendChild(tituloFiltros);
-  const prioRow = rtEl('div', { className:'rt-buscador-row' });
-  ['alta', 'media', 'baja'].forEach(p => {
-    const btn = rtEl('button', { className:'btn-sm' + (RT_OPORTUNIDADES_PRIORIDAD === p ? ' rt-kpi-activo' : ''), text: 'Prioridad ' + p });
-    btn.type = 'button';
-    btn.addEventListener('click', () => { RT_OPORTUNIDADES_PRIORIDAD = (RT_OPORTUNIDADES_PRIORIDAD === p) ? null : p; RT_OPORTUNIDADES_OFFSET = 0; RT_OPORTUNIDADES_EXPANDIDO = null; rtCargarOportunidades(); });
-    prioRow.appendChild(btn);
-  });
-  host.appendChild(prioRow);
-
-  // Revision de posible_rotacion: confianza + filtros derivados (§4). Bug corregido
-  // 2026-07-20: antes se mostraba con solo chequear que hubiera ALGUN caso de rotacion
-  // en todo el periodo (r.por_regla_cumplida.posible_rotacion > 0), sin importar que
-  // tarjeta de estado estuviera seleccionada -- el titulo y los filtros de origen/
-  // destino quedaban pegados arriba de la tabla de CUALQUIER otro estado (ej. "Revisar
-  // devoluciones"), dando la impresion de que esas filas eran de rotacion. Ahora solo
-  // se muestra cuando el estado activo es realmente posible_rotacion.
-  if (RT_OPORTUNIDADES_ESTADO === 'posible_rotacion' && (r.por_regla_cumplida.posible_rotacion || 0) > 0) {
-    host.appendChild(rtEl('h4', { text:'Revisar posible rotación', className:'rt-subtitulo' }));
-    host.appendChild(rtEl('p', { className:'rt-note', text:'Las rotaciones requieren validación por talle y color.' }));
-    // Filtro "Alta confianza" oculto temporalmente (no eliminado del backend): desde
-    // v1.2.0 confianza_rotacion queda fija en "manual" porque el calculo no verifica
-    // coincidencia de talle/color -- mostrar una pestaña que siempre da 0 resultados
-    // confunde mas de lo que ayuda. Reactivar cuando exista esa validacion por variante
-    // (ver ADR-034 en docs/DECISIONS.md).
-    const confRow = rtEl('div', { className:'rt-buscador-row' });
-    [['', 'Todos'], ['manual', 'Revisión manual']].forEach(([valor, etiqueta]) => {
-      const btn = rtEl('button', { className:'btn-sm' + (RT_OPORTUNIDADES_CONFIANZA === valor && valor ? ' rt-kpi-activo' : (!valor && !RT_OPORTUNIDADES_CONFIANZA ? ' rt-kpi-activo' : '')), text: etiqueta });
-      btn.type = 'button';
-      btn.addEventListener('click', () => rtOportunidadesCambiarConfianza(valor || null));
-      confRow.appendChild(btn);
-    });
-    host.appendChild(confRow);
-
-    const rotRow = rtEl('div', { className:'rt-buscador-row' });
-    const selOrigen = rtEl('select'); selOrigen.appendChild(rtEl('option', { attrs:{value:''}, text:'Sucursal origen' }));
-    const selDestino = rtEl('select'); selDestino.appendChild(rtEl('option', { attrs:{value:''}, text:'Sucursal destino' }));
-    RT_CENTROS.forEach(c => {
-      selOrigen.appendChild(rtEl('option', { attrs:{value:c}, text: RT_CENTRO_NOMBRE[c] }));
-      selDestino.appendChild(rtEl('option', { attrs:{value:c}, text: RT_CENTRO_NOMBRE[c] }));
-    });
-    selOrigen.value = RT_OPORTUNIDADES_ROTACION.origen; selDestino.value = RT_OPORTUNIDADES_ROTACION.destino;
-    selOrigen.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.origen = selOrigen.value; rtOportunidadesAplicarRotacion(); });
-    selDestino.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.destino = selDestino.value; rtOportunidadesAplicarRotacion(); });
-    rotRow.appendChild(selOrigen); rotRow.appendChild(selDestino);
-
-    const inpVentas = rtEl('input', { attrs:{ type:'number', min:'0', placeholder:'Mín. ventas destino' } });
-    inpVentas.value = RT_OPORTUNIDADES_ROTACION.ventasDestinoMin;
-    inpVentas.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.ventasDestinoMin = inpVentas.value; rtOportunidadesAplicarRotacion(); });
-    const inpStock = rtEl('input', { attrs:{ type:'number', min:'0', placeholder:'Mín. stock origen' } });
-    inpStock.value = RT_OPORTUNIDADES_ROTACION.stockOrigenMin;
-    inpStock.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.stockOrigenMin = inpStock.value; rtOportunidadesAplicarRotacion(); });
-    const inpCobertura = rtEl('input', { attrs:{ type:'number', min:'0', placeholder:'Mín. cobertura origen (días)' } });
-    inpCobertura.value = RT_OPORTUNIDADES_ROTACION.coberturaOrigenMin;
-    inpCobertura.addEventListener('change', () => { RT_OPORTUNIDADES_ROTACION.coberturaOrigenMin = inpCobertura.value; rtOportunidadesAplicarRotacion(); });
-    rotRow.appendChild(inpVentas); rotRow.appendChild(inpStock); rotRow.appendChild(inpCobertura);
-    host.appendChild(rotRow);
-  }
-
-  if (RT_OPORTUNIDADES_LOADING) {
-    const box = rtEl('div', { className:'rt-progress' });
-    box.appendChild(rtEl('div', { className:'spinner' }));
-    box.appendChild(rtEl('span', { text:'Actualizando...' }));
-    host.appendChild(box);
-    return;
-  }
-
-  const datos = RT_OPORTUNIDADES.data;
-  if (!datos.length) {
-    // Mensaje especifico cuando el filtro activo es reponer_desde_deposito: la regla
-    // se mantiene tal cual (no se relajan umbrales para forzar resultados) -- un
-    // resultado vacio es una respuesta valida, no un error ni una regla rota.
-    const mensajeVacio = RT_OPORTUNIDADES_ESTADO === 'reponer_desde_deposito'
-      ? 'No se encontraron productos que necesiten reposición desde Depósito 90 para este período.'
-      : 'Sin oportunidades para este filtro y período.';
-    // rtEstado() hace container.replaceChildren() -- pasarle "host" directo borraria las
-    // tarjetas de estado, los chips de Prioridad y el formulario de filtro ya agregados
-    // arriba en esta misma funcion, dejando al usuario sin forma de sacar el filtro sin
-    // recargar la pagina (bug reportado 2026-07-20). Se le da un div aislado en su lugar.
-    const vacioWrap = rtEl('div');
-    host.appendChild(vacioWrap);
-    return rtEstado(vacioWrap, 'vacio', mensajeVacio);
-  }
-
-  // Tabla (desktop) -- columnas dependen del estado seleccionado (ver
-  // rtOportunidadesGrupoColumnas). Umbrales/logica de clasificacion viven solo en
-  // croma-api (config/oportunidades.js + motor/oportunidades.js) -- acá solo se
-  // muestran los campos que ya vienen calculados del backend.
-  const columnas = rtOportunidadesGrupoColumnas(RT_OPORTUNIDADES_ESTADO, datos);
-  columnas.push(rrColumnaAccion()); // accion sugerida + rendimiento (campos del servidor, sin recalcular)
-  const headers = columnas.map(c => c.className ? { text: c.header, className: c.className } : c.header);
-  headers.push('Acción');
-  const tablaWrap = rtEl('div', { className:'rt-oportunidades-tabla' });
-  tablaWrap.appendChild(rtTabla(
-    headers,
-    datos,
-    (f) => rtOportunidadesFila(f, columnas),
-    { wrapClassName:'rt-oport-wrap', tableClassName:'rt-oport-tabla' }
-  ));
-  host.appendChild(tablaWrap);
-
-  // Tarjetas (mobile) -- mismo dato, distinta presentacion, activada por CSS (.rt-oportunidades-tabla se
-  // oculta y .rt-oportunidades-cards se muestra por debajo de 700px, ver <style>). Sin
-  // click-to-navigate en toda la tarjeta -- "Ver detalle" explicito, igual que en desktop.
-  const cardsWrap = rtEl('div', { className:'rt-oportunidades-cards' });
-  datos.forEach(f => {
-    const expandido = RT_OPORTUNIDADES_EXPANDIDO === f.Codigo_producto;
-    const card = rtEl('div', { className:'card rt-opp-card' });
-    card.appendChild(rtBadgeEstado(f.estado_principal, f.texto_estado));
-    if (f.estados_secundarios.length) card.appendChild(rtBadgesSecundarios(f.estados_secundarios));
-    card.appendChild(rtEl('div', { className:'rt-opp-card-titulo', text: f.Codigo_producto + ' · ' + f.Nombre_producto }));
-    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: f.Nombre_marca }));
-    card.appendChild(rtEl('div', { className:'rt-opp-card-linea', text: 'Ventas ' + nf.format(f.Ventas_total) + (f.ratio_confiable === false ? ' (muestra chica)' : '') + ' · Stock ' + nf.format(f.Stock_sucursales) + ' (+' + nf.format(rtOportunidadesStockDeposito(f)) + ' depósito 90' + (f.Stock_fallados ? ' · ' + nf.format(f.Stock_fallados) + ' fallados' : '') + ') · Total operativo ' + nf.format(f.Stock_total) }));
-    rrLineasTarjeta(card, f);
-    const btnDetalle = rtEl('button', { className:'btn-sm', text: expandido ? 'Ocultar' : 'Ver detalle' });
-    btnDetalle.type = 'button';
-    btnDetalle.setAttribute('aria-expanded', expandido ? 'true' : 'false');
-    btnDetalle.addEventListener('click', () => rtOportunidadesToggleDetalle(f.Codigo_producto));
-    card.appendChild(btnDetalle);
-    if (expandido) card.appendChild(rtOportunidadesPanelDetalle(f));
-    cardsWrap.appendChild(card);
-  });
-  host.appendChild(cardsWrap);
-
-  const p = RT_OPORTUNIDADES.paginacion;
-  const pag = rtEl('div', { className:'rt-pagination' });
-  pag.appendChild(rtEl('span', { text: 'Mostrando ' + (p.total === 0 ? 0 : p.offset + 1) + '–' + (p.offset + p.devueltos) + ' de ' + nf.format(p.total) }));
-  const btnAnt = rtEl('button', { className:'btn-sm', text:'← Anterior' });
-  btnAnt.type = 'button'; btnAnt.disabled = p.offset === 0;
-  btnAnt.addEventListener('click', () => rtOportunidadesPagina(-1));
-  const btnSig = rtEl('button', { className:'btn-sm', text:'Siguiente →' });
-  btnSig.type = 'button'; btnSig.disabled = (p.offset + p.devueltos) >= p.total;
-  btnSig.addEventListener('click', () => rtOportunidadesPagina(1));
-  pag.appendChild(btnAnt); pag.appendChild(btnSig);
-  host.appendChild(pag);
-}
 
 </script>
-<script src="oportunidades-explicacion.js?v=20261031-1"></script>
+<script src="oportunidades-explicacion.js?v=20261103-1"></script>
+<script src="oportunidades-grupos.js?v=20261103-1"></script>
 <script src="oportunidades-reglas.js?v=20261031-1"></script>
+<script src="oportunidades-vista.js?v=20261103-1"></script>
 <script>
   window.addEventListener('load', function() {
     var splash = document.getElementById('splashScreen');
