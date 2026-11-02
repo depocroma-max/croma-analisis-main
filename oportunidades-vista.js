@@ -405,6 +405,14 @@ function ovFiltrosRotacion(host) {
 
 // ── Celdas de la tabla ───────────────────────────────────────────────────────────────────────────
 function ovNombreSucursal(c) { return RT_CENTRO_NOMBRE[c] || String(c); }
+// Ultimo ingreso del PRODUCTO (el mas reciente entre todos sus talles/colores; el motor lo usa en Ingreso reciente, Stock parado y
+// Posible descuento). Solo la fecha: la cantidad ingresada todavia no la entrega la API. Sin fecha NO se inventa ninguna.
+const OV_NOTA_INGRESO = 'Fecha del último ingreso del producto completo (el más reciente entre todos sus talles y colores); no indica cuántas unidades entraron.';
+function ovTextoIngreso(f) {
+  if (!f.Ultimo_ingreso) return 'Sin ingreso registrado';
+  const dias = f.dias_desde_ultimo_ingreso;
+  return 'Último ingreso: ' + ovFechaCorta(String(f.Ultimo_ingreso).slice(0, 10)) + (dias === null || dias === undefined ? '' : ' (hace ' + nf.format(dias) + (dias === 1 ? ' día)' : ' días)'));
+}
 function ovProductoMeta(f) { return [f.Nombre_marca, f.Nombre_rubro].filter(Boolean).join(' · '); }
 
 function ovCeldaProducto(f) {
@@ -415,6 +423,7 @@ function ovCeldaProducto(f) {
   wrap.appendChild(linea);
   const meta = ovProductoMeta(f);
   if (meta) wrap.appendChild(rtEl('div', { className: 'ov-prod-meta', text: meta }));
+  wrap.appendChild(rtEl('div', { className: 'ov-prod-meta ov-prod-ingreso', text: ovTextoIngreso(f), attrs: { title: OV_NOTA_INGRESO } }));
   return wrap;
 }
 

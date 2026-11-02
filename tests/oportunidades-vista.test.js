@@ -348,3 +348,16 @@ test('notas de superposición: texto corto fijo y la explicación ampliada en un
   assert.equal(ayuda.open, false, 'cerrada por defecto');
   assert.match(ayuda.textContent, /detalle largo/);
 });
+
+test('último ingreso: fecha y días del producto; sin fecha no se inventa ninguna; aclara que no es la cantidad', () => {
+  const env = crearEntorno();
+  const texto = o => env.ev(`ovTextoIngreso(${JSON.stringify(o)})`);
+  assert.equal(texto({ Ultimo_ingreso: '2026-07-24T00:00:00.000Z', dias_desde_ultimo_ingreso: 101 }), 'Último ingreso: 24/07/2026 (hace 101 días)');
+  assert.equal(texto({ Ultimo_ingreso: '2026-10-31T00:00:00.000Z', dias_desde_ultimo_ingreso: 1 }), 'Último ingreso: 31/10/2026 (hace 1 día)');
+  assert.equal(texto({ Ultimo_ingreso: '2026-07-24T00:00:00.000Z' }), 'Último ingreso: 24/07/2026');
+  assert.equal(texto({ Ultimo_ingreso: null, dias_desde_ultimo_ingreso: null }), 'Sin ingreso registrado');
+  const celda = env.ev(`ovCeldaProducto({ Codigo_producto: '1', Nombre_producto: 'X', Ultimo_ingreso: '2026-07-24T00:00:00.000Z', dias_desde_ultimo_ingreso: 101 })`);
+  const linea = celda.buscar(n => n.className.includes('ov-prod-ingreso'))[0];
+  assert.match(linea.textContent, /24\/07\/2026 \(hace 101 días\)/);
+  assert.match(linea.attrs.title, /producto completo.*no indica cuántas unidades/);
+});

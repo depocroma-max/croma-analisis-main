@@ -170,6 +170,7 @@ function rrDetalleOportunidad(panel, f, resp, bloque) {
   panel.appendChild(bloque('Ventas y stock',
     'Ventas del período: ' + nf.format(f.Ventas_total || 0) + ' (' + nf1.format(f.ventas_semana || 0) + ' por semana) · Stock en sucursales: ' + nf.format(f.Stock_sucursales || 0)
     + ' · Depósito 90: ' + nf.format(deposito) + ' · Fallados 93: ' + nf.format(f.Stock_fallados || 0) + ' · Ratio de venta: ' + ratio));
+  if (typeof ovTextoIngreso === 'function') panel.appendChild(bloque('Ingreso', ovTextoIngreso(f) + '. ' + OV_NOTA_INGRESO));
   panel.appendChild(rrBloquePorQue(f, resp));
   if (typeof rrEsAdmin === 'function' && rrEsAdmin()) panel.appendChild(rrBloqueTecnico(f, resp)); // huellas y perfiles: solo administradores
   const rot = acciones.find(a => a.requiere_validacion_variante);
