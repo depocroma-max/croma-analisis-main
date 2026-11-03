@@ -349,15 +349,31 @@ test('notas de superposición: texto corto fijo y la explicación ampliada en un
   assert.match(ayuda.textContent, /detalle largo/);
 });
 
-test('último ingreso: fecha y días del producto; sin fecha no se inventa ninguna; aclara que no es la cantidad', () => {
+test('ingreso de proveedor: última fecha y cantidad, "hace N días" al final del período; null = sin ingreso; API anterior = fecha sin cantidad', () => {
   const env = crearEntorno();
   const texto = o => env.ev(`ovTextoIngreso(${JSON.stringify(o)})`);
-  assert.equal(texto({ Ultimo_ingreso: '2026-07-24T00:00:00.000Z', dias_desde_ultimo_ingreso: 101 }), 'Último ingreso: 24/07/2026 (hace 101 días)');
-  assert.equal(texto({ Ultimo_ingreso: '2026-10-31T00:00:00.000Z', dias_desde_ultimo_ingreso: 1 }), 'Último ingreso: 31/10/2026 (hace 1 día)');
-  assert.equal(texto({ Ultimo_ingreso: '2026-07-24T00:00:00.000Z' }), 'Último ingreso: 24/07/2026');
-  assert.equal(texto({ Ultimo_ingreso: null, dias_desde_ultimo_ingreso: null }), 'Sin ingreso registrado');
-  const celda = env.ev(`ovCeldaProducto({ Codigo_producto: '1', Nombre_producto: 'X', Ultimo_ingreso: '2026-07-24T00:00:00.000Z', dias_desde_ultimo_ingreso: 101 })`);
+  assert.equal(texto({ ingreso_proveedor: { ultima_fecha: '2026-07-24T00:00:00.000Z', ultima_cantidad: 36, unidades_periodo: 0, dias_con_ingreso_periodo: 0 } }), 'Ingreso proveedor: 24/07/2026 · 36 u. (hace 98 días)');
+  assert.equal(texto({ ingreso_proveedor: { ultima_fecha: '2026-10-29T00:00:00.000Z', ultima_cantidad: 3, unidades_periodo: 3, dias_con_ingreso_periodo: 1 } }), 'Ingreso proveedor: 29/10/2026 · 3 u. (hace 1 día)');
+  assert.equal(texto({ ingreso_proveedor: null, Ultimo_ingreso: '2026-07-24T00:00:00.000Z' }), 'Sin ingreso de proveedor registrado', 'null del servidor: no se rellena con otro dato');
+  assert.equal(texto({ Ultimo_ingreso: '2026-07-24T00:00:00.000Z', dias_desde_ultimo_ingreso: 101 }), 'Último ingreso: 24/07/2026 (hace 101 días)', 'API anterior: sin cantidad');
+  assert.equal(texto({ Ultimo_ingreso: null }), 'Sin ingreso registrado');
+  const celda = env.ev(`ovCeldaProducto({ Codigo_producto: '1', Nombre_producto: 'X', ingreso_proveedor: { ultima_fecha: '2026-07-24T00:00:00.000Z', ultima_cantidad: 24, unidades_periodo: 0, dias_con_ingreso_periodo: 0 } })`);
   const linea = celda.buscar(n => n.className.includes('ov-prod-ingreso'))[0];
-  assert.match(linea.textContent, /24\/07\/2026 \(hace 101 días\)/);
-  assert.match(linea.attrs.title, /producto completo.*no indica cuántas unidades/);
+  assert.match(linea.textContent, /24\/07\/2026 · 24 u\./);
+  assert.match(linea.attrs.title, /Depósito 90.*No incluye Fallados 93, transferencias ni rotaciones/);
+});
+
+test('detalle de ingresos: último, lo ingresado en el período y aviso cuando las reglas usan otra fecha', () => {
+  const env = crearEntorno();
+  const bloque = (f, resp = { periodo: { hasta: '2026-10-30' } }) => env.ev(`ovBloqueIngresos(${JSON.stringify(f)}, ${JSON.stringify(resp)})`).textContent;
+  const ip = { ultima_fecha: '2026-09-20T00:00:00.000Z', ultima_cantidad: 36, unidades_periodo: 60, dias_con_ingreso_periodo: 2 };
+  const t = bloque({ ingreso_proveedor: ip, Ultimo_ingreso: '2026-09-20T00:00:00.000Z' });
+  assert.match(t, /Último ingreso: 20\/09\/2026 · 36 unidades \(hace 40 días\)/);
+  assert.match(t, /En el período: 60 unidades en 2 días con ingreso\./);
+  assert.doesNotMatch(t, /reglas de antigüedad usan hoy otro dato/, 'misma fecha: sin aviso');
+  assert.match(bloque({ ingreso_proveedor: ip, Ultimo_ingreso: '2026-10-05T00:00:00.000Z' }), /reglas de antigüedad usan hoy otro dato: último ingreso registrado el 05\/10\/2026 \(incluye Fallados 93 y cualquier talle\)/);
+  assert.match(bloque({ ingreso_proveedor: { ...ip, unidades_periodo: 0, dias_con_ingreso_periodo: 0 } }), /En el período: sin ingresos de proveedor\./);
+  assert.match(bloque({ ingreso_proveedor: { ...ip, dias_con_ingreso_periodo: 1, unidades_periodo: 36 } }), /36 unidades en 1 día con ingreso\./);
+  assert.match(bloque({ ingreso_proveedor: null }), /Sin ingresos de proveedor al Depósito 90 hasta el final del período\./);
+  assert.match(bloque({ Ultimo_ingreso: '2026-07-24T00:00:00.000Z', dias_desde_ultimo_ingreso: 101 }), /no indica cuántas unidades entraron/, 'API anterior');
 });

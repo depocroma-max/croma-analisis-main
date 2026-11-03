@@ -405,13 +405,45 @@ function ovFiltrosRotacion(host) {
 
 // ── Celdas de la tabla ───────────────────────────────────────────────────────────────────────────
 function ovNombreSucursal(c) { return RT_CENTRO_NOMBRE[c] || String(c); }
-// Ultimo ingreso del PRODUCTO (el mas reciente entre todos sus talles/colores; el motor lo usa en Ingreso reciente, Stock parado y
-// Posible descuento). Solo la fecha: la cantidad ingresada todavia no la entrega la API. Sin fecha NO se inventa ninguna.
+// INGRESOS DE PROVEEDOR (informativo: no participa en ninguna regla). La API entrega f.ingreso_proveedor = ultimo ingreso de mercaderia al
+// Deposito 90 (sin Fallados 93, transferencias ni rotaciones) con su cantidad y lo ingresado en el periodo; null = sin ingresos. Con una API
+// anterior el campo no existe (undefined): se muestra la fecha del ultimo ingreso que ya entregaba, sin cantidad. Nunca se inventa un dato.
+const OV_NOTA_INGRESO_PROV = 'Último ingreso de proveedor al Depósito 90 (todos los talles y colores del producto). No incluye Fallados 93, transferencias ni rotaciones.';
 const OV_NOTA_INGRESO = 'Fecha del último ingreso del producto completo (el más reciente entre todos sus talles y colores); no indica cuántas unidades entraron.';
+function ovFechaIngreso(valor) { return ovFechaCorta(String(valor).slice(0, 10)); }
+function ovHaceDias(valor, hasta) {
+  const d = Math.round((Date.parse((hasta || RT_HASTA) + 'T00:00:00Z') - Date.parse(String(valor).slice(0, 10) + 'T00:00:00Z')) / 86400000);
+  return isFinite(d) && d >= 0 ? ' (hace ' + nf.format(d) + (d === 1 ? ' día)' : ' días)') : '';
+}
 function ovTextoIngreso(f) {
+  const ip = f.ingreso_proveedor;
+  if (ip === null) return 'Sin ingreso de proveedor registrado';
+  if (ip && ip.ultima_fecha) return 'Ingreso proveedor: ' + ovFechaIngreso(ip.ultima_fecha) + ' · ' + nf.format(ip.ultima_cantidad) + ' u.' + ovHaceDias(ip.ultima_fecha);
   if (!f.Ultimo_ingreso) return 'Sin ingreso registrado';
   const dias = f.dias_desde_ultimo_ingreso;
-  return 'Último ingreso: ' + ovFechaCorta(String(f.Ultimo_ingreso).slice(0, 10)) + (dias === null || dias === undefined ? '' : ' (hace ' + nf.format(dias) + (dias === 1 ? ' día)' : ' días)'));
+  return 'Último ingreso: ' + ovFechaIngreso(f.Ultimo_ingreso) + (dias === null || dias === undefined ? '' : ' (hace ' + nf.format(dias) + (dias === 1 ? ' día)' : ' días)'));
+}
+function ovNotaTextoIngreso(f) { return f.ingreso_proveedor !== undefined ? OV_NOTA_INGRESO_PROV : OV_NOTA_INGRESO; }
+
+// Bloque del detalle: ultimo ingreso, lo ingresado en el periodo y, si difiere, la fecha que usan hoy las reglas de antiguedad.
+function ovBloqueIngresos(f, resp) {
+  const caja = rtEl('div');
+  const ip = f.ingreso_proveedor;
+  const linea = t => caja.appendChild(rtEl('div', { text: t }));
+  if (ip === undefined) { linea(ovTextoIngreso(f) + '.'); linea(OV_NOTA_INGRESO); return caja; }
+  if (ip === null) linea('Sin ingresos de proveedor al Depósito 90 hasta el final del período.');
+  else {
+    linea('Último ingreso: ' + ovFechaIngreso(ip.ultima_fecha) + ' · ' + nf.format(ip.ultima_cantidad) + ' unidades' + ovHaceDias(ip.ultima_fecha, resp && resp.periodo && resp.periodo.hasta));
+    linea(ip.unidades_periodo > 0
+      ? 'En el período: ' + nf.format(ip.unidades_periodo) + ' unidades en ' + nf.format(ip.dias_con_ingreso_periodo) + (ip.dias_con_ingreso_periodo === 1 ? ' día con ingreso.' : ' días con ingreso.')
+      : 'En el período: sin ingresos de proveedor.');
+  }
+  caja.appendChild(rtEl('div', { className: 'rt-note', text: OV_NOTA_INGRESO_PROV }));
+  // Las reglas de antiguedad (Ingreso reciente, Stock parado, Posible descuento) siguen usando el dato anterior: si difiere, se aclara.
+  const reglas = f.Ultimo_ingreso ? String(f.Ultimo_ingreso).slice(0, 10) : null;
+  const prov = ip && ip.ultima_fecha ? String(ip.ultima_fecha).slice(0, 10) : null;
+  if (reglas && reglas !== prov) caja.appendChild(rtEl('div', { className: 'rt-note', text: 'Las reglas de antigüedad usan hoy otro dato: último ingreso registrado el ' + ovFechaIngreso(reglas) + ' (incluye Fallados 93 y cualquier talle).' }));
+  return caja;
 }
 function ovProductoMeta(f) { return [f.Nombre_marca, f.Nombre_rubro].filter(Boolean).join(' · '); }
 
@@ -423,7 +455,7 @@ function ovCeldaProducto(f) {
   wrap.appendChild(linea);
   const meta = ovProductoMeta(f);
   if (meta) wrap.appendChild(rtEl('div', { className: 'ov-prod-meta', text: meta }));
-  wrap.appendChild(rtEl('div', { className: 'ov-prod-meta ov-prod-ingreso', text: ovTextoIngreso(f), attrs: { title: OV_NOTA_INGRESO } }));
+  wrap.appendChild(rtEl('div', { className: 'ov-prod-meta ov-prod-ingreso', text: ovTextoIngreso(f), attrs: { title: ovNotaTextoIngreso(f) } }));
   return wrap;
 }
 

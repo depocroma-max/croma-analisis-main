@@ -49,6 +49,8 @@ const fakePool = {
         if (estado.retrasoMs) await new Promise(res => setTimeout(res, estado.retrasoMs));
         if (texto.includes('SELECT DISTINCT RTRIM(p.Descripcion_Marca) marca')) return { recordset: CATALOGO_FILAS };
         if (texto.includes('AS ventas_0001') && texto.includes('GROUP BY cod;')) return { recordset: aFilas(productosActuales()) };
+        // Ingresos de proveedor (Deposito 90): sinteticos, derivados del Ultimo_ingreso del fixture (los pares impares no tienen ingreso)
+        if (texto.includes('AS ingreso_prov_fecha')) return { recordset: productosActuales().filter((p, i) => p.Ultimo_ingreso && i % 7 !== 3).map((p, i) => ({ cod: p.Codigo_producto, ingreso_prov_fecha: p.Ultimo_ingreso, ingreso_prov_cantidad: 6 + (i % 5) * 6, ingreso_prov_unidades_periodo: i % 3 === 0 ? 6 + (i % 5) * 6 : 0, ingreso_prov_dias_periodo: i % 3 === 0 ? 1 : 0 })) };
         if (texto.includes('AS ventas_30d')) return { recordset: productosActuales().filter(p => p.Ultima_venta).map(p => ({ cod: p.Codigo_producto, ultima_venta: p.Ultima_venta, ventas_30d: p.Ventas_ultimos_30_dias })) };
         return { recordset: [] }; // otras pestanas: vacias (el harness no simula Sysneo completo)
       },
