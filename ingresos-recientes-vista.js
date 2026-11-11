@@ -44,6 +44,17 @@ function irValorContador(resp, clave) {
   const v = resp.resumen && resp.resumen.por_lectura ? resp.resumen.por_lectura[clave] : undefined;
   return typeof v === 'number' ? v : null;
 }
+// Cantidad de dias del rango (ambos extremos incluidos) o null si las fechas no alcanzan para contarlos.
+function irDiasRango(desde, hasta) {
+  if (!desde || !hasta || desde > hasta) return null;
+  const d = Math.round((Date.parse(hasta + 'T00:00:00Z') - Date.parse(desde + 'T00:00:00Z')) / 86400000) + 1;
+  return isNaN(d) ? null : d;
+}
+function irTextoDiasRango(desde, hasta) {
+  const d = irDiasRango(desde, hasta);
+  if (d === null) return { texto: '', excede: false };
+  return { texto: d + (d === 1 ? ' día' : ' días') + (d > IR_MAX_DIAS ? ' · máximo ' + IR_MAX_DIAS : ''), excede: d > IR_MAX_DIAS };
+}
 function irValidarRango(desde, hasta, corte) {
   if (!desde || !hasta) return 'Elegí las dos fechas.';
   if (desde > hasta) return '"Desde" no puede ser posterior a "Hasta".';
@@ -116,6 +127,28 @@ async function irCargar() {
   if (reintentar) irCargar();
 }
 function irReiniciar() { IR.offset = 0; IR.expandido = null; IR.confirmar = null; }
+// Con Ingresos recientes activa, en escritorio «Sucursales», «Actualizar» y la hora de actualizacion pasan a la barra superior (ahorra una fila).
+// En movil no hay lugar en la barra superior: quedan donde estaban. Son los mismos nodos (mismos ids y eventos), solo cambian de lugar.
+function irUbicarAcciones() {
+  const bar = document.getElementById('rtBar'), top = document.querySelector('header.topbar .top-actions');
+  if (!bar || !top) return;
+  const activa = bar.classList.contains('ir-activa') || bar.classList.contains('ir-en-top');
+  const enTop = bar.classList.contains('ir-activa') && !(typeof ovEsMovil === 'function' && ovEsMovil());
+  const cont = document.querySelector('header.topbar .ir-top-acc');
+  const estado = document.querySelector('.rt-status'), fin = document.querySelector('.fbar-end');
+  if (!estado || !fin) return;
+  if (enTop && !cont) {
+    const c = document.createElement('div'); c.className = 'ir-top-acc';
+    c.appendChild(estado); c.appendChild(fin);
+    top.insertBefore(c, top.firstChild);
+  } else if (!enTop && cont) {
+    bar.appendChild(estado); bar.appendChild(fin); cont.remove();
+  }
+  bar.classList.toggle('ir-en-top', enTop);
+  if (!activa) bar.classList.remove('ir-en-top');
+}
+if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('resize', () => irUbicarAcciones());
+
 function irAplicar(fn, foco) { fn(); if (foco) IR.foco = foco; irReiniciar(); irCargar(); }
 // Redibuja conservando el scroll; despues enfoca 'foco' y deja visible 'mostrar' (selector) por debajo del encabezado fijo de la app.
 function irRedibujar(foco, mostrar) { if (foco) IR.foco = foco; IR.mostrar = mostrar || null; IR.scrollY = window.scrollY; rtRenderVistaActual(); }
@@ -309,6 +342,11 @@ function irControlesFiltro(host, resp) {
     const campo = (rot, id, valor, max) => { const l = rtEl('label', { text: rot + ' ' }); const i = rtEl('input', { className: 'form-control ir-fecha', attrs: { type: 'date', id } }); i.value = valor || ''; if (max) i.setAttribute('max', max); l.appendChild(i); r.appendChild(l); return i; };
     const corte = resp && resp.periodo ? resp.periodo.corte : '';
     const d = campo('Desde', 'irDesde', IR.desde, corte), h = campo('Hasta', 'irHasta', IR.hasta, corte);
+    // al lado de las fechas: cuantos dias se estan consultando (se actualiza al escribir o elegir)
+    const dias = rtEl('span', { className: 'ir-dias-rango', attrs: { id: 'irDiasRango', role: 'status', 'aria-live': 'polite' } });
+    const pintarDias = () => { const t = irTextoDiasRango(d.value, h.value); dias.textContent = t.texto; dias.classList.toggle('ir-dias-excede', t.excede); const e = document.querySelector('.ir-error'); if (e && e.parentNode) { e.parentNode.removeChild(e); IR.errorRango = null; } };
+    [d, h].forEach(x => { x.addEventListener('input', pintarDias); x.addEventListener('change', pintarDias); });
+    pintarDias(); r.appendChild(dias);
     const ap = rtEl('button', { className: 'ir-btn ir-btn-rojo', text: 'Aplicar' }); ap.type = 'submit'; r.appendChild(ap);
     r.addEventListener('submit', e => {
       if (e && e.preventDefault) e.preventDefault();

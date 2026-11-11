@@ -53,6 +53,16 @@ const check = (nombre, ok, detalle) => { resultados.push({ nombre, ok: !!ok, det
     check(T('barra superior compacta: sin tarjeta vacía y altura mínima'), cabeceras.barra.h <= (movil ? 48 : 44) && /rgba\(0, 0, 0, 0\)|transparent/.test(cabeceras.fondo) && cabeceras.borde === '0px', JSON.stringify(cabeceras.barra));
     check(T('altura acumulada hasta las subpestañas'), cabeceras.subnav.bottom <= (movil ? 290 : 235), 'subpestañas terminan en ' + cabeceras.subnav.bottom + ' px');
     if (movil) check(T('controles de la barra cómodos de tocar (≥ 40 px)'), cabeceras.boton.h >= 40, 'alto ' + cabeceras.boton.h);
+    // acciones en la barra superior (escritorio) o en su lugar de siempre (movil)
+    const acc = await page.evaluate(() => { const top = document.querySelector('header.topbar'); const g = id => document.getElementById(id); const r = e => { const b = e.getBoundingClientRect(); return { l: Math.round(b.left), r: Math.round(b.right), t: Math.round(b.top), b: Math.round(b.bottom) }; }; return { suc: !!top.querySelector('#rtBtnSucursales'), act: !!top.querySelector('#rtBtnActualizar'), hdr: Math.round(top.getBoundingClientRect().height), sucR: r(g('rtBtnSucursales')), actR: r(g('rtBtnActualizar')), barra: getComputedStyle(g('rtBar')).display, sub: Math.round(document.querySelector('.ov-subnav').getBoundingClientRect().top) }; });
+    if (!movil) {
+      check(T('escritorio: «Sucursales» y «Actualizar» están en la barra superior y la fila de acciones desaparece'), acc.suc && acc.act && acc.barra === 'none' && acc.sucR.b <= acc.hdr && acc.actR.b <= acc.hdr, JSON.stringify(acc));
+      await page.locator('#rtBtnSucursales').click(); await page.waitForTimeout(300);
+      const pn = await page.evaluate(() => { const b = document.getElementById('rtSucursalesPanel').getBoundingClientRect(); return { l: Math.round(b.left), r: Math.round(b.right), t: Math.round(b.top), vw: innerWidth, visible: document.elementFromPoint(b.left + 20, b.top + 20)?.closest('#rtSucursalesPanel') !== null }; });
+      check(T('panel de sucursales desde la barra superior: dentro de la pantalla y por encima del contenido'), pn.l >= 0 && pn.r <= pn.vw && pn.visible, JSON.stringify(pn));
+      await foto(page, 'alineado-07-acciones-en-barra-superior');
+      await page.keyboard.press('Escape'); await page.locator('#rtBtnSucursales').click(); await page.waitForTimeout(200);
+    } else check(T('móvil: las acciones siguen bajo la barra superior (no caben en ella)'), !acc.suc && !acc.act && acc.barra !== 'none', JSON.stringify(acc));
     // teclado: el panel queda justo despues de la linea de alcance; Escape lo cierra y devuelve el foco
     await page.locator('.ir-alcance-btn').focus(); await page.keyboard.press('Enter');
     await page.waitForSelector('#irPanelSuc');
@@ -155,9 +165,12 @@ const check = (nombre, ok, detalle) => { resultados.push({ nombre, ok: !!ok, det
     await page.getByRole('button', { name: 'Personalizado' }).click();
     await page.waitForSelector('#irDesde');
     await page.fill('#irDesde', '2026-03-01'); await page.fill('#irHasta', '2026-11-10');
+    check(T('rango personalizado: al lado de las fechas dice cuántos días se consultan (y avisa si pasa el máximo)'), /255 días · máximo 180/.test(await texto(page, '#irDiasRango')) && await page.locator('#irDiasRango.ir-dias-excede').count() === 1, await texto(page, '#irDiasRango'));
     await page.locator('.ir-rango button[type="submit"]').click();
     check(T('rango > 180 días muestra error y no consulta'), /180 días/.test(await page.locator('.ir-error').innerText().catch(() => '')), '');
     await page.fill('#irDesde', '2026-10-20'); await page.fill('#irHasta', '2026-11-10');
+    check(T('rango personalizado: 20/10 al 10/11 = 22 días, visible junto a Hasta'), (await texto(page, '#irDiasRango')).trim() === '22 días' && await page.evaluate(() => { const h = document.getElementById('irHasta').getBoundingClientRect(), d = document.getElementById('irDiasRango').getBoundingClientRect(); return d.left >= h.left && Math.abs(d.top - h.top) < 40; }), await texto(page, '#irDiasRango'));
+    await foto(page, 'alineado-08-rango-personalizado-dias');
     await page.locator('.ir-rango button[type="submit"]').click(); await page.waitForTimeout(700);
     check(T('rango válido consulta con desde/hasta'), pedidos.some(p => p.get('desde') === '2026-10-20' && p.get('hasta') === '2026-11-10'), '');
     // paginación (60 d tiene > 50 códigos)

@@ -254,7 +254,7 @@ const esperar = (ms) => new Promise(r => setTimeout(r, ms));
     await page.click('#rtTabs .tab[data-view="dashboard"]').catch(() => {}); await page.waitForTimeout(600);
     await irAIngresos();
     // selección global: quitar Perito Moreno desde el botón de la barra
-    await page.locator('#rtBar button', { hasText: /Sucursales/ }).click(); await page.waitForTimeout(400);
+    await page.locator('#rtBtnSucursales').click(); await page.waitForTimeout(400);
     { const bb = await page.locator('#rtSucursalesPanel').boundingBox(); check(T('selección global: el panel de sucursales queda dentro de la pantalla'), bb && bb.x >= 0 && bb.x + bb.width <= vp.width, JSON.stringify(bb)); await foto('real-09a-panel-sucursales-global'); }
     await page.locator('.rt-suc-opcion', { hasText: 'Perito Moreno' }).click();
     await page.locator('.rt-suc-aplicar').click(); await page.waitForTimeout(1500);
@@ -266,7 +266,7 @@ const esperar = (ms) => new Promise(r => setTimeout(r, ms));
     check(T('selección global: el alcance de la vista lo informa'), /Perito Moreno/.test(alcG) && /barra superior|Sucursales/.test(alcG) || (movil && /4 sucursales/.test(alcG)), alcG.replace(/\n/g, ' '));
     await foto('real-09-seleccion-global');
     // restaurar la selección global
-    await page.locator('#rtBar button', { hasText: /Sucursales/ }).click(); await page.waitForTimeout(300);
+    await page.locator('#rtBtnSucursales').click(); await page.waitForTimeout(300);
     await page.locator('.rt-suc-opcion', { hasText: 'Perito Moreno' }).click(); await page.locator('.rt-suc-aplicar').click(); await page.waitForTimeout(1500);
     if (!(await page.locator(filas).count())) await esperarFilas();
     check(T('selección global restaurada: vuelve a las 5 sucursales operativas'), new URL(ultimoPedido()).searchParams.get('sucursales') === '0001,0005,0010,0012,0014', new URL(ultimoPedido()).searchParams.get('sucursales'));

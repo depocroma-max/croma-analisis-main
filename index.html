@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="croma-ds.css?v=20260714-1">
   <link rel="stylesheet" href="oportunidades-reglas.css?v=20261031-1">
   <link rel="stylesheet" href="oportunidades-vista.css?v=20261103-1">
-  <link rel="stylesheet" href="ingresos-recientes-vista.css?v=20261111-2">
+  <link rel="stylesheet" href="ingresos-recientes-vista.css?v=20261111-3">
   <style>
     /* --black, --white, --gray-100..800 y --accent ya vienen de croma-ds.css (valores
        idénticos, una sola fuente de verdad). Acá solo lo que croma-ds.css no define:
@@ -2605,6 +2605,7 @@ function rtRenderVistaActual() {
   // En Oportunidades > Ingresos recientes el periodo global (Desde/Hasta) no aplica: la barra oculta esos campos para dejar lugar a la lista.
   const barra = document.getElementById('rtBar');
   if (barra) barra.classList.toggle('ir-activa', RT_VIEW === 'oportunidades' && typeof ovSubvistaActual === 'function' && ovSubvistaActual() === 'ingresos');
+  if (typeof irUbicarAcciones === 'function') irUbicarAcciones();
   host.replaceChildren();
   if (RT_VIEW === 'dashboard') renderRTDashboard(host);
   else if (RT_VIEW === 'marcas') renderRTMarcas(host);
@@ -4988,7 +4989,7 @@ function rtOportunidadesPanelDetalle(f) {
 <script src="oportunidades-grupos.js?v=20261103-1"></script>
 <script src="oportunidades-reglas.js?v=20261031-1"></script>
 <script src="oportunidades-vista.js?v=20261103-1"></script>
-<script src="ingresos-recientes-vista.js?v=20261111-2"></script>
+<script src="ingresos-recientes-vista.js?v=20261111-3"></script>
 <script>
   window.addEventListener('load', function() {
     var splash = document.getElementById('splashScreen');

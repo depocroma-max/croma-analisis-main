@@ -47,6 +47,17 @@ test('parametros de consulta: rango inicial dias=30, sucursales siempre explicit
   assert.ok(!/dias=/.test(q("{ personalizado: true, dias: 30, desde: '2026-10-01', hasta: '2026-10-31', tipo: '', lectura: '', orden: 'prioridad', offset: 0 }", ['0001'], null)), 'con rango no se manda dias');
 });
 
+test('rango personalizado: cantidad de días consultados (ambos extremos incluidos) y aviso si supera el máximo', () => {
+  const env = crearEntorno();
+  const t = (d, h) => plano(env.ev(`irTextoDiasRango(${JSON.stringify(d)}, ${JSON.stringify(h)})`));
+  assert.equal(t('2026-11-01', '2026-11-01').texto, '1 día');
+  assert.equal(t('2026-10-12', '2026-11-10').texto, '30 días');
+  assert.equal(t('2026-10-01', '2026-11-10').texto, '41 días');
+  assert.equal(t('2026-05-01', '2026-10-27').texto, '180 días'); assert.equal(t('2026-05-01', '2026-10-27').excede, false);
+  assert.match(t('2026-05-01', '2026-10-28').texto, /181 días · máximo 180/); assert.equal(t('2026-05-01', '2026-10-28').excede, true);
+  assert.equal(t('', '2026-11-10').texto, '', 'sin una fecha no se cuenta'); assert.equal(t('2026-11-10', '2026-11-01').texto, '', 'invertido: no se cuenta');
+});
+
 test('rango personalizado: máximo 180 días, hasta no posterior al corte y orden de fechas', () => {
   const env = crearEntorno();
   const v = (d, h, c) => env.ev(`irValidarRango(${JSON.stringify(d)}, ${JSON.stringify(h)}, ${JSON.stringify(c)})`);

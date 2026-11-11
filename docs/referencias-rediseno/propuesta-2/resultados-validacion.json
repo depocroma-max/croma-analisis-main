@@ -1,22 +1,32 @@
 {
-  "fecha": "2026-11-11T14:49:02.411Z",
-  "total": 106,
+  "fecha": "2026-11-11T15:22:59.059Z",
+  "total": 113,
   "fallidas": 0,
   "resultados": [
     {
       "nombre": "[1280] alineado: el primer producto entra en la primera pantalla (filtros y detalle cerrados)",
       "ok": true,
-      "detalle": "{\"top\":544,\"bottom\":598,\"alto\":800}"
+      "detalle": "{\"top\":508,\"bottom\":562,\"alto\":800}"
     },
     {
       "nombre": "[1280] barra superior compacta: sin tarjeta vacía y altura mínima",
       "ok": true,
-      "detalle": "{\"top\":84,\"bottom\":120,\"h\":36}"
+      "detalle": "{\"top\":0,\"bottom\":0,\"h\":0}"
     },
     {
       "nombre": "[1280] altura acumulada hasta las subpestañas",
       "ok": true,
-      "detalle": "subpestañas terminan en 218 px"
+      "detalle": "subpestañas terminan en 182 px"
+    },
+    {
+      "nombre": "[1280] escritorio: «Sucursales» y «Actualizar» están en la barra superior y la fila de acciones desaparece",
+      "ok": true,
+      "detalle": "{\"suc\":true,\"act\":true,\"hdr\":64,\"sucR\":{\"l\":821,\"r\":954,\"t\":14,\"b\":50},\"actR\":{\"l\":964,\"r\":1072,\"t\":14,\"b\":50},\"barra\":\"none\",\"sub\":143}"
+    },
+    {
+      "nombre": "[1280] panel de sucursales desde la barra superior: dentro de la pantalla y por encima del contenido",
+      "ok": true,
+      "detalle": "{\"l\":614,\"r\":954,\"t\":56,\"vw\":1280,\"visible\":true}"
     },
     {
       "nombre": "[1280] teclado: tras abrir el panel, Tab entra a las acciones del panel",
@@ -66,7 +76,7 @@
     {
       "nombre": "[1280] al abrir un detalle con scroll, el encabezado fijo deja visibles el producto y el control enfocado",
       "ok": true,
-      "detalle": "{\"h\":64,\"filaTop\":407,\"focoTop\":423,\"focoBottom\":445,\"vh\":800}"
+      "detalle": "{\"h\":64,\"filaTop\":370,\"focoTop\":386,\"focoBottom\":409,\"vh\":800}"
     },
     {
       "nombre": "[1280] teclado: Escape cierra el detalle y el foco vuelve al botón Detalle",
@@ -129,9 +139,19 @@
       "detalle": "B1113"
     },
     {
+      "nombre": "[1280] rango personalizado: al lado de las fechas dice cuántos días se consultan (y avisa si pasa el máximo)",
+      "ok": true,
+      "detalle": "255 días · máximo 180"
+    },
+    {
       "nombre": "[1280] rango > 180 días muestra error y no consulta",
       "ok": true,
       "detalle": ""
+    },
+    {
+      "nombre": "[1280] rango personalizado: 20/10 al 10/11 = 22 días, visible junto a Hasta",
+      "ok": true,
+      "detalle": "22 días"
     },
     {
       "nombre": "[1280] rango válido consulta con desde/hasta",
@@ -161,7 +181,7 @@
     {
       "nombre": "[1280] atrasado: el aviso es visible en la primera pantalla y compacto",
       "ok": true,
-      "detalle": "{\"top\":340,\"bottom\":393,\"alto\":52,\"vh\":800}"
+      "detalle": "{\"top\":304,\"bottom\":356,\"alto\":52,\"vh\":800}"
     },
     {
       "nombre": "[1280] atrasado: contadores sin clasificar muestran \"—\" (no 0) y Historial insuficiente muestra el total",
@@ -181,7 +201,7 @@
     {
       "nombre": "[1280] panel de sucursales: nombre y acción en la primera línea de cada local",
       "ok": true,
-      "detalle": "{\"nombreTop\":419,\"btnTop\":412,\"btnAlto\":32,\"datosTop\":0,\"nombreBottom\":438,\"nombreLeft\":37,\"btnLeft\":1169,\"nombreRight\":289}"
+      "detalle": "{\"nombreTop\":383,\"btnTop\":376,\"btnAlto\":32,\"datosTop\":0,\"nombreBottom\":401,\"nombreLeft\":37,\"btnLeft\":1169,\"nombreRight\":289}"
     },
     {
       "nombre": "[1280] panel con nombre largo: sin desborde horizontal y el botón queda dentro de la pantalla",
@@ -277,6 +297,11 @@
       "nombre": "[375] controles de la barra cómodos de tocar (≥ 40 px)",
       "ok": true,
       "detalle": "alto 40"
+    },
+    {
+      "nombre": "[375] móvil: las acciones siguen bajo la barra superior (no caben en ella)",
+      "ok": true,
+      "detalle": "{\"suc\":false,\"act\":false,\"hdr\":64,\"sucR\":{\"l\":14,\"r\":144,\"t\":78,\"b\":118},\"actR\":{\"l\":152,\"r\":254,\"t\":78,\"b\":118},\"barra\":\"flex\",\"sub\":175}"
     },
     {
       "nombre": "[375] teclado: tras abrir el panel, Tab entra a las acciones del panel",
@@ -399,9 +424,19 @@
       "detalle": "B1113"
     },
     {
+      "nombre": "[375] rango personalizado: al lado de las fechas dice cuántos días se consultan (y avisa si pasa el máximo)",
+      "ok": true,
+      "detalle": "255 días · máximo 180"
+    },
+    {
       "nombre": "[375] rango > 180 días muestra error y no consulta",
       "ok": true,
       "detalle": ""
+    },
+    {
+      "nombre": "[375] rango personalizado: 20/10 al 10/11 = 22 días, visible junto a Hasta",
+      "ok": true,
+      "detalle": "22 días"
     },
     {
       "nombre": "[375] rango válido consulta con desde/hasta",
