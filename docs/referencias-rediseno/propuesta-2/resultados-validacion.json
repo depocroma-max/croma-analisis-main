@@ -1,12 +1,12 @@
 {
-  "fecha": "2026-11-11T13:57:57.513Z",
+  "fecha": "2026-11-11T14:49:02.411Z",
   "total": 106,
   "fallidas": 0,
   "resultados": [
     {
       "nombre": "[1280] alineado: el primer producto entra en la primera pantalla (filtros y detalle cerrados)",
       "ok": true,
-      "detalle": "{\"top\":539,\"bottom\":594,\"alto\":800}"
+      "detalle": "{\"top\":544,\"bottom\":598,\"alto\":800}"
     },
     {
       "nombre": "[1280] barra superior compacta: sin tarjeta vacía y altura mínima",
@@ -66,7 +66,7 @@
     {
       "nombre": "[1280] al abrir un detalle con scroll, el encabezado fijo deja visibles el producto y el control enfocado",
       "ok": true,
-      "detalle": "{\"h\":64,\"filaTop\":402,\"focoTop\":418,\"focoBottom\":440,\"vh\":800}"
+      "detalle": "{\"h\":64,\"filaTop\":407,\"focoTop\":423,\"focoBottom\":445,\"vh\":800}"
     },
     {
       "nombre": "[1280] teclado: Escape cierra el detalle y el foco vuelve al botón Detalle",

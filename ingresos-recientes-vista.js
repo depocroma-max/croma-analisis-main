@@ -14,7 +14,11 @@ const IR_LECTURAS = [
   ['en_observacion', 'En observación'], ['agotado_con_ventas', 'Vendió y agotado'], ['con_ventas', 'Con ventas'],
 ];
 const IR_TONO = { sin_ventas_con_stock: 'danger', historial_insuficiente: 'warning', sin_exposicion: 'neutral', en_observacion: 'neutral', agotado_con_ventas: 'info', con_ventas: 'success' };
-const IR_ORDENES = [['prioridad', 'Más urgentes primero'], ['ingreso_desc', 'Ingreso más reciente'], ['ingreso_asc', 'Ingreso más antiguo'], ['ventas_desc', 'Más ventas'], ['ventas_asc', 'Menos ventas']];
+const IR_ORDENES = [['prioridad', 'Más urgentes primero'], ['ingreso_desc', 'Ingreso más reciente'], ['ingreso_asc', 'Ingreso más antiguo'], ['ventas_desc', 'Más ventas'], ['ventas_asc', 'Menos ventas'],
+  ['producto_asc', 'Producto A–Z'], ['producto_desc', 'Producto Z–A'], ['dias_asc', 'Días con stock: menor a mayor'], ['dias_desc', 'Días con stock: mayor a menor'],
+  ['stock_asc', 'Stock de sucursales: menor a mayor'], ['stock_desc', 'Stock de sucursales: mayor a menor'], ['deposito_asc', 'Depósito 90: menor a mayor'], ['deposito_desc', 'Depósito 90: mayor a menor'], ['lectura_desc', 'Lectura: menos urgentes primero']];
+// Columnas ordenables de la tabla: [asc, desc]. El orden lo hace la API sobre TODOS los códigos (no solo la página visible); los nulos quedan al final.
+const IR_ORDEN_COLUMNA = { 'Producto': ['producto_asc', 'producto_desc'], 'Último ingreso': ['ingreso_asc', 'ingreso_desc'], 'Ventas obs.': ['ventas_asc', 'ventas_desc'], 'Días con stock': ['dias_asc', 'dias_desc'], 'Stock suc.': ['stock_asc', 'stock_desc'], 'Dep. 90': ['deposito_asc', 'deposito_desc'], 'Lectura': ['prioridad', 'lectura_desc'] };
 const IR_TIPOS = [['', 'Todos los ingresos'], ['primer_ingreso', 'Primer ingreso'], ['reingreso', 'Reingreso']];
 const IR_TIPO_TEXTO = { primer_ingreso: 'Primer ingreso', reingreso: 'Reingreso', indeterminado: 'Ingreso sin verificar' };
 
@@ -461,7 +465,17 @@ function irTabla(datos, resp) {
   const fechaStock = irFechaStock(resp);
   const cols = [['Producto', 'ir-c-prod'], ['Último ingreso', 'ir-c-ing'], ['Ventas obs.', 'ir-c-num'], ['Días con stock', 'ir-c-num'], ['Stock suc.', 'ir-c-num', fechaStock], ['Dep. 90', 'ir-c-num', 'sin fecha'], ['Lectura', 'ir-c-lect'], ['', 'ir-c-det']];
   const thead = rtEl('thead'), trh = rtEl('tr');
-  cols.forEach(([t, cls, sub]) => { const th = rtEl('th', { className: cls, text: t, attrs: { scope: 'col' } }); if (sub) th.appendChild(rtEl('span', { className: 'ir-th-sub', text: sub })); if (!t) th.appendChild(rtEl('span', { className: 'ov-solo-lectores', text: 'Detalle' })); trh.appendChild(th); });
+  cols.forEach(([t, cls, sub]) => {
+    const par = IR_ORDEN_COLUMNA[t];
+    const activo = par ? (IR.orden === par[0] ? 'ascending' : IR.orden === par[1] ? 'descending' : null) : null;
+    const th = rtEl('th', { className: cls + (par ? ' ir-th-orden' : ''), attrs: { scope: 'col' } });
+    if (activo) th.setAttribute('aria-sort', activo);
+    if (par) {
+      // un clic ordena de menor a mayor (o A–Z); otro clic invierte. El orden "Más urgentes primero" se recupera desde el selector.
+      const b = irBoton(t + (activo ? (activo === 'ascending' ? ' ▲' : ' ▼') : ''), 'ir-th-btn', () => irAplicar(() => { IR.orden = activo === 'ascending' ? par[1] : par[0]; }, 'th-' + par[0]), { 'data-ir-foco': 'th-' + par[0], 'aria-label': 'Ordenar por ' + t + (activo === 'ascending' ? ', de mayor a menor' : ', de menor a mayor') });
+      th.appendChild(b);
+    } else th.textContent = t;
+    if (sub) th.appendChild(rtEl('span', { className: 'ir-th-sub', text: sub })); if (!t) th.appendChild(rtEl('span', { className: 'ov-solo-lectores', text: 'Detalle' })); trh.appendChild(th); });
   thead.appendChild(trh); tabla.appendChild(thead);
   const tbody = rtEl('tbody');
   datos.forEach(f => {

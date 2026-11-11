@@ -55,3 +55,6 @@ Un franja inferior del harness indica siempre **«datos SIMULADOS · escenario �
 
 ## Cambio posterior (integración con datos reales)
 La tarjeta móvil junta marca/rubro y «Detalle» en un renglón y el panel «Sucursales» de la barra global queda dentro de la pantalla en móvil. Detalle y comparación con la API real: `../integracion-real/README.md`.
+
+## Ajuste posterior: orden por columna y centrado
+Los encabezados de la tabla ordenan de menor a mayor (y a la inversa) con la API; todas las columnas, salvo Producto, van centradas. Requiere `croma-api` con los nuevos valores de `orden`.
