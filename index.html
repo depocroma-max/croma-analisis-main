@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="croma-ds.css?v=20260714-1">
   <link rel="stylesheet" href="oportunidades-reglas.css?v=20261031-1">
   <link rel="stylesheet" href="oportunidades-vista.css?v=20261103-1">
+  <link rel="stylesheet" href="ingresos-recientes-vista.css?v=20261111-1">
   <style>
     /* --black, --white, --gray-100..800 y --accent ya vienen de croma-ds.css (valores
        idénticos, una sola fuente de verdad). Acá solo lo que croma-ds.css no define:
@@ -626,6 +627,7 @@
       .wrap{padding:14px 14px 60px}
       .fbar{gap:8px}
       .fbar-end{margin-left:0;width:100%}
+      .rt-suc-panel{right:auto;left:0;width:min(340px,calc(100vw - 48px))} /* el boton queda a la izquierda: anclar a la izquierda para que el panel no salga de la pantalla */
       .dash-grid{grid-template-columns:1fr}
       .topbar{padding:0 .85rem;gap:.6rem}
       .brand{min-width:0}
@@ -2600,6 +2602,9 @@ function rtFiltroTexto() {
 function rtRenderVistaActual() {
   const host = document.getElementById('rtPanelHost');
   if (!host) return;
+  // En Oportunidades > Ingresos recientes el periodo global (Desde/Hasta) no aplica: la barra oculta esos campos para dejar lugar a la lista.
+  const barra = document.getElementById('rtBar');
+  if (barra) barra.classList.toggle('ir-activa', RT_VIEW === 'oportunidades' && typeof ovSubvistaActual === 'function' && ovSubvistaActual() === 'ingresos');
   host.replaceChildren();
   if (RT_VIEW === 'dashboard') renderRTDashboard(host);
   else if (RT_VIEW === 'marcas') renderRTMarcas(host);
@@ -4983,6 +4988,7 @@ function rtOportunidadesPanelDetalle(f) {
 <script src="oportunidades-grupos.js?v=20261103-1"></script>
 <script src="oportunidades-reglas.js?v=20261031-1"></script>
 <script src="oportunidades-vista.js?v=20261103-1"></script>
+<script src="ingresos-recientes-vista.js?v=20261111-1"></script>
 <script>
   window.addEventListener('load', function() {
     var splash = document.getElementById('splashScreen');

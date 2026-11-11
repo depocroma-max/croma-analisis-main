@@ -21,6 +21,9 @@ if (argv['sin-senal']) delete process.env.OPORTUNIDADES_PERFILES_HABILITADOS; el
 
 const U = require(API + '/scripts/fixtures/oportunidades-universo-sintetico');
 const estado = { retrasoMs: 0, universo: 'normal' };
+// Ingresos recientes (propuesta visual 2): escenarios SIMULADOS con el router real de croma-api y un fixture sintetico (ver ingresos-fixture.js).
+const IR = require('./ingresos-fixture');
+const estadoIR = { escenario: 'alineado', vacio: false, error: false, retrasoMs: 0 };
 const productosActuales = () => {
   const todos = U.universo();
   if (estado.universo === 'vacio') return [];
@@ -46,6 +49,12 @@ const fakePool = {
     const r = {
       input(n, t, v) { inputs[n] = v; return r; },
       async query(texto) {
+        if (texto.includes('#ref_ir')) { // GET /analisis/ingresos-recientes
+          if (estadoIR.retrasoMs) await new Promise(res => setTimeout(res, estadoIR.retrasoMs));
+          if (estadoIR.error) throw new Error('error simulado del harness (Ingresos recientes)');
+          const recordsets = IR.consultar(texto, inputs, estadoIR);
+          return { recordsets, recordset: recordsets[0] };
+        }
         if (estado.retrasoMs) await new Promise(res => setTimeout(res, estado.retrasoMs));
         if (texto.includes('SELECT DISTINCT RTRIM(p.Descripcion_Marca) marca')) return { recordset: CATALOGO_FILAS };
         if (texto.includes('AS ventas_0001') && texto.includes('GROUP BY cod;')) return { recordset: aFilas(productosActuales()) };
@@ -75,6 +84,19 @@ app.use(express.json());
 app.get('/__h/senal', (q, s) => { if (q.query.valor === '1') process.env.OPORTUNIDADES_PERFILES_HABILITADOS = '1'; else delete process.env.OPORTUNIDADES_PERFILES_HABILITADOS; s.json({ senal: process.env.OPORTUNIDADES_PERFILES_HABILITADOS || null }); });
 app.get('/__h/retraso', (q, s) => { estado.retrasoMs = Number(q.query.ms || 0); s.json(estado); });
 app.get('/__h/universo', (q, s) => { estado.universo = q.query.n || 'normal'; require(API + '/routes/analisis').invalidarCacheOportunidades(); s.json(estado); });
+// Control en caliente de Ingresos recientes: /__h/ir?escenario=alineado|atrasado&vacio=0|1&error=0|1&retraso=ms (sin parametros: devuelve el estado)
+const irRouter = require(API + '/routes/ingresos-recientes');
+const t0IR = Date.now();
+irRouter.__fijarReloj(() => new Date(Date.parse(IR.HOY_ISO) + (Date.now() - t0IR))); // "hoy" fijo (2026-11-11 12:00 AR) que avanza: la cache de 3 min / 30 s sigue funcionando
+app.get('/__h/ir', (q, s) => {
+  if (q.query.escenario) estadoIR.escenario = q.query.escenario === 'atrasado' ? 'atrasado' : 'alineado';
+  if (q.query.vacio !== undefined) estadoIR.vacio = q.query.vacio === '1';
+  if (q.query.error !== undefined) estadoIR.error = q.query.error === '1';
+  if (q.query.retraso !== undefined) estadoIR.retrasoMs = Number(q.query.retraso) || 0;
+  if (Object.keys(q.query).length) irRouter.__limpiarCache();
+  s.json(estadoIR);
+});
+app.use('/analisis/ingresos-recientes', irRouter);
 app.use('/analisis/oportunidades/perfiles', require(API + '/routes/oportunidades-perfiles'));
 app.use('/analisis/oportunidades/simulaciones', require(API + '/routes/oportunidades-simulaciones'));
 app.use('/analisis/oportunidades/activaciones', require(API + '/routes/oportunidades-activaciones'));
@@ -92,7 +114,9 @@ app.get(['/', '/index.html'], (req, res) => {
     const token = jwt.sign({ id: 1, usuario: 'tester', rol, exp }, process.env.JWT_SECRET, { algorithm: 'HS256' });
     inyeccion = `<script>sessionStorage.setItem('croma_token', ${JSON.stringify(token)});</script>`;
   } else inyeccion = '<script>sessionStorage.removeItem("croma_token");localStorage.removeItem("croma_token");</script>';
-  res.type('html').send(html.replace('<head>', '<head>' + inyeccion));
+  // Aviso fijo SOLO del harness: identifica que los datos de Ingresos recientes son simulados y en que escenario esta.
+  const aviso = '<script>(function(){var b=document.createElement("div");b.id="harnessAviso";b.setAttribute("role","note");b.style.cssText="position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#111;color:#fff;font:10px/14px sans-serif;padding:0 8px;text-align:center;opacity:.9;pointer-events:none";document.addEventListener("DOMContentLoaded",function(){document.body.appendChild(b);});function t(){fetch("/__h/ir").then(function(r){return r.json()}).then(function(e){b.textContent="HARNESS · Ingresos recientes: datos SIMULADOS · escenario "+e.escenario+(e.vacio?" · vacio":"")+(e.error?" · error":"")}).catch(function(){})}t();setInterval(t,2000);})();</script>';
+  res.type('html').send(html.replace('<head>', '<head>' + inyeccion + aviso));
 });
 app.use(express.static(FRONT));
 process.on('exit', () => { try { rotDb.close(); } catch (e) { /* ya cerrada */ } try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) { /* en uso: queda en tmpdir */ } });

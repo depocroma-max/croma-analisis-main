@@ -1,0 +1,933 @@
+{
+  "generado": "2026-11-11T13:56:11.652Z",
+  "origen": "croma-api local (localhost:3001) + Sysneo real, solo lectura",
+  "total": 173,
+  "ok": 173,
+  "tiempos": [
+    {
+      "tam": "1280",
+      "paso": "consulta inicial (clic en la subpestaña → filas visibles)",
+      "ms": 19836,
+      "api_ms": 19250
+    },
+    {
+      "tam": "1280",
+      "paso": "paginación (clic en página 2 → filas)",
+      "ms": 797,
+      "api_ms": 11
+    },
+    {
+      "tam": "1280",
+      "paso": "período 60 días (clic → filas)",
+      "ms": 399,
+      "api_ms": 12
+    },
+    {
+      "tam": "1280",
+      "paso": "carga de la app hasta pestañas (sin Ingresos)",
+      "ms": 321
+    },
+    {
+      "tam": "1280",
+      "paso": "respuestas observadas de /analisis/ingresos-recientes (todas)",
+      "ms": 19250,
+      "detalle": "n=21, mediana=11 ms, máx=19250 ms"
+    },
+    {
+      "tam": "375",
+      "paso": "consulta inicial (clic en la subpestaña → filas visibles)",
+      "ms": 660,
+      "api_ms": 6
+    },
+    {
+      "tam": "375",
+      "paso": "paginación (clic en página 2 → filas)",
+      "ms": 816,
+      "api_ms": 12
+    },
+    {
+      "tam": "375",
+      "paso": "período 60 días (clic → filas)",
+      "ms": 391,
+      "api_ms": 11
+    },
+    {
+      "tam": "375",
+      "paso": "carga de la app hasta pestañas (sin Ingresos)",
+      "ms": 317
+    },
+    {
+      "tam": "375",
+      "paso": "respuestas observadas de /analisis/ingresos-recientes (todas)",
+      "ms": 15,
+      "detalle": "n=21, mediana=9 ms, máx=15 ms"
+    }
+  ],
+  "resultados": [
+    {
+      "nombre": "[1280] consulta inicial: usa dias=30, sucursales explícitas y limit=50",
+      "ok": true,
+      "detalle": "/analisis/ingresos-recientes?dias=30&sucursales=0001,0005,0010,0012,0014&limit=50&offset=0"
+    },
+    {
+      "nombre": "[1280] el primer producto entra en la primera pantalla con datos reales",
+      "ok": true,
+      "detalle": "{\"top\":539,\"bottom\":596,\"alto\":800}"
+    },
+    {
+      "nombre": "[1280] 30 días: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[1280] 30 días: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[1280] 30 días: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[1280] 30 días: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "6 etiquetas"
+    },
+    {
+      "nombre": "[1280] 30 días: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 31 ms (cache)"
+    },
+    {
+      "nombre": "[1280] alcance y estado de stock reflejan sucursales.estado_general de la API",
+      "ok": true,
+      "detalle": "API alineado · «Sucursales: Paseo, Wave, Perito Moreno, Centenario, Roca Stock al día · 10/11 ▾»"
+    },
+    {
+      "nombre": "[1280] encabezado: desde/hasta/corte/días salen de periodo",
+      "ok": true,
+      "detalle": "Último ingreso entre el 12/10/2026 y el 10/11/2026 · 30 días · corte 10/11/2026 (cierre de ayer)"
+    },
+    {
+      "nombre": "[1280] Información: fecha de stock por sucursal y ventas observadas hasta la fecha de la API",
+      "ok": true,
+      "detalle": "STOCK DE SUCURSALES Paseo al 10/11 · Wave al 10/11 · Perito Moreno al 10/11 · Centenario al 10/11 · Roca al 10/11. Cada local informa la fecha a la que corresponde su stock; si alguno está atrasado respecto del corte, no se calculan días co"
+    },
+    {
+      "nombre": "[1280] Información: Depósito 90 sin fecha de actualización (texto acordado)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] detalle (fila 1): primer ingreso, stock previo, días con stock y umbral coinciden con la API",
+      "ok": true,
+      "detalle": "ÚLTIMO INGRESO 24/10/2026 · 14 u. · Primer ingreso PRIMER INGRESO REGISTRADO 24/10/2026 VENTAS OBSERVADAS 0 u. DÍAS CON STOCK 15 de 18 días STOCK PREVIO EN SUCURSALES 0 u. STOCK PREVIO EN DEPÓSITO 90 — no disponible: no "
+    },
+    {
+      "nombre": "[1280] detalle: días con stock «x de y» y umbral/origen de la API",
+      "ok": true,
+      "detalle": "API 15 de 18, mín 10/rubro"
+    },
+    {
+      "nombre": "[1280] detalle: valores null se muestran «—» con su motivo (Depósito 90 previo)",
+      "ok": true,
+      "detalle": "null → «—» + motivo"
+    },
+    {
+      "nombre": "[1280] detalle: desglose por sucursal (stock, ventas, días con stock, fecha de stock) coincide con por_sucursal",
+      "ok": true,
+      "detalle": "Paseo 3/0/15/10/11 · Wave 3/0/15/10/11 · Perito Moreno 3/0/15/10/11 · Centenario 2/0/15/10/11 · Roca 3/0/15/10/11"
+    },
+    {
+      "nombre": "[1280] filtro por código 02312: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"1 código con los filtros elegidos\" · API 1"
+    },
+    {
+      "nombre": "[1280] filtro por código 02312: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "0/0/0/1/0/0"
+    },
+    {
+      "nombre": "[1280] filtro por código 02312: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 1 · API 1"
+    },
+    {
+      "nombre": "[1280] filtro por código 02312: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "1 etiquetas"
+    },
+    {
+      "nombre": "[1280] filtro por código 02312: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "1 filas comparadas · API 4 ms (cache)"
+    },
+    {
+      "nombre": "[1280] filtro por código: el pedido lleva el código y devuelve solo ese producto",
+      "ok": true,
+      "detalle": "/analisis/ingresos-recientes?dias=30&sucursales=0001,0005,0010,0012,0014&codigo=02312&limit=50&offset=0"
+    },
+    {
+      "nombre": "[1280] detalle de reingreso con stock previo: muestra la aclaración y el stock previo de la API",
+      "ok": true,
+      "detalle": "stock previo API 6 · ÚLTIMO INGRESO 15/10/2026 · 7 u. · Reingreso PRIMER INGRESO REGISTRADO 29/09/2026 VENTAS OBSERVADAS 0 u. (1 devuelta) DÍAS CON STOCK 27 de 27 días STOCK PREVIO "
+    },
+    {
+      "nombre": "[1280] paginación: página 2 pide offset=50",
+      "ok": true,
+      "detalle": "/analisis/ingresos-recientes?dias=30&sucursales=0001%2C0005%2C0010%2C0012%2C0014&limit=50&offset=50"
+    },
+    {
+      "nombre": "[1280] página 2: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[1280] página 2: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[1280] página 2: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[1280] página 2: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "6 etiquetas"
+    },
+    {
+      "nombre": "[1280] página 2: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 7 ms (cache)"
+    },
+    {
+      "nombre": "[1280] paginación: la página 2 empieza donde termina la 1 (sin repetidos)",
+      "ok": true,
+      "detalle": "última p.1 B1200 · primera p.2 B1201"
+    },
+    {
+      "nombre": "[1280] 60 días: pedido dias=60",
+      "ok": true,
+      "detalle": "/analisis/ingresos-recientes?dias=60&sucursales=0001%2C0005%2C0010%2C0012%2C0014&limit=50&offset=0"
+    },
+    {
+      "nombre": "[1280] 60 días: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"467 códigos\" · API 467"
+    },
+    {
+      "nombre": "[1280] 60 días: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "17/3/1/86/7/353"
+    },
+    {
+      "nombre": "[1280] 60 días: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[1280] 60 días: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "6 etiquetas"
+    },
+    {
+      "nombre": "[1280] 60 días: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 4 ms (cache)"
+    },
+    {
+      "nombre": "[1280] 60 días: encabezado con el período de la API",
+      "ok": true,
+      "detalle": "2026-09-12 → 2026-11-10"
+    },
+    {
+      "nombre": "[1280] historial insuficiente: casos disponibles por período (informativo)",
+      "ok": true,
+      "detalle": "{\"7\":0,\"15\":0,\"30\":0,\"60\":3,\"90\":6}"
+    },
+    {
+      "nombre": "[1280] lectura Historial insuficiente (60 d): «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"3 códigos con los filtros elegidos\" · API 3"
+    },
+    {
+      "nombre": "[1280] lectura Historial insuficiente (60 d): contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "17/3/1/86/7/353"
+    },
+    {
+      "nombre": "[1280] lectura Historial insuficiente (60 d): cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 3 · API 3"
+    },
+    {
+      "nombre": "[1280] lectura Historial insuficiente (60 d): la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "3 etiquetas"
+    },
+    {
+      "nombre": "[1280] lectura Historial insuficiente (60 d): primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "3 filas comparadas · API 2 ms (cache)"
+    },
+    {
+      "nombre": "[1280] historial insuficiente: todas las filas son «Historial insuficiente» y el detalle explica el motivo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] historial insuficiente: detalle con valores null «—» y motivo",
+      "ok": true,
+      "detalle": "ÚLTIMO INGRESO 01/10/2026 · 12 u. · Reingreso PRIMER INGRESO REGISTRADO 16/03/2021 VENTAS OBSERVADAS 6 u. DÍAS CON STOCK — no disponible: el stock no cuadra con los movimientos STOCK PREVIO EN SUCURSA"
+    },
+    {
+      "nombre": "[1280] tipo=reingreso: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"78 códigos con los filtros elegidos\" · API 78"
+    },
+    {
+      "nombre": "[1280] tipo=reingreso: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[1280] tipo=reingreso: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[1280] tipo=reingreso: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "6 etiquetas"
+    },
+    {
+      "nombre": "[1280] tipo=reingreso: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 3 ms (cache)"
+    },
+    {
+      "nombre": "[1280] tipo=reingreso: llega a la API y todas las filas son Reingreso",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] lectura=con_ventas: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"140 códigos con los filtros elegidos\" · API 140"
+    },
+    {
+      "nombre": "[1280] lectura=con_ventas: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[1280] lectura=con_ventas: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[1280] lectura=con_ventas: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "6 etiquetas"
+    },
+    {
+      "nombre": "[1280] lectura=con_ventas: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 2 ms (cache)"
+    },
+    {
+      "nombre": "[1280] lectura=con_ventas: todas las filas de la API y de la pantalla son «Con ventas»",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] orden=ventas_desc: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[1280] orden=ventas_desc: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[1280] orden=ventas_desc: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[1280] orden=ventas_desc: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "6 etiquetas"
+    },
+    {
+      "nombre": "[1280] orden=ventas_desc: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 3 ms (cache)"
+    },
+    {
+      "nombre": "[1280] orden por ventas: de mayor a menor en la API y en pantalla",
+      "ok": true,
+      "detalle": "119,28,12,12"
+    },
+    {
+      "nombre": "[1280] filtros de marca/rubro/código disponibles en el formulario del catálogo real",
+      "ok": true,
+      "detalle": "512 controles"
+    },
+    {
+      "nombre": "[1280] exclusión de Wave: el pedido consulta solo 0001,0010,0012,0014",
+      "ok": true,
+      "detalle": "0001,0010,0012,0014"
+    },
+    {
+      "nombre": "[1280] sin Wave: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[1280] sin Wave: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/1/69/3/132"
+    },
+    {
+      "nombre": "[1280] sin Wave: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[1280] sin Wave: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "6 etiquetas"
+    },
+    {
+      "nombre": "[1280] sin Wave: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 4 ms (cache)"
+    },
+    {
+      "nombre": "[1280] exclusión de Wave: el alcance visible lo indica y la API devuelve 4 sucursales sin 0005",
+      "ok": true,
+      "detalle": "Sucursales: Paseo, Perito Moreno, Centenario, Roca Stock al día · 10/11 ▴ Excluida de esta vista: Wave · ventas y stock no la incluyen. Volver a incluir"
+    },
+    {
+      "nombre": "[1280] exclusión de Wave: ventas y stock distintos a los de 5 sucursales (recalculados)",
+      "ok": true,
+      "detalle": "total 5 suc 206 → 4 suc 206"
+    },
+    {
+      "nombre": "[1280] exclusión de Wave: el detalle no muestra Wave y las sucursales coinciden con por_sucursal de la API",
+      "ok": true,
+      "detalle": "Paseo,Perito Moreno,Centenario,Roca"
+    },
+    {
+      "nombre": "[1280] reincorporación: vuelve a consultar las 5 sucursales",
+      "ok": true,
+      "detalle": "0001,0005,0010,0012,0014"
+    },
+    {
+      "nombre": "[1280] reincorporada: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[1280] reincorporada: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[1280] reincorporada: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[1280] reincorporada: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "6 etiquetas"
+    },
+    {
+      "nombre": "[1280] reincorporada: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 3 ms (cache)"
+    },
+    {
+      "nombre": "[1280] reincorporación: los números vuelven a ser los de la consulta inicial",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] navegación: Oportunidades se muestra sin la vista de Ingresos",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] navegación: volver a Ingresos recientes recupera la lista (período 30 días) sin errores",
+      "ok": true,
+      "detalle": "pedidos nuevos: 0"
+    },
+    {
+      "nombre": "[1280] selección global: el panel de sucursales queda dentro de la pantalla",
+      "ok": true,
+      "detalle": "{\"x\":802.0625,\"y\":118.390625,\"width\":340,\"height\":448.96875}"
+    },
+    {
+      "nombre": "[1280] selección global: quitar Perito Moreno se refleja en el pedido de Ingresos recientes",
+      "ok": true,
+      "detalle": "0001,0005,0012,0014"
+    },
+    {
+      "nombre": "[1280] selección global sin Perito Moreno: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[1280] selección global sin Perito Moreno: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/1/66/2/136"
+    },
+    {
+      "nombre": "[1280] selección global sin Perito Moreno: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[1280] selección global sin Perito Moreno: la etiqueta completa de la API queda en el título de cada lectura",
+      "ok": true,
+      "detalle": "6 etiquetas"
+    },
+    {
+      "nombre": "[1280] selección global sin Perito Moreno: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 4 ms (cache)"
+    },
+    {
+      "nombre": "[1280] selección global: el alcance de la vista lo informa",
+      "ok": true,
+      "detalle": "Sucursales: Paseo, Wave, Centenario, Roca Stock al día · 10/11 ▴ Sin considerar por el botón «Sucursales» de la barra superior: Perito Moreno."
+    },
+    {
+      "nombre": "[1280] selección global restaurada: vuelve a las 5 sucursales operativas",
+      "ok": true,
+      "detalle": "0001,0005,0010,0012,0014"
+    },
+    {
+      "nombre": "[1280] recarga: sin exclusiones residuales, 5 sucursales consultadas",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] sin errores HTTP, de consola ni de script durante todo el flujo real",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] consulta inicial: usa dias=30, sucursales explícitas y limit=50",
+      "ok": true,
+      "detalle": "/analisis/ingresos-recientes?dias=30&sucursales=0001,0005,0010,0012,0014&limit=50&offset=0"
+    },
+    {
+      "nombre": "[375] el primer producto entra en la primera pantalla con datos reales",
+      "ok": true,
+      "detalle": "{\"top\":623,\"bottom\":774,\"alto\":812}"
+    },
+    {
+      "nombre": "[375] 30 días: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[375] 30 días: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[375] 30 días: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[375] 30 días: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 5 ms (cache)"
+    },
+    {
+      "nombre": "[375] alcance y estado de stock reflejan sucursales.estado_general de la API",
+      "ok": true,
+      "detalle": "API alineado · «5 sucursales Stock al día · 10/11 ▾»"
+    },
+    {
+      "nombre": "[375] encabezado: desde/hasta/corte/días salen de periodo",
+      "ok": true,
+      "detalle": "Último ingreso 12/10 al 10/11 · 30 días · corte 10/11"
+    },
+    {
+      "nombre": "[375] Información: fecha de stock por sucursal y ventas observadas hasta la fecha de la API",
+      "ok": true,
+      "detalle": "STOCK DE SUCURSALES Paseo al 10/11 · Wave al 10/11 · Perito Moreno al 10/11 · Centenario al 10/11 · Roca al 10/11. Cada local informa la fecha a la que corresponde su stock; si alguno está atrasado respecto del corte, no se calculan días co"
+    },
+    {
+      "nombre": "[375] Información: Depósito 90 sin fecha de actualización (texto acordado)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] detalle (fila 1): primer ingreso, stock previo, días con stock y umbral coinciden con la API",
+      "ok": true,
+      "detalle": "ÚLTIMO INGRESO 24/10/2026 · 14 u. · Primer ingreso PRIMER INGRESO REGISTRADO 24/10/2026 VENTAS OBSERVADAS 0 u. DÍAS CON STOCK 15 de 18 días STOCK PREVIO EN SUCURSALES 0 u. STOCK PREVIO EN DEPÓSITO 90 — no disponible: no "
+    },
+    {
+      "nombre": "[375] detalle: días con stock «x de y» y umbral/origen de la API",
+      "ok": true,
+      "detalle": "API 15 de 18, mín 10/rubro"
+    },
+    {
+      "nombre": "[375] detalle: valores null se muestran «—» con su motivo (Depósito 90 previo)",
+      "ok": true,
+      "detalle": "null → «—» + motivo"
+    },
+    {
+      "nombre": "[375] detalle: desglose por sucursal (stock, ventas, días con stock, fecha de stock) coincide con por_sucursal",
+      "ok": true,
+      "detalle": "Paseo 3/0/15/10/11 · Wave 3/0/15/10/11 · Perito Moreno 3/0/15/10/11 · Centenario 2/0/15/10/11 · Roca 3/0/15/10/11"
+    },
+    {
+      "nombre": "[375] filtro por código 02312: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"1 código con los filtros elegidos\" · API 1"
+    },
+    {
+      "nombre": "[375] filtro por código 02312: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "0/0/0/1/0/0"
+    },
+    {
+      "nombre": "[375] filtro por código 02312: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 1 · API 1"
+    },
+    {
+      "nombre": "[375] filtro por código 02312: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "1 filas comparadas · API 2 ms (cache)"
+    },
+    {
+      "nombre": "[375] filtro por código: el pedido lleva el código y devuelve solo ese producto",
+      "ok": true,
+      "detalle": "/analisis/ingresos-recientes?dias=30&sucursales=0001,0005,0010,0012,0014&codigo=02312&limit=50&offset=0"
+    },
+    {
+      "nombre": "[375] detalle de reingreso con stock previo: muestra la aclaración y el stock previo de la API",
+      "ok": true,
+      "detalle": "stock previo API 6 · ÚLTIMO INGRESO 15/10/2026 · 7 u. · Reingreso PRIMER INGRESO REGISTRADO 29/09/2026 VENTAS OBSERVADAS 0 u. (1 devuelta) DÍAS CON STOCK 27 de 27 días STOCK PREVIO "
+    },
+    {
+      "nombre": "[375] paginación: página 2 pide offset=50",
+      "ok": true,
+      "detalle": "/analisis/ingresos-recientes?dias=30&sucursales=0001%2C0005%2C0010%2C0012%2C0014&limit=50&offset=50"
+    },
+    {
+      "nombre": "[375] página 2: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[375] página 2: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[375] página 2: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[375] página 2: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 3 ms (cache)"
+    },
+    {
+      "nombre": "[375] paginación: la página 2 empieza donde termina la 1 (sin repetidos)",
+      "ok": true,
+      "detalle": "última p.1 B1200 · primera p.2 B1201"
+    },
+    {
+      "nombre": "[375] 60 días: pedido dias=60",
+      "ok": true,
+      "detalle": "/analisis/ingresos-recientes?dias=60&sucursales=0001%2C0005%2C0010%2C0012%2C0014&limit=50&offset=0"
+    },
+    {
+      "nombre": "[375] 60 días: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"467 códigos\" · API 467"
+    },
+    {
+      "nombre": "[375] 60 días: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "17/3/1/86/7/353"
+    },
+    {
+      "nombre": "[375] 60 días: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[375] 60 días: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 4 ms (cache)"
+    },
+    {
+      "nombre": "[375] 60 días: encabezado con el período de la API",
+      "ok": true,
+      "detalle": "2026-09-12 → 2026-11-10"
+    },
+    {
+      "nombre": "[375] historial insuficiente: casos disponibles por período (informativo)",
+      "ok": true,
+      "detalle": "{\"7\":0,\"15\":0,\"30\":0,\"60\":3,\"90\":6}"
+    },
+    {
+      "nombre": "[375] lectura Historial insuficiente (60 d): «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"3 códigos con los filtros elegidos\" · API 3"
+    },
+    {
+      "nombre": "[375] lectura Historial insuficiente (60 d): contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "17/3/1/86/7/353"
+    },
+    {
+      "nombre": "[375] lectura Historial insuficiente (60 d): cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 3 · API 3"
+    },
+    {
+      "nombre": "[375] lectura Historial insuficiente (60 d): primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "3 filas comparadas · API 1 ms (cache)"
+    },
+    {
+      "nombre": "[375] historial insuficiente: todas las filas son «Historial insuficiente» y el detalle explica el motivo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] historial insuficiente: detalle con valores null «—» y motivo",
+      "ok": true,
+      "detalle": "ÚLTIMO INGRESO 01/10/2026 · 12 u. · Reingreso PRIMER INGRESO REGISTRADO 16/03/2021 VENTAS OBSERVADAS 6 u. DÍAS CON STOCK — no disponible: el stock no cuadra con los movimientos STOCK PREVIO EN SUCURSA"
+    },
+    {
+      "nombre": "[375] tipo=reingreso: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"78 códigos con los filtros elegidos\" · API 78"
+    },
+    {
+      "nombre": "[375] tipo=reingreso: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[375] tipo=reingreso: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[375] tipo=reingreso: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 3 ms (cache)"
+    },
+    {
+      "nombre": "[375] tipo=reingreso: llega a la API y todas las filas son Reingreso",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] lectura=con_ventas: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"140 códigos con los filtros elegidos\" · API 140"
+    },
+    {
+      "nombre": "[375] lectura=con_ventas: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[375] lectura=con_ventas: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[375] lectura=con_ventas: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 2 ms (cache)"
+    },
+    {
+      "nombre": "[375] lectura=con_ventas: todas las filas de la API y de la pantalla son «Con ventas»",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] orden=ventas_desc: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[375] orden=ventas_desc: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[375] orden=ventas_desc: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[375] orden=ventas_desc: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 3 ms (cache)"
+    },
+    {
+      "nombre": "[375] orden por ventas: de mayor a menor en la API y en pantalla",
+      "ok": true,
+      "detalle": "119,28,12,12"
+    },
+    {
+      "nombre": "[375] filtros de marca/rubro/código disponibles en el formulario del catálogo real",
+      "ok": true,
+      "detalle": "512 controles"
+    },
+    {
+      "nombre": "[375] exclusión de Wave: el pedido consulta solo 0001,0010,0012,0014",
+      "ok": true,
+      "detalle": "0001,0010,0012,0014"
+    },
+    {
+      "nombre": "[375] sin Wave: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[375] sin Wave: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/1/69/3/132"
+    },
+    {
+      "nombre": "[375] sin Wave: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[375] sin Wave: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 4 ms (cache)"
+    },
+    {
+      "nombre": "[375] exclusión de Wave: el alcance visible lo indica y la API devuelve 4 sucursales sin 0005",
+      "ok": true,
+      "detalle": "4 sucursales Stock al día · 10/11 ▴ Excluida de esta vista: Wave · ventas y stock no la incluyen. Volver a incluir"
+    },
+    {
+      "nombre": "[375] exclusión de Wave: ventas y stock distintos a los de 5 sucursales (recalculados)",
+      "ok": true,
+      "detalle": "total 5 suc 206 → 4 suc 206"
+    },
+    {
+      "nombre": "[375] exclusión de Wave: el detalle no muestra Wave y las sucursales coinciden con por_sucursal de la API",
+      "ok": true,
+      "detalle": "Paseo,Perito Moreno,Centenario,Roca"
+    },
+    {
+      "nombre": "[375] reincorporación: vuelve a consultar las 5 sucursales",
+      "ok": true,
+      "detalle": "0001,0005,0010,0012,0014"
+    },
+    {
+      "nombre": "[375] reincorporada: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[375] reincorporada: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/0/63/2/140"
+    },
+    {
+      "nombre": "[375] reincorporada: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[375] reincorporada: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 9 ms (cache)"
+    },
+    {
+      "nombre": "[375] reincorporación: los números vuelven a ser los de la consulta inicial",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] navegación: Oportunidades se muestra sin la vista de Ingresos",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] navegación: volver a Ingresos recientes recupera la lista (período 30 días) sin errores",
+      "ok": true,
+      "detalle": "pedidos nuevos: 0"
+    },
+    {
+      "nombre": "[375] selección global: el panel de sucursales queda dentro de la pantalla",
+      "ok": true,
+      "detalle": "{\"x\":14,\"y\":148.671875,\"width\":327,\"height\":470.21875}"
+    },
+    {
+      "nombre": "[375] selección global: quitar Perito Moreno se refleja en el pedido de Ingresos recientes",
+      "ok": true,
+      "detalle": "0001,0005,0012,0014"
+    },
+    {
+      "nombre": "[375] selección global sin Perito Moreno: «N códigos» coincide con paginacion.total",
+      "ok": true,
+      "detalle": "pantalla \"206 códigos\" · API 206"
+    },
+    {
+      "nombre": "[375] selección global sin Perito Moreno: contadores coinciden con resumen.por_lectura",
+      "ok": true,
+      "detalle": "1/0/1/66/2/136"
+    },
+    {
+      "nombre": "[375] selección global sin Perito Moreno: cantidad de filas = data.length",
+      "ok": true,
+      "detalle": "pantalla 50 · API 50"
+    },
+    {
+      "nombre": "[375] selección global sin Perito Moreno: primeras filas muestran código, ingreso/unidades, ventas, stock y lectura de la API",
+      "ok": true,
+      "detalle": "6 filas comparadas · API 6 ms (cache)"
+    },
+    {
+      "nombre": "[375] selección global: el alcance de la vista lo informa",
+      "ok": true,
+      "detalle": "4 sucursales Stock al día · 10/11 ▴ Sin considerar por el botón «Sucursales» de la barra superior: Perito Moreno."
+    },
+    {
+      "nombre": "[375] selección global restaurada: vuelve a las 5 sucursales operativas",
+      "ok": true,
+      "detalle": "0001,0005,0010,0012,0014"
+    },
+    {
+      "nombre": "[375] recarga: sin exclusiones residuales, 5 sucursales consultadas",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] sin errores HTTP, de consola ni de script durante todo el flujo real",
+      "ok": true,
+      "detalle": ""
+    }
+  ]
+}

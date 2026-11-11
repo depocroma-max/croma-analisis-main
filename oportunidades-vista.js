@@ -697,9 +697,30 @@ function ovProgramarCarga() {
   }, 0);
 }
 
+// Subpestanas dentro de Oportunidades: la lista de oportunidades y "Ingresos recientes" (ingresos-recientes-vista.js).
+let OV_SUBVISTA = 'oportunidades';
+function ovSubvistaActual() { return OV_SUBVISTA; }
+function ovElegirSubvista(id) { if (OV_SUBVISTA === id) return; OV_SUBVISTA = id; rtRenderVistaActual(); }
+function ovSubnav() {
+  const nav = rtEl('div', { className: 'ov-subnav', attrs: { role: 'tablist', 'aria-label': 'Secciones de Oportunidades' } });
+  [['oportunidades', 'Oportunidades'], ['ingresos', 'Ingresos recientes']].forEach(([id, texto]) => {
+    const activo = OV_SUBVISTA === id;
+    const b = rtEl('button', { className: 'ov-subtab' + (activo ? ' ov-activo' : ''), text: texto, attrs: { role: 'tab', 'aria-selected': activo ? 'true' : 'false', 'data-subvista': id } });
+    b.type = 'button'; b.addEventListener('click', () => ovElegirSubvista(id));
+    nav.appendChild(b);
+  });
+  return nav;
+}
+
 function renderRTOportunidades(host) {
   const raiz = rtEl('div', { className: 'ov' });
   host.appendChild(raiz);
+  raiz.appendChild(ovSubnav());
+  if (OV_SUBVISTA === 'ingresos' && typeof irRender === 'function') {
+    if (!OV_ESCUCHA_MEDIOS && typeof matchMedia === 'function') { OV_ESCUCHA_MEDIOS = true; matchMedia(OV_MEDIA_MOVIL).addEventListener('change', () => { if (RT_VIEW === 'oportunidades') rtRenderVistaActual(); }); }
+    irRender(raiz);
+    return;
+  }
   raiz.appendChild(ovEncabezado());
   if (!OV_ESCUCHA_MEDIOS && typeof matchMedia === 'function') { // al cruzar el ancho movil se vuelve a dibujar
     OV_ESCUCHA_MEDIOS = true;

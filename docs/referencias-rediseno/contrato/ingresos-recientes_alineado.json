@@ -1,0 +1,968 @@
+{
+  "ok": true,
+  "contrato": 1,
+  "generado_en": "2026-11-11T12:51:41.979Z",
+  "periodo": {
+    "criterio": "ultimo_ingreso",
+    "desde": "2026-09-12",
+    "hasta": "2026-11-10",
+    "corte": "2026-11-10",
+    "dias": 60,
+    "rango_personalizado": false,
+    "corte_criterio": "cierre_de_ayer",
+    "zona_horaria": "America/Argentina/Buenos_Aires",
+    "hoy": "2026-11-11",
+    "nota": "La ventana historica termina en el cierre de ayer: los ingresos de hoy no entran (ver resumen.ingresos_posteriores_al_corte)."
+  },
+  "stock_actual": {
+    "sucursales": {
+      "criterio": "metadato_ultima_fecha_actualizacion",
+      "fuente": "Stock_Productos.ultima_fecha_actualizacion",
+      "corte_solicitado": "2026-11-10",
+      "estado_general": "alineado",
+      "alineadas": [
+        "0001",
+        "0005",
+        "0010",
+        "0012",
+        "0014"
+      ],
+      "atrasadas": [],
+      "desconocidas": [],
+      "por_centro": {
+        "0001": {
+          "centro": "0001",
+          "nombre": "01 PASEO",
+          "fecha_actualizacion": "2026-11-10",
+          "estado": "ok",
+          "motivo": null,
+          "dias_atraso": 0,
+          "filas": 7967,
+          "filas_sin_fecha": 0,
+          "fechas_distintas": 1
+        },
+        "0005": {
+          "centro": "0005",
+          "nombre": "05 WAVE",
+          "fecha_actualizacion": "2026-11-10",
+          "estado": "ok",
+          "motivo": null,
+          "dias_atraso": 0,
+          "filas": 3334,
+          "filas_sin_fecha": 0,
+          "fechas_distintas": 1
+        },
+        "0010": {
+          "centro": "0010",
+          "nombre": "10 PERITO MORENO",
+          "fecha_actualizacion": "2026-11-10",
+          "estado": "ok",
+          "motivo": null,
+          "dias_atraso": 0,
+          "filas": 5469,
+          "filas_sin_fecha": 0,
+          "fechas_distintas": 1
+        },
+        "0012": {
+          "centro": "0012",
+          "nombre": "12 CENTENARIO",
+          "fecha_actualizacion": "2026-11-10",
+          "estado": "ok",
+          "motivo": null,
+          "dias_atraso": 0,
+          "filas": 4998,
+          "filas_sin_fecha": 0,
+          "fechas_distintas": 1
+        },
+        "0014": {
+          "centro": "0014",
+          "nombre": "14 ROCA",
+          "fecha_actualizacion": "2026-11-10",
+          "estado": "ok",
+          "motivo": null,
+          "dias_atraso": 0,
+          "filas": 6541,
+          "filas_sin_fecha": 0,
+          "fechas_distintas": 1
+        }
+      },
+      "nota": "Cada sucursal informa la fecha de datos de su stock (uniforme dentro del centro, puede diferir entre centros). Si alguna sucursal pedida esta atrasada respecto del corte o su fecha es desconocida, los codigos quedan en \"Historial insuficiente\": no se calculan dias con stock ni stock previo con un stock desalineado."
+    },
+    "deposito_90": {
+      "fecha_actualizacion": null,
+      "referencia": "en_vivo",
+      "origen_en_vivo": "ADR-032",
+      "consultado_en": "2026-11-11T12:51:41.979Z",
+      "fuente": "depositoConfiableJoinSQL (Stock_Productos centro 0000 menos Fallados 93)",
+      "aclaracion": "Stock_Productos del centro 0000 no trae una fecha de actualizacion util (placeholder 2020-01-01): su condicion en vivo proviene de ADR-032, no de un metadato."
+    },
+    "fallados_93": {
+      "incluido_en_stock_operativo": false,
+      "fecha_actualizacion": "2026-11-10T15:34:12.620-03:00",
+      "ultima_modificacion_fallados": "2026-10-16T12:03:53.263-03:00",
+      "fuente": "Interfaz_WEB_Registro_Novedades (Tabla = Interfaz_WEB_stock_depositos)",
+      "verificada": true,
+      "verificacion": "Las 35830 filas de la fuente apuntan a novedades de la misma tabla (0 punteros invalidos): fecha_actualizacion es la ultima novedad aplicada a la tabla y ultima_modificacion_fallados la ultima fila de Fallados 93 modificada."
+    }
+  },
+  "ventas": {
+    "completitud": "desconocida",
+    "metadato_fuente": null,
+    "observadas_hasta": "2026-11-10",
+    "ultima_venta_observada_por_centro": {
+      "0001": "2026-11-10",
+      "0005": "2026-11-10",
+      "0010": "2026-11-10",
+      "0012": "2026-11-10",
+      "0014": "2026-11-10"
+    },
+    "observacion": "Movimientos_Productos solo trae la fecha del movimiento: no hay metadato de actualizacion ni de carga. La ultima fecha con ventas por centro es una observacion, no una garantia de sincronizacion.",
+    "efecto_en_lecturas": "Las ventas informadas son las observadas hasta el corte. \"Con ventas\" y \"Vendio y hoy esta agotado\" siguen valiendo (son ventas reales). \"En observacion\", \"Sin exposicion\" y \"Revisar: sin ventas\" se apoyan en la AUSENCIA de ventas: si faltan ventas de dias aun no sincronizados podrian ser falsas por ese margen, por eso exigen varios dias de observacion o de stock y no se emiten cuando el stock de alguna sucursal esta atrasado o con fecha desconocida."
+  },
+  "ancla_reconstruccion": {
+    "criterio": "fecha_de_datos_por_centro",
+    "descripcion": "saldo al cierre del dia d = stock de la sucursal a la fecha de datos de su centro menos los movimientos con d < fecha <= esa fecha",
+    "tolerancia_descuadre_unidades": 0
+  },
+  "sucursales": [
+    "0001",
+    "0005",
+    "0010",
+    "0012",
+    "0014"
+  ],
+  "sucursales_ignoradas": [],
+  "umbrales": {
+    "version": "1.0.0-F0G-2026-11-10",
+    "minimo_dias_global": 47,
+    "n_min_muestra_rubro": 20,
+    "rubros_calibrados": 12,
+    "dias_min_observados": 3,
+    "calibracion": {
+      "fuente": "F0G",
+      "fecha": "2026-11-10",
+      "muestra_primeros_ingresos": {
+        "desde": "2025-09-01",
+        "hasta": "2026-07-08",
+        "productos": 1269,
+        "consistentes": 1250
+      },
+      "ventana_observacion_dias": 120,
+      "percentil": 0.9,
+      "global": {
+        "p50": 8,
+        "p75": 22,
+        "p90": 47,
+        "p95": 66,
+        "vendieron": 1209,
+        "nunca_vendieron": 41
+      }
+    }
+  },
+  "lecturas": {
+    "historial_insuficiente": "Historial insuficiente",
+    "sin_ventas_con_stock": "Revisar: sin ventas",
+    "sin_exposicion": "Sin exposición en sucursales",
+    "en_observacion": "En observación",
+    "agotado_con_ventas": "Vendió y hoy está agotado",
+    "con_ventas": "Con ventas"
+  },
+  "resumen": {
+    "total": 467,
+    "por_lectura": {
+      "sin_ventas_con_stock": 17,
+      "historial_insuficiente": 3,
+      "sin_exposicion": 1,
+      "en_observacion": 86,
+      "agotado_con_ventas": 7,
+      "con_ventas": 353
+    },
+    "por_tipo": {
+      "primer_ingreso": 266,
+      "reingreso": 201,
+      "indeterminado": 0
+    },
+    "ingresos_posteriores_al_corte": 0
+  },
+  "paginacion": {
+    "limit": 500,
+    "offset": 0,
+    "total": 467,
+    "orden": "prioridad"
+  },
+  "data": [
+    {
+      "cod": "B1147",
+      "nombre": "PONCHO BB PACIFIC HOODIE TOWEL",
+      "marca": "BILLABONG",
+      "rubro": "ACCES TOALLAS",
+      "subrubro": "NO DISPONIBLE",
+      "tipo_ingreso": "primer_ingreso",
+      "primer_ingreso_registrado": "2026-09-12",
+      "primer_ingreso_estado": "verificado",
+      "ultimo_ingreso": "2026-09-12",
+      "unidades_ingresadas": 5,
+      "dias_con_ingreso_registrados": 1,
+      "ingreso_posterior_al_corte": false,
+      "dias_desde_ingreso": 59,
+      "ventas_desde_ingreso": 0,
+      "ventas_dia_ingreso": 0,
+      "devoluciones_desde_ingreso": 0,
+      "ventas_completitud": {
+        "estado": "desconocida",
+        "observadas_hasta": "2026-11-10",
+        "indicios": []
+      },
+      "stock_previo_sucursales": 0,
+      "stock_previo_deposito_90": null,
+      "stock_previo_deposito_90_estado": "desconocido",
+      "reingreso_con_stock_previo": false,
+      "stock_sucursales": 5,
+      "stock_deposito_90": 0,
+      "fallados_93": 0,
+      "dias_con_stock_sucursales": 57,
+      "dias_observados": 60,
+      "minimo_dias": {
+        "valor": 47,
+        "fuente": "global",
+        "n_muestra": null
+      },
+      "variantes_agotadas_con_ventas": {
+        "variantes": 0,
+        "unidades_vendidas": 0
+      },
+      "calidad_historial": {
+        "estado": "ok",
+        "motivos": [],
+        "descuadre_unidades": 0,
+        "variantes_con_descuadre": 0,
+        "variantes_con_saldo_negativo": 0,
+        "tolerancia_unidades": 0,
+        "centros_afectados": []
+      },
+      "lectura": "sin_ventas_con_stock",
+      "lectura_etiqueta": "Revisar: sin ventas",
+      "motivo": "57 días con stock en sucursales sin ventas (mínimo 47, umbral global).",
+      "por_sucursal": [
+        {
+          "centro": "0001",
+          "nombre": "01 PASEO",
+          "stock": 1,
+          "ventas": 0,
+          "dias_con_stock": 57,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0005",
+          "nombre": "05 WAVE",
+          "stock": 1,
+          "ventas": 0,
+          "dias_con_stock": 57,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0010",
+          "nombre": "10 PERITO MORENO",
+          "stock": 1,
+          "ventas": 0,
+          "dias_con_stock": 57,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0012",
+          "nombre": "12 CENTENARIO",
+          "stock": 1,
+          "ventas": 0,
+          "dias_con_stock": 57,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0014",
+          "nombre": "14 ROCA",
+          "stock": 1,
+          "ventas": 0,
+          "dias_con_stock": 57,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "cod": "05520",
+      "nombre": "RCA WL PU MAGIC WALLET",
+      "marca": "RIP CURL",
+      "rubro": "ACCES BILLE AD",
+      "subrubro": "PU",
+      "tipo_ingreso": "reingreso",
+      "primer_ingreso_registrado": "2021-03-16",
+      "primer_ingreso_estado": "verificado",
+      "ultimo_ingreso": "2026-10-01",
+      "unidades_ingresadas": 12,
+      "dias_con_ingreso_registrados": 11,
+      "ingreso_posterior_al_corte": false,
+      "dias_desde_ingreso": 40,
+      "ventas_desde_ingreso": 6,
+      "ventas_dia_ingreso": 0,
+      "devoluciones_desde_ingreso": 0,
+      "ventas_completitud": {
+        "estado": "desconocida",
+        "observadas_hasta": "2026-11-10",
+        "indicios": []
+      },
+      "stock_previo_sucursales": null,
+      "stock_previo_deposito_90": null,
+      "stock_previo_deposito_90_estado": "desconocido",
+      "reingreso_con_stock_previo": false,
+      "stock_sucursales": 10,
+      "stock_deposito_90": 0,
+      "fallados_93": 0,
+      "dias_con_stock_sucursales": null,
+      "dias_observados": 41,
+      "minimo_dias": {
+        "valor": 47,
+        "fuente": "global",
+        "n_muestra": null
+      },
+      "variantes_agotadas_con_ventas": {
+        "variantes": 0,
+        "unidades_vendidas": 0
+      },
+      "calidad_historial": {
+        "estado": "insuficiente",
+        "motivos": [
+          "descuadre"
+        ],
+        "descuadre_unidades": 10,
+        "variantes_con_descuadre": 1,
+        "variantes_con_saldo_negativo": 0,
+        "tolerancia_unidades": 0,
+        "centros_afectados": []
+      },
+      "lectura": "historial_insuficiente",
+      "lectura_etiqueta": "Historial insuficiente",
+      "motivo": "El stock de sucursales no cuadra con los movimientos (10 u. de diferencia absoluta): no se puede contar días con stock.",
+      "por_sucursal": [
+        {
+          "centro": "0001",
+          "nombre": "01 PASEO",
+          "stock": 2,
+          "ventas": 1,
+          "dias_con_stock": null,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0005",
+          "nombre": "05 WAVE",
+          "stock": 1,
+          "ventas": 2,
+          "dias_con_stock": null,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0010",
+          "nombre": "10 PERITO MORENO",
+          "stock": 4,
+          "ventas": 0,
+          "dias_con_stock": null,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0012",
+          "nombre": "12 CENTENARIO",
+          "stock": 2,
+          "ventas": 1,
+          "dias_con_stock": null,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0014",
+          "nombre": "14 ROCA",
+          "stock": 1,
+          "ventas": 2,
+          "dias_con_stock": null,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "cod": "TR157",
+      "nombre": "POLO MC TEJIDA 01021",
+      "marca": "CROMA",
+      "rubro": "POLO MC AD",
+      "subrubro": "NO DISPONIBLE",
+      "tipo_ingreso": "primer_ingreso",
+      "primer_ingreso_registrado": "2026-09-29",
+      "primer_ingreso_estado": "verificado",
+      "ultimo_ingreso": "2026-09-29",
+      "unidades_ingresadas": 32,
+      "dias_con_ingreso_registrados": 1,
+      "ingreso_posterior_al_corte": false,
+      "dias_desde_ingreso": 42,
+      "ventas_desde_ingreso": 0,
+      "ventas_dia_ingreso": 0,
+      "devoluciones_desde_ingreso": 0,
+      "ventas_completitud": {
+        "estado": "desconocida",
+        "observadas_hasta": "2026-11-10",
+        "indicios": []
+      },
+      "stock_previo_sucursales": 0,
+      "stock_previo_deposito_90": null,
+      "stock_previo_deposito_90_estado": "desconocido",
+      "reingreso_con_stock_previo": false,
+      "stock_sucursales": 0,
+      "stock_deposito_90": 32,
+      "fallados_93": 0,
+      "dias_con_stock_sucursales": 0,
+      "dias_observados": 43,
+      "minimo_dias": {
+        "valor": 47,
+        "fuente": "global",
+        "n_muestra": null
+      },
+      "variantes_agotadas_con_ventas": {
+        "variantes": 0,
+        "unidades_vendidas": 0
+      },
+      "calidad_historial": {
+        "estado": "ok",
+        "motivos": [],
+        "descuadre_unidades": 0,
+        "variantes_con_descuadre": 0,
+        "variantes_con_saldo_negativo": 0,
+        "tolerancia_unidades": 0,
+        "centros_afectados": []
+      },
+      "lectura": "sin_exposicion",
+      "lectura_etiqueta": "Sin exposición en sucursales",
+      "motivo": "Ningún día con stock en sucursales desde el ingreso: la mercadería no llegó a sucursales.",
+      "por_sucursal": [
+        {
+          "centro": "0001",
+          "nombre": "01 PASEO",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0005",
+          "nombre": "05 WAVE",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0010",
+          "nombre": "10 PERITO MORENO",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0012",
+          "nombre": "12 CENTENARIO",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0014",
+          "nombre": "14 ROCA",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "cod": "02486",
+      "nombre": "RCB G DR MINI KINT BOSSANOVA",
+      "marca": "RIP CURL",
+      "rubro": "MUJER VESTIDOS M",
+      "subrubro": "NO DISPONIBLE",
+      "tipo_ingreso": "reingreso",
+      "primer_ingreso_registrado": "2021-09-29",
+      "primer_ingreso_estado": "verificado",
+      "ultimo_ingreso": "2026-09-24",
+      "unidades_ingresadas": 4,
+      "dias_con_ingreso_registrados": 2,
+      "ingreso_posterior_al_corte": false,
+      "dias_desde_ingreso": 47,
+      "ventas_desde_ingreso": 0,
+      "ventas_dia_ingreso": 0,
+      "devoluciones_desde_ingreso": 0,
+      "ventas_completitud": {
+        "estado": "desconocida",
+        "observadas_hasta": "2026-11-10",
+        "indicios": []
+      },
+      "stock_previo_sucursales": 0,
+      "stock_previo_deposito_90": null,
+      "stock_previo_deposito_90_estado": "desconocido",
+      "reingreso_con_stock_previo": false,
+      "stock_sucursales": 4,
+      "stock_deposito_90": 0,
+      "fallados_93": 0,
+      "dias_con_stock_sucursales": 46,
+      "dias_observados": 48,
+      "minimo_dias": {
+        "valor": 47,
+        "fuente": "global",
+        "n_muestra": null
+      },
+      "variantes_agotadas_con_ventas": {
+        "variantes": 0,
+        "unidades_vendidas": 0
+      },
+      "calidad_historial": {
+        "estado": "ok",
+        "motivos": [],
+        "descuadre_unidades": 0,
+        "variantes_con_descuadre": 0,
+        "variantes_con_saldo_negativo": 0,
+        "tolerancia_unidades": 0,
+        "centros_afectados": []
+      },
+      "lectura": "en_observacion",
+      "lectura_etiqueta": "En observación",
+      "motivo": "46 de 47 días con stock en sucursales sin ventas.",
+      "por_sucursal": [
+        {
+          "centro": "0001",
+          "nombre": "01 PASEO",
+          "stock": 3,
+          "ventas": 0,
+          "dias_con_stock": 42,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0005",
+          "nombre": "05 WAVE",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0010",
+          "nombre": "10 PERITO MORENO",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0012",
+          "nombre": "12 CENTENARIO",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0014",
+          "nombre": "14 ROCA",
+          "stock": 1,
+          "ventas": 0,
+          "dias_con_stock": 46,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "cod": "T1407",
+      "nombre": "CAP TRK FLAT RVCA PLATFORM",
+      "marca": "RVCA",
+      "rubro": "ACCES GORRAS AD",
+      "subrubro": "TRK FLAT",
+      "tipo_ingreso": "primer_ingreso",
+      "primer_ingreso_registrado": "2026-09-12",
+      "primer_ingreso_estado": "verificado",
+      "ultimo_ingreso": "2026-09-12",
+      "unidades_ingresadas": 24,
+      "dias_con_ingreso_registrados": 1,
+      "ingreso_posterior_al_corte": false,
+      "dias_desde_ingreso": 59,
+      "ventas_desde_ingreso": 24,
+      "ventas_dia_ingreso": 1,
+      "devoluciones_desde_ingreso": 0,
+      "ventas_completitud": {
+        "estado": "desconocida",
+        "observadas_hasta": "2026-11-10",
+        "indicios": []
+      },
+      "stock_previo_sucursales": 0,
+      "stock_previo_deposito_90": null,
+      "stock_previo_deposito_90_estado": "desconocido",
+      "reingreso_con_stock_previo": false,
+      "stock_sucursales": 0,
+      "stock_deposito_90": 0,
+      "fallados_93": 0,
+      "dias_con_stock_sucursales": 25,
+      "dias_observados": 60,
+      "minimo_dias": {
+        "valor": 56,
+        "fuente": "rubro",
+        "n_muestra": 59
+      },
+      "variantes_agotadas_con_ventas": {
+        "variantes": 1,
+        "unidades_vendidas": 24
+      },
+      "calidad_historial": {
+        "estado": "ok",
+        "motivos": [],
+        "descuadre_unidades": 0,
+        "variantes_con_descuadre": 0,
+        "variantes_con_saldo_negativo": 0,
+        "tolerancia_unidades": 0,
+        "centros_afectados": []
+      },
+      "lectura": "agotado_con_ventas",
+      "lectura_etiqueta": "Vendió y hoy está agotado",
+      "motivo": "Vendió 24 u. del código desde el ingreso y hoy no tiene stock en sucursales ni en Depósito 90.",
+      "por_sucursal": [
+        {
+          "centro": "0001",
+          "nombre": "01 PASEO",
+          "stock": 0,
+          "ventas": 8,
+          "dias_con_stock": 19,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0005",
+          "nombre": "05 WAVE",
+          "stock": 0,
+          "ventas": 9,
+          "dias_con_stock": 14,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0010",
+          "nombre": "10 PERITO MORENO",
+          "stock": 0,
+          "ventas": 3,
+          "dias_con_stock": 24,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0012",
+          "nombre": "12 CENTENARIO",
+          "stock": 0,
+          "ventas": 2,
+          "dias_con_stock": 8,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0014",
+          "nombre": "14 ROCA",
+          "stock": 0,
+          "ventas": 2,
+          "dias_con_stock": 23,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "cod": "B1148",
+      "nombre": "MUSC G BB JOYRIDE",
+      "marca": "BILLABONG",
+      "rubro": "MUSC G",
+      "subrubro": "NO DISPONIBLE",
+      "tipo_ingreso": "primer_ingreso",
+      "primer_ingreso_registrado": "2026-09-12",
+      "primer_ingreso_estado": "verificado",
+      "ultimo_ingreso": "2026-09-12",
+      "unidades_ingresadas": 12,
+      "dias_con_ingreso_registrados": 1,
+      "ingreso_posterior_al_corte": false,
+      "dias_desde_ingreso": 59,
+      "ventas_desde_ingreso": 2,
+      "ventas_dia_ingreso": 0,
+      "devoluciones_desde_ingreso": 0,
+      "ventas_completitud": {
+        "estado": "desconocida",
+        "observadas_hasta": "2026-11-10",
+        "indicios": []
+      },
+      "stock_previo_sucursales": 0,
+      "stock_previo_deposito_90": null,
+      "stock_previo_deposito_90_estado": "desconocido",
+      "reingreso_con_stock_previo": false,
+      "stock_sucursales": 9,
+      "stock_deposito_90": 0,
+      "fallados_93": 0,
+      "dias_con_stock_sucursales": 57,
+      "dias_observados": 60,
+      "minimo_dias": {
+        "valor": 47,
+        "fuente": "global",
+        "n_muestra": null
+      },
+      "variantes_agotadas_con_ventas": {
+        "variantes": 0,
+        "unidades_vendidas": 0
+      },
+      "calidad_historial": {
+        "estado": "ok",
+        "motivos": [],
+        "descuadre_unidades": 0,
+        "variantes_con_descuadre": 0,
+        "variantes_con_saldo_negativo": 0,
+        "tolerancia_unidades": 0,
+        "centros_afectados": []
+      },
+      "lectura": "con_ventas",
+      "lectura_etiqueta": "Con ventas",
+      "motivo": "Vendió 2 u. del código desde el ingreso.",
+      "por_sucursal": [
+        {
+          "centro": "0001",
+          "nombre": "01 PASEO",
+          "stock": 1,
+          "ventas": 1,
+          "dias_con_stock": 57,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0005",
+          "nombre": "05 WAVE",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0010",
+          "nombre": "10 PERITO MORENO",
+          "stock": 2,
+          "ventas": 0,
+          "dias_con_stock": 57,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0012",
+          "nombre": "12 CENTENARIO",
+          "stock": 4,
+          "ventas": 0,
+          "dias_con_stock": 57,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0014",
+          "nombre": "14 ROCA",
+          "stock": 2,
+          "ventas": 1,
+          "dias_con_stock": 57,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "cod": "B1113",
+      "nombre": "REM G MC BB BRING THE SUN BABY",
+      "marca": "BILLABONG",
+      "rubro": "REM MC GIRL",
+      "subrubro": "NO DISPONIBLE",
+      "tipo_ingreso": "reingreso",
+      "primer_ingreso_registrado": "2026-08-26",
+      "primer_ingreso_estado": "verificado",
+      "ultimo_ingreso": "2026-09-12",
+      "unidades_ingresadas": 21,
+      "dias_con_ingreso_registrados": 2,
+      "ingreso_posterior_al_corte": false,
+      "dias_desde_ingreso": 59,
+      "ventas_desde_ingreso": 9,
+      "ventas_dia_ingreso": 0,
+      "devoluciones_desde_ingreso": 1,
+      "ventas_completitud": {
+        "estado": "desconocida",
+        "observadas_hasta": "2026-11-10",
+        "indicios": []
+      },
+      "stock_previo_sucursales": 11,
+      "stock_previo_deposito_90": null,
+      "stock_previo_deposito_90_estado": "desconocido",
+      "reingreso_con_stock_previo": true,
+      "stock_sucursales": 19,
+      "stock_deposito_90": 0,
+      "fallados_93": 0,
+      "dias_con_stock_sucursales": 60,
+      "dias_observados": 60,
+      "minimo_dias": {
+        "valor": 28,
+        "fuente": "rubro",
+        "n_muestra": 43
+      },
+      "variantes_agotadas_con_ventas": {
+        "variantes": 4,
+        "unidades_vendidas": 5
+      },
+      "calidad_historial": {
+        "estado": "ok",
+        "motivos": [],
+        "descuadre_unidades": 0,
+        "variantes_con_descuadre": 0,
+        "variantes_con_saldo_negativo": 0,
+        "tolerancia_unidades": 0,
+        "centros_afectados": []
+      },
+      "lectura": "con_ventas",
+      "lectura_etiqueta": "Con ventas",
+      "motivo": "Vendió 9 u. del código desde el ingreso (había stock previo en sucursales: las ventas no se atribuyen al lote nuevo).",
+      "por_sucursal": [
+        {
+          "centro": "0001",
+          "nombre": "01 PASEO",
+          "stock": 7,
+          "ventas": 0,
+          "dias_con_stock": 60,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0005",
+          "nombre": "05 WAVE",
+          "stock": 0,
+          "ventas": 0,
+          "dias_con_stock": 0,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0010",
+          "nombre": "10 PERITO MORENO",
+          "stock": 2,
+          "ventas": 2,
+          "dias_con_stock": 60,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0012",
+          "nombre": "12 CENTENARIO",
+          "stock": 3,
+          "ventas": 4,
+          "dias_con_stock": 60,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        },
+        {
+          "centro": "0014",
+          "nombre": "14 ROCA",
+          "stock": 7,
+          "ventas": 3,
+          "dias_con_stock": 60,
+          "referencia_stock": {
+            "fecha_actualizacion": "2026-11-10",
+            "estado": "ok"
+          }
+        }
+      ]
+    }
+  ],
+  "_nota_referencia": "Respuesta REAL de GET /analisis/ingresos-recientes?dias=60 (Sysneo, solo lectura). data recortada a 7 filas representativas; paginacion.total y resumen conservan los valores reales."
+}

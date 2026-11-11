@@ -1,0 +1,537 @@
+{
+  "fecha": "2026-11-11T13:57:57.513Z",
+  "total": 106,
+  "fallidas": 0,
+  "resultados": [
+    {
+      "nombre": "[1280] alineado: el primer producto entra en la primera pantalla (filtros y detalle cerrados)",
+      "ok": true,
+      "detalle": "{\"top\":539,\"bottom\":594,\"alto\":800}"
+    },
+    {
+      "nombre": "[1280] barra superior compacta: sin tarjeta vacía y altura mínima",
+      "ok": true,
+      "detalle": "{\"top\":84,\"bottom\":120,\"h\":36}"
+    },
+    {
+      "nombre": "[1280] altura acumulada hasta las subpestañas",
+      "ok": true,
+      "detalle": "subpestañas terminan en 218 px"
+    },
+    {
+      "nombre": "[1280] teclado: tras abrir el panel, Tab entra a las acciones del panel",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] teclado: Escape cierra el panel y devuelve el foco a la línea de alcance",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] al abrir el panel con scroll, la línea de alcance y el control enfocado quedan bajo el encabezado fijo",
+      "ok": true,
+      "detalle": "{\"h\":64,\"alcanceTop\":74,\"focoTop\":74,\"focoBottom\":109,\"vh\":800}"
+    },
+    {
+      "nombre": "[1280] primera consulta usa el rango inicial del contrato (dias=30) y sucursales explicitas",
+      "ok": true,
+      "detalle": "dias=30&sucursales=0001%2C0005%2C0010%2C0012%2C0014&limit=50&offset=0"
+    },
+    {
+      "nombre": "[1280] encabezado muestra período y corte",
+      "ok": true,
+      "detalle": "Último ingreso entre el 12/10/2026 y el 10/11/2026 · 30 días · corte 10/11/2026 (cierre de ayer)"
+    },
+    {
+      "nombre": "[1280] línea de alcance con sucursales/estado de stock",
+      "ok": true,
+      "detalle": "Sucursales:\nPaseo, Wave, Perito Moreno, Centenario, Roca\nStock al día · 10/11\n▾"
+    },
+    {
+      "nombre": "[1280] contadores: \"0\" real se muestra como 0 (alineado)",
+      "ok": true,
+      "detalle": "0\nRevisar: sin ventas | 6\nHistorial insuficiente | 4\nSin exposición | 27\nEn observación | 7\nVendió y agotado | 48\nCon ventas"
+    },
+    {
+      "nombre": "[1280] \"Información de los datos\" agrupa fuentes, ventas observadas y datos desconocidos, sin referencias internas",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] Información de los datos: Depósito 90 dice «Stock informado por el sistema · sin fecha de actualización disponible»",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] al abrir un detalle con scroll, el encabezado fijo deja visibles el producto y el control enfocado",
+      "ok": true,
+      "detalle": "{\"h\":64,\"filaTop\":402,\"focoTop\":418,\"focoBottom\":440,\"vh\":800}"
+    },
+    {
+      "nombre": "[1280] teclado: Escape cierra el detalle y el foco vuelve al botón Detalle",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] detalle: stock previo, días con stock, umbral aplicado y desglose por sucursal",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] período 60 d reconsulta con dias=60",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] 60 d: aparecen códigos \"Revisar: sin ventas\" con su umbral y origen",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] filtro tipo=reingreso llega a la API",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] con tipo=reingreso todas las filas son reingresos",
+      "ok": true,
+      "detalle": "50 filas"
+    },
+    {
+      "nombre": "[1280] contador Con ventas filtra por lectura=con_ventas",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] con el contador activo todas las filas son \"Con ventas\"",
+      "ok": true,
+      "detalle": "50 filas"
+    },
+    {
+      "nombre": "[1280] orden elegido llega a la API",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] filtro por código llega a la API",
+      "ok": true,
+      "detalle": "dias=60&sucursales=0001%2C0005%2C0010%2C0012%2C0014&codigo=B1113&limit=50&offset=0"
+    },
+    {
+      "nombre": "[1280] con filtro por código queda una fila y aparece el chip de filtro activo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] reingreso con stock previo: aclara que las ventas son del código y la atribución al lote está pendiente",
+      "ok": true,
+      "detalle": "B1113"
+    },
+    {
+      "nombre": "[1280] rango > 180 días muestra error y no consulta",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] rango válido consulta con desde/hasta",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] paginación presente con más de 50 códigos",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] página 2 pide offset=50",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] sin errores HTTP ni de script en el flujo alineado",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] atrasado: aviso breve con local, fecha y efecto",
+      "ok": true,
+      "detalle": "200 caracteres"
+    },
+    {
+      "nombre": "[1280] atrasado: el aviso es visible en la primera pantalla y compacto",
+      "ok": true,
+      "detalle": "{\"top\":340,\"bottom\":393,\"alto\":52,\"vh\":800}"
+    },
+    {
+      "nombre": "[1280] atrasado: contadores sin clasificar muestran \"—\" (no 0) y Historial insuficiente muestra el total",
+      "ok": true,
+      "detalle": "— Revisar: sin ventas | 92 Historial insuficiente | — Sin exposición | — En observación | — Vendió y agotado | — Con ventas"
+    },
+    {
+      "nombre": "[1280] atrasado: la tabla/tarjetas conservan ventas y muestran \"—\" en días con stock",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] \"Revisar sucursales\" abre el panel con las fechas por local",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] panel de sucursales: nombre y acción en la primera línea de cada local",
+      "ok": true,
+      "detalle": "{\"nombreTop\":419,\"btnTop\":412,\"btnAlto\":32,\"datosTop\":0,\"nombreBottom\":438,\"nombreLeft\":37,\"btnLeft\":1169,\"nombreRight\":289}"
+    },
+    {
+      "nombre": "[1280] panel con nombre largo: sin desborde horizontal y el botón queda dentro de la pantalla",
+      "ok": true,
+      "detalle": "{\"sw\":1238,\"cw\":1238,\"docW\":1280,\"vw\":1280,\"btnRight\":1243}"
+    },
+    {
+      "nombre": "[1280] excluir requiere confirmación explícita y avisa que cambia ventas y stock",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] confirmación de exclusión: botones y mensaje dentro de la pantalla, sin desborde, foco en Cancelar",
+      "ok": true,
+      "detalle": "{\"bs\":[{\"l\":1011,\"r\":1091,\"h\":32},{\"l\":1097,\"r\":1243,\"h\":32}],\"msgLeft\":33,\"msgRight\":1247,\"vw\":1280,\"docW\":1280,\"foco\":\"Cancelar\"}"
+    },
+    {
+      "nombre": "[1280] tras confirmar se consulta SIN 0012 (respuesta coherente con el alcance)",
+      "ok": true,
+      "detalle": "dias=30&sucursales=0001%2C0005%2C0010%2C0014&limit=50&offset=0"
+    },
+    {
+      "nombre": "[1280] el alcance visible indica la exclusión y las ventas/stock dejan de depender de Centenario",
+      "ok": true,
+      "detalle": "Sucursales:\nPaseo, Wave, Perito Moreno, Roca\nStock al día · 10/11\n▴\nExcluida de esta vista: Centenario · ventas y stock no la incluyen. Volver a incluir"
+    },
+    {
+      "nombre": "[1280] con el alcance sin Centenario los contadores vuelven a clasificarse",
+      "ok": true,
+      "detalle": "0 Revisar: sin ventas | 6 Historial insuficiente | 5 Sin exposición | 26 En observación | 7 Vendió y agotado | 48 Con ventas"
+    },
+    {
+      "nombre": "[1280] volver a incluir restituye el alcance y el aviso",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] exclusión vigente: el alcance visible lo indica",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] tras recargar: se consultan todas las sucursales y el alcance visible coincide (sin exclusión residual)",
+      "ok": true,
+      "detalle": "dias=30&sucursales=0001%2C0005%2C0010%2C0012%2C0014&limit=50&offset=0 | Sucursales: Paseo, Wave, Perito Moreno, Centenario, Roca Stock desactualizado ▾"
+    },
+    {
+      "nombre": "[1280] sin errores HTTP ni de script en el flujo atrasado",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] carga: se ve el esqueleto con aria-busy",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] cambios rápidos: la respuesta vigente (60 d) no es reemplazada por una anterior",
+      "ok": true,
+      "detalle": "Último ingreso entre el 12/09/2026 y el 10/11/2026 · 60 días · corte 10/11/2026 (cierre de ayer)"
+    },
+    {
+      "nombre": "[1280] vacío: mensaje claro",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] error: mensaje con botón Reintentar",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[1280] error: Reintentar recupera los datos",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] alineado: el primer producto entra en la primera pantalla (filtros y detalle cerrados)",
+      "ok": true,
+      "detalle": "{\"top\":623,\"bottom\":755,\"alto\":812}"
+    },
+    {
+      "nombre": "[375] barra superior compacta: sin tarjeta vacía y altura mínima",
+      "ok": true,
+      "detalle": "{\"top\":78,\"bottom\":118,\"h\":40}"
+    },
+    {
+      "nombre": "[375] altura acumulada hasta las subpestañas",
+      "ok": true,
+      "detalle": "subpestañas terminan en 214 px"
+    },
+    {
+      "nombre": "[375] controles de la barra cómodos de tocar (≥ 40 px)",
+      "ok": true,
+      "detalle": "alto 40"
+    },
+    {
+      "nombre": "[375] teclado: tras abrir el panel, Tab entra a las acciones del panel",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] teclado: Escape cierra el panel y devuelve el foco a la línea de alcance",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] al abrir el panel con scroll, la línea de alcance y el control enfocado quedan bajo el encabezado fijo",
+      "ok": true,
+      "detalle": "{\"h\":64,\"alcanceTop\":74,\"focoTop\":74,\"focoBottom\":109,\"vh\":812}"
+    },
+    {
+      "nombre": "[375] primera consulta usa el rango inicial del contrato (dias=30) y sucursales explicitas",
+      "ok": true,
+      "detalle": "dias=30&sucursales=0001%2C0005%2C0010%2C0012%2C0014&limit=50&offset=0"
+    },
+    {
+      "nombre": "[375] encabezado muestra período y corte",
+      "ok": true,
+      "detalle": "Último ingreso 12/10 al 10/11 · 30 días · corte 10/11"
+    },
+    {
+      "nombre": "[375] línea de alcance con sucursales/estado de stock",
+      "ok": true,
+      "detalle": "5 sucursales\nStock al día · 10/11\n▾"
+    },
+    {
+      "nombre": "[375] contadores: \"0\" real se muestra como 0 (alineado)",
+      "ok": true,
+      "detalle": "0\nRevisar: sin ventas | 6\nHistorial insuficiente | 4\nSin exposición | 27\nEn observación | 7\nVendió y agotado | 48\nCon ventas"
+    },
+    {
+      "nombre": "[375] contadores en dos columnas en móvil",
+      "ok": true,
+      "detalle": "columnas=2"
+    },
+    {
+      "nombre": "[375] filtros plegados con resumen de filtros activos",
+      "ok": true,
+      "detalle": "Filtros\n30 días"
+    },
+    {
+      "nombre": "[375] \"Información de los datos\" agrupa fuentes, ventas observadas y datos desconocidos, sin referencias internas",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] Información de los datos: Depósito 90 dice «Stock informado por el sistema · sin fecha de actualización disponible»",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] al abrir un detalle con scroll, el encabezado fijo deja visibles el producto y el control enfocado",
+      "ok": true,
+      "detalle": "{\"h\":64,\"filaTop\":173,\"focoTop\":195,\"focoBottom\":235,\"vh\":812}"
+    },
+    {
+      "nombre": "[375] teclado: Escape cierra el detalle y el foco vuelve al botón Detalle",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] detalle: stock previo, días con stock, umbral aplicado y desglose por sucursal",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] período 60 d reconsulta con dias=60",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] 60 d: aparecen códigos \"Revisar: sin ventas\" con su umbral y origen",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] filtro tipo=reingreso llega a la API",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] con tipo=reingreso todas las filas son reingresos",
+      "ok": true,
+      "detalle": "50 filas"
+    },
+    {
+      "nombre": "[375] contador Con ventas filtra por lectura=con_ventas",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] con el contador activo todas las filas son \"Con ventas\"",
+      "ok": true,
+      "detalle": "50 filas"
+    },
+    {
+      "nombre": "[375] orden elegido llega a la API",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] filtro por código llega a la API",
+      "ok": true,
+      "detalle": "dias=60&sucursales=0001%2C0005%2C0010%2C0012%2C0014&codigo=B1113&limit=50&offset=0"
+    },
+    {
+      "nombre": "[375] con filtro por código queda una fila y aparece el chip de filtro activo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] reingreso con stock previo: aclara que las ventas son del código y la atribución al lote está pendiente",
+      "ok": true,
+      "detalle": "B1113"
+    },
+    {
+      "nombre": "[375] rango > 180 días muestra error y no consulta",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] rango válido consulta con desde/hasta",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] paginación presente con más de 50 códigos",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] página 2 pide offset=50",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] sin errores HTTP ni de script en el flujo alineado",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] atrasado: aviso breve con local, fecha y efecto",
+      "ok": true,
+      "detalle": "200 caracteres"
+    },
+    {
+      "nombre": "[375] atrasado: el aviso es visible en la primera pantalla y compacto",
+      "ok": true,
+      "detalle": "{\"top\":349,\"bottom\":486,\"alto\":137,\"vh\":812}"
+    },
+    {
+      "nombre": "[375] atrasado: contadores sin clasificar muestran \"—\" (no 0) y Historial insuficiente muestra el total",
+      "ok": true,
+      "detalle": "— Revisar: sin ventas | 92 Historial insuficiente | — Sin exposición | — En observación | — Vendió y agotado | — Con ventas"
+    },
+    {
+      "nombre": "[375] atrasado: la tabla/tarjetas conservan ventas y muestran \"—\" en días con stock",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] \"Revisar sucursales\" abre el panel con las fechas por local",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] panel de sucursales: nombre y acción en la primera línea de cada local",
+      "ok": true,
+      "detalle": "{\"nombreTop\":443,\"btnTop\":433,\"btnAlto\":40,\"datosTop\":477,\"nombreBottom\":463,\"nombreLeft\":31,\"btnLeft\":270,\"nombreRight\":260}"
+    },
+    {
+      "nombre": "[375] panel móvil: fecha, estado y última venta debajo del nombre y botones ≥ 40 px",
+      "ok": true,
+      "detalle": "40,40,40,40,40"
+    },
+    {
+      "nombre": "[375] panel con nombre largo: sin desborde horizontal y el botón queda dentro de la pantalla",
+      "ok": true,
+      "detalle": "{\"sw\":345,\"cw\":345,\"docW\":375,\"vw\":375,\"btnRight\":344}"
+    },
+    {
+      "nombre": "[375] excluir requiere confirmación explícita y avisa que cambia ventas y stock",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] confirmación de exclusión: botones y mensaje dentro de la pantalla, sin desborde, foco en Cancelar",
+      "ok": true,
+      "detalle": "{\"bs\":[{\"l\":31,\"r\":185,\"h\":40},{\"l\":191,\"r\":344,\"h\":40}],\"msgLeft\":27,\"msgRight\":348,\"vw\":375,\"docW\":375,\"foco\":\"Cancelar\"}"
+    },
+    {
+      "nombre": "[375] tras confirmar se consulta SIN 0012 (respuesta coherente con el alcance)",
+      "ok": true,
+      "detalle": "dias=30&sucursales=0001%2C0005%2C0010%2C0014&limit=50&offset=0"
+    },
+    {
+      "nombre": "[375] el alcance visible indica la exclusión y las ventas/stock dejan de depender de Centenario",
+      "ok": true,
+      "detalle": "4 sucursales\nStock al día · 10/11\n▴\nExcluida de esta vista: Centenario · ventas y stock no la incluyen. Volver a incluir"
+    },
+    {
+      "nombre": "[375] con el alcance sin Centenario los contadores vuelven a clasificarse",
+      "ok": true,
+      "detalle": "0 Revisar: sin ventas | 6 Historial insuficiente | 5 Sin exposición | 26 En observación | 7 Vendió y agotado | 48 Con ventas"
+    },
+    {
+      "nombre": "[375] volver a incluir restituye el alcance y el aviso",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] exclusión vigente: el alcance visible lo indica",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] tras recargar: se consultan todas las sucursales y el alcance visible coincide (sin exclusión residual)",
+      "ok": true,
+      "detalle": "dias=30&sucursales=0001%2C0005%2C0010%2C0012%2C0014&limit=50&offset=0 | 5 sucursales Stock desactualizado ▾"
+    },
+    {
+      "nombre": "[375] sin errores HTTP ni de script en el flujo atrasado",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] carga: se ve el esqueleto con aria-busy",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] cambios rápidos: la respuesta vigente (60 d) no es reemplazada por una anterior",
+      "ok": true,
+      "detalle": "Último ingreso 12/09 al 10/11 · 60 días · corte 10/11"
+    },
+    {
+      "nombre": "[375] vacío: mensaje claro",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] error: mensaje con botón Reintentar",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "[375] error: Reintentar recupera los datos",
+      "ok": true,
+      "detalle": ""
+    }
+  ]
+}

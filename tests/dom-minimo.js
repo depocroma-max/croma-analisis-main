@@ -91,7 +91,7 @@ function crearEntorno({ rutas = {}, usuario = { rol: 'admin', usuario: 'tester' 
     function rtCambiarVista(v) { RT_VIEW = v; ultimaVista = v; }
   `, 'auxiliares');
   const raiz = path.join(__dirname, '..');
-  for (const f of ['oportunidades-explicacion.js', 'oportunidades-grupos.js', 'oportunidades-reglas.js', 'oportunidades-vista.js']) sandbox(fs.readFileSync(path.join(raiz, f), 'utf8'), f);
+  for (const f of ['oportunidades-explicacion.js', 'oportunidades-grupos.js', 'oportunidades-reglas.js', 'oportunidades-vista.js', 'ingresos-recientes-vista.js']) sandbox(fs.readFileSync(path.join(raiz, f), 'utf8'), f);
   sandbox('HOST = document.createElement("div");', 'host');
   return { ctx, reg, ev: c => vm.runInContext(c, ctx), host: () => vm.runInContext('HOST', ctx), Nodo };
 }

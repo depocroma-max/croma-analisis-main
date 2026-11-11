@@ -1,0 +1,197 @@
+/* Ingresos recientes (propuesta visual 2): subpestanas de Oportunidades, encabezado compacto, alcance, aviso, contadores, tabla y tarjetas.
+   Solo tokens de croma-ds.css. Rojo = accion/urgencia, negro = estado activo, claro = fondo. El color nunca es el unico indicador. */
+
+/* Subpestanas */
+.ov-subnav{display:inline-flex;gap:2px;background:var(--white);border:1px solid var(--gray-100);border-radius:10px;padding:3px;align-self:flex-start}
+.ov-subtab{font:inherit;font-size:13px;font-weight:600;color:var(--gray-600);background:none;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.ov-subtab:hover{color:var(--black)}
+.ov-subtab.ov-activo{background:var(--black);color:var(--white)}
+
+/* La barra global de periodo no aplica a Ingresos recientes: se ocultan Desde/Hasta y queda lo que si afecta (sucursales, actualizar) */
+#rtBar.ir-activa .rt-periodo-grupo{display:none}
+#rtBar.ir-activa{background:transparent;border:none;box-shadow:none;padding:0;margin:0;min-height:0;justify-content:flex-end}
+#rtBar.ir-activa .fbar-end{margin-left:auto;width:auto;padding:0}
+#rtBar.ir-activa .btn-sm{min-height:36px}
+#rtBar.ir-activa + .tabs{margin:6px 0 10px}
+/* El encabezado fijo (64 px) no debe tapar el control enfocado ni el titulo de lo que se abre: margen de scroll para foco por teclado y anclas */
+html:has(#rtBar.ir-activa){scroll-padding-top:76px}
+.ir-alcance,.ir-cab,[data-ir-fila],#irPanelSuc,#irInfo,.ir-lista,[data-ir-foco]{scroll-margin-top:76px}
+
+.ir-cab{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--space-3)}
+.ir-titulo{font-family:var(--font-display);font-size:30px;line-height:1;letter-spacing:.5px;margin:0}
+.ir-sub{margin:2px 0 0;font-size:13px;color:var(--gray-600)}
+.ir-link{font:inherit;font-size:12.5px;font-weight:600;color:var(--info);background:none;border:none;padding:4px 0;cursor:pointer;text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
+.ir-link.ir-activo{color:var(--black)}
+.ir-btn,.ir-btn-rojo{font:inherit;font-size:12.5px;font-weight:600;border-radius:8px;padding:6px 12px;cursor:pointer;border:1px solid var(--gray-300);background:var(--white);color:var(--black)}
+.ir-btn:hover{border-color:var(--black)}
+.ir-btn.ir-activo{background:var(--black);color:var(--white);border-color:var(--black)}
+.ir-btn-rojo{background:var(--accent);border-color:var(--accent);color:var(--white)}
+.ir-btn-rojo:hover{background:#d01f15;border-color:#d01f15}
+
+/* Alcance */
+.ir-alcance{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.ir-alcance-btn{font:inherit;font-size:13px;text-align:left;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--black);max-width:100%}
+.ir-alcance-btn:hover,.ir-alcance-btn.ir-activo{border-color:var(--black)}
+.ir-estado{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--gray-100);color:var(--gray-800)}
+.ir-estado-ok{background:var(--success-bg);color:#166534}
+.ir-estado-alerta{background:var(--warning-bg);color:#92400e}
+.ir-excluidas{font-size:12.5px;color:var(--gray-800);background:var(--warning-bg);border-radius:6px;padding:3px 8px}
+
+/* Aviso de atraso: breve, dos lineas como maximo en escritorio */
+.ir-aviso{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;background:var(--warning-bg);border-left:4px solid var(--warning);border-radius:6px;padding:8px 12px}
+.ir-aviso-txt{margin:0;font-size:13px;line-height:1.4;color:var(--gray-800);flex:1 1 420px;min-width:0}
+.ir-aviso-acc{display:flex;gap:8px;flex:none}
+
+/* Panel de sucursales */
+.ir-panel-suc{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.ir-nota{margin:0;font-size:12.5px;color:var(--gray-600);line-height:1.45}
+.ir-nota-aviso{background:var(--info-bg);border-left:4px solid var(--info);padding:6px 10px;border-radius:6px;color:var(--gray-800)}
+.ir-suc-lista{display:flex;flex-direction:column}
+.ir-suc-fila{display:grid;grid-template-columns:1.2fr .6fr 1.1fr .8fr 1.9fr;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--gray-100);font-size:13px}
+.ir-suc-nombre{min-width:0;overflow-wrap:anywhere}
+@media (min-width:701px){
+  /* escritorio: una fila con columnas alineadas (Sucursal | Stock al | Estado | Última venta | acción) */
+  .ir-suc-fila:not(.ir-suc-cab) > *{grid-row:1}
+  .ir-suc-nombre{grid-column:1}
+  .ir-suc-datos{display:contents}
+  .ir-suc-datos > span:nth-child(1){grid-column:2}.ir-suc-datos > span:nth-child(2){grid-column:3}.ir-suc-datos > span:nth-child(3){grid-column:4}
+  .ir-suc-fila:not(.ir-suc-cab) > .ir-suc-acc{grid-column:5}
+}
+.ir-suc-cab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-600);border-bottom:1px solid var(--gray-200)}
+.ir-suc-alerta{background:var(--warning-bg)}
+.ir-suc-alerta .ir-suc-estado{font-weight:700;color:#92400e}
+.ir-suc-excluida{color:var(--gray-500)}
+.ir-suc-acc{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;min-width:0}
+.ir-suc-confirma{background:var(--danger-bg)}
+.ir-confirma{margin:0;padding:6px 8px;font-size:12.5px;background:var(--danger-bg);color:var(--gray-800);border-radius:6px}
+
+/* Informacion de los datos */
+.ir-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 24px;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:10px 14px}
+.ir-info h4{margin:0 0 2px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-600)}
+.ir-info p{margin:0;font-size:12.5px;line-height:1.45;color:var(--gray-800)}
+
+/* Controles de filtro */
+.ir-controles{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ir-rapidos{display:inline-flex;border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;background:var(--white)}
+.ir-rapido{font:inherit;font-size:12.5px;font-weight:600;border:none;border-right:1px solid var(--gray-200);background:var(--white);color:var(--gray-800);padding:6px 11px;cursor:pointer}
+.ir-rapido:last-child{border-right:none}
+.ir-rapido:hover{background:var(--gray-50)}
+.ir-rapido.ir-activo{background:var(--black);color:var(--white)}
+.ir-select{font:inherit;font-size:12.5px;border:1px solid var(--gray-200);border-radius:8px;padding:6px 8px;background:var(--white);color:var(--black)}
+.ir-rango{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;font-size:12.5px;font-weight:600;color:var(--gray-600)}
+.ir-fecha{padding:5px 8px;font-size:13px}
+.ir-error{margin:0}
+.ir-filtros-form form.ov-filtros,.ir-filtros-form form{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-md);padding:8px 10px;margin-bottom:0;grid-template-columns:minmax(130px,1fr) repeat(3,minmax(130px,1fr)) auto;gap:10px;align-items:end}
+.ir-plegable{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md)}
+.ir-plegable > summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 12px;cursor:pointer;font-size:13px}
+.ir-plegable > summary::-webkit-details-marker{display:none}
+.ir-plegable > summary::after{content:"▾";margin-left:auto;color:var(--gray-600)}
+.ir-plegable[open] > summary::after{content:"▴"}
+.ir-fp-tit{font-weight:700}
+.ir-fp-res{color:var(--gray-600);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ir-plegable > .ir-controles,.ir-plegable > .ir-rango,.ir-plegable > .ir-filtros-form,.ir-plegable > .ov-activos{padding:0 12px 10px}
+
+/* Contadores */
+.ir-contadores{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.ir-cont{font:inherit;text-align:left;cursor:pointer;background:var(--white);border:1px solid var(--gray-200);border-left:4px solid var(--gray-400);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:1px;min-width:0;color:var(--black)}
+.ir-cont:hover{border-color:var(--gray-600)}
+.ir-cont-danger{border-left-color:var(--danger)}.ir-cont-warning{border-left-color:var(--warning)}.ir-cont-success{border-left-color:var(--success)}.ir-cont-info{border-left-color:var(--info)}
+.ir-cont-num{font-family:var(--font-display);font-size:24px;line-height:1.05;letter-spacing:.3px;font-variant-numeric:tabular-nums}
+.ir-cont-nom{font-size:12px;font-weight:600;color:var(--gray-800);line-height:1.2}
+.ir-cont.ir-activo{border:2px solid var(--black);border-left-width:5px;background:var(--gray-50);padding:5px 9px}
+.ir-ayuda{display:flex;flex-direction:column;gap:4px;padding:0 14px 8px}
+.ir-th-sub{display:block;font-weight:600;text-transform:none;letter-spacing:0;font-size:11px;color:var(--gray-500)}
+.ir-ayuda-lista{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;font-size:12.5px}
+.ir-ayuda-lista dt{font-weight:700;margin-top:2px}.ir-ayuda-lista dd{margin:0;color:var(--gray-600);line-height:1.4}
+
+/* Lista */
+.ir-lista{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
+.ir-lista-cab{padding:6px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--gray-800)}
+.ir-lista > .rt-state,.ir-lista > button{margin:var(--space-3)}
+.ir-tabla-wrap{border-top:1px solid var(--gray-100)}
+.ir-tabla{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:13px}
+.ir-tabla > thead > tr > th{position:sticky;top:var(--ov-sticky-top,64px);z-index:2;background:var(--gray-50);text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-600);padding:8px 10px;border-bottom:1px solid var(--gray-200)}
+.ir-tabla > tbody > tr > td{padding:8px 10px;border-bottom:1px solid var(--gray-100);vertical-align:middle;overflow-wrap:anywhere}
+.ir-c-prod{width:29%}.ir-c-ing{width:15%}.ir-c-num{width:9.5%;text-align:right}.ir-c-lect{width:14%}.ir-c-det{width:8%;text-align:right}
+.ir-tabla > tbody > tr > td.ir-c-num{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px}
+.ir-fila{cursor:pointer}.ir-fila:hover{background:var(--gray-50)}
+.ir-fila-abierta{background:color-mix(in srgb,var(--info-bg) 40%,transparent)}
+.ir-prod{display:flex;flex-direction:column;gap:1px;min-width:0}
+.ir-prod-l1{line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ir-meta{font-size:12px;color:var(--gray-600)}
+.ir-lect{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.ir-pill{display:inline-block;font-size:12px;font-weight:700;line-height:1.3;padding:2px 8px;border-radius:6px;background:var(--gray-100);color:var(--gray-800)}
+.ir-pill-danger{background:var(--danger-bg);color:var(--danger)}.ir-pill-warning{background:var(--warning-bg);color:#92400e}.ir-pill-success{background:var(--success-bg);color:#166534}.ir-pill-info{background:var(--info-bg);color:var(--info)}
+.ir-nd{color:var(--gray-500);font-weight:600;text-decoration:underline dotted;text-underline-offset:3px;cursor:help}
+.ir-det-btn{font:inherit;font-size:12.5px;font-weight:600;background:none;border:none;color:var(--black);cursor:pointer;padding:2px 0;text-decoration:underline;text-underline-offset:3px}
+.ir-tabla > tbody > tr.ir-fila-detalle > td{background:var(--gray-50);padding:10px 14px}
+
+/* Detalle */
+.ir-detalle{display:flex;flex-direction:column;gap:8px}
+.ir-d-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px 18px}
+.ir-d-item{display:flex;flex-direction:column;gap:1px;min-width:0}
+.ir-d-rot{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-600)}
+.ir-d-val{font-size:13px;color:var(--black);overflow-wrap:anywhere}
+.ir-d-sub{margin:4px 0 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-600)}
+.ir-suc-tabla-wrap{overflow-x:auto}
+.ir-suc-tabla{width:100%;border-collapse:collapse;font-size:12.5px}
+.ir-suc-tabla th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-600);padding:4px 8px;border-bottom:1px solid var(--gray-200)}
+.ir-suc-tabla td{padding:4px 8px;border-bottom:1px solid var(--gray-100);font-variant-numeric:tabular-nums}
+
+/* Carga */
+.ir-esqueleto{padding:6px 14px 12px;display:flex;flex-direction:column;gap:8px}
+.ir-skel-fila{display:flex;gap:2%;align-items:center;height:40px;border-bottom:1px solid var(--gray-100)}
+.ir-skel{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--gray-100),var(--gray-200),var(--gray-100));background-size:200% 100%;animation:ir-brillo 1.4s ease-in-out infinite}
+@keyframes ir-brillo{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.ir-skel{animation:none}}
+
+/* Foco visible */
+.ov button:focus-visible,.ov select:focus-visible,.ov input:focus-visible,.ov summary:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+
+/* Tarjetas (movil) */
+.ir-tarjetas{display:none}
+@media (max-width:700px){
+  #rtBar.ir-activa .rt-suc-panel{right:auto;left:0;width:min(340px,calc(100vw - 48px))}
+  .ov-subnav{align-self:stretch}.ov-subtab{flex:1;text-align:center}
+  .ir-titulo{font-size:26px}
+  .ir-cab{flex-direction:row;align-items:flex-start;flex-wrap:nowrap}
+  .ir-cab > div{flex:1;min-width:0}
+  .ir-sub{font-size:12.5px}
+  #rtBar.ir-activa{justify-content:flex-start}
+  #rtBar.ir-activa .fbar-end{margin-left:0;width:100%;display:flex;gap:8px}
+  #rtBar.ir-activa .btn-sm{min-height:40px;padding:4px 12px}
+  #rtBar.ir-activa + .tabs{margin:6px 0 8px}
+  .ir-btn,.ir-btn-rojo{min-height:40px}.ir-rapido{min-height:40px}.ir-select{min-height:40px}
+  .ir-lista-cab{padding:6px 12px}.ir-ayuda{padding:0 12px 8px}
+  .ir-alcance-btn{width:100%}
+  .ir-aviso{padding:8px 10px}.ir-aviso-acc{width:100%}.ir-aviso-acc .ir-btn,.ir-aviso-acc .ir-btn-rojo{flex:1}
+  .ir-contadores{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ir-cont{padding:5px 8px}.ir-cont-num{font-size:22px}
+  .ir-ayuda-lista,.ir-info{grid-template-columns:1fr}
+  /* una estructura por local: 1.ª linea = nombre + accion; debajo, fecha de stock, estado y ultima venta; al confirmar, los botones ocupan su propia linea */
+  .ir-suc-cab{display:none}
+  .ir-suc-fila:not(.ir-suc-cab){grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nombre acc" "datos datos";gap:4px 10px;padding:10px 4px;align-items:center}
+  .ir-suc-nombre{grid-area:nombre;font-size:14px}
+  .ir-suc-acc{grid-area:acc;justify-self:end}
+  .ir-suc-datos{display:flex;flex-wrap:wrap;gap:2px 14px;grid-area:datos;font-size:12.5px}
+  .ir-suc-datos > span::before{content:attr(data-rotulo) ": ";color:var(--gray-600);font-size:11.5px}
+  .ir-suc-confirma:not(.ir-suc-cab){grid-template-columns:minmax(0,1fr);grid-template-areas:"nombre" "datos" "acc"}
+  .ir-suc-confirma > .ir-suc-acc{justify-self:stretch;display:flex}
+  .ir-suc-confirma > .ir-suc-acc > button{flex:1}
+  .ir-d-grid{grid-template-columns:1fr 1fr}
+  .ir-filtros-form form{grid-template-columns:1fr 1fr;}
+  .ir-tabla-wrap{display:none}
+  .ir-tarjetas{display:flex;flex-direction:column;border-top:1px solid var(--gray-100)}
+  .ir-tarjeta{padding:10px 12px;border-bottom:1px solid var(--gray-100);display:flex;flex-direction:column;gap:3px}
+  .ir-t-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .ir-t-id{flex:1;min-width:0;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ir-t-metricas{display:grid;grid-template-columns:1.15fr .8fr 1.05fr;gap:6px;margin:4px 0 0}
+  .ir-t-metricas dt{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gray-600)}
+  .ir-t-metricas dd{margin:0;display:flex;flex-direction:column}
+  .ir-t-metricas b{font-size:14px;font-variant-numeric:tabular-nums}
+  .ir-t-metricas small{font-size:11px;color:var(--gray-600);line-height:1.25}
+  .ir-t-meta{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .ir-t-meta .ir-meta{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ir-tarjeta .ir-det-btn{flex:none;padding:11px 4px;margin:-11px 0 -11px 0} /* area tactil de 40 px sin agrandar la tarjeta */
+  .ir-tarjeta.ir-fila-abierta{background:color-mix(in srgb,var(--info-bg) 40%,transparent)}
+}
