@@ -61,6 +61,12 @@ const check = (nombre, ok, detalle) => { resultados.push({ nombre, ok: !!ok, det
       const pn = await page.evaluate(() => { const b = document.getElementById('rtSucursalesPanel').getBoundingClientRect(); return { l: Math.round(b.left), r: Math.round(b.right), t: Math.round(b.top), vw: innerWidth, visible: document.elementFromPoint(b.left + 20, b.top + 20)?.closest('#rtSucursalesPanel') !== null }; });
       check(T('panel de sucursales desde la barra superior: dentro de la pantalla y por encima del contenido'), pn.l >= 0 && pn.r <= pn.vw && pn.visible, JSON.stringify(pn));
       await foto(page, 'alineado-07-acciones-en-barra-superior');
+      // toda la interfaz: otra pestaña mantiene las acciones arriba y muestra los dias de Desde/Hasta
+      await page.keyboard.press('Escape'); await page.click('#rtTabs .tab[data-view="stock-ventas"]'); await page.waitForTimeout(400);
+      const glob = await page.evaluate(() => ({ top: !!document.querySelector('header.topbar #rtBtnSucursales') && !!document.querySelector('header.topbar #rtBtnActualizar'), dias: document.getElementById('rtDiasPeriodo').innerText, barra: getComputedStyle(document.getElementById('rtBar')).display }));
+      check(T('otras pestañas: acciones en la barra superior y cantidad de días junto a Desde/Hasta'), glob.top && /^[0-9]+ días$/.test(glob.dias) && glob.barra !== 'none', JSON.stringify(glob));
+      await page.click('#rtTabs .tab[data-view="oportunidades"]'); await page.waitForSelector(filas, { timeout: 15000 });
+      if (!(await page.locator('#rtBtnSucursales').count())) throw new Error('acciones');
       await page.keyboard.press('Escape'); await page.locator('#rtBtnSucursales').click(); await page.waitForTimeout(200);
     } else check(T('móvil: las acciones siguen bajo la barra superior (no caben en ella)'), !acc.suc && !acc.act && acc.barra !== 'none', JSON.stringify(acc));
     // teclado: el panel queda justo despues de la linea de alcance; Escape lo cierra y devuelve el foco

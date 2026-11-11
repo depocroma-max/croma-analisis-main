@@ -127,28 +127,6 @@ async function irCargar() {
   if (reintentar) irCargar();
 }
 function irReiniciar() { IR.offset = 0; IR.expandido = null; IR.confirmar = null; }
-// Con Ingresos recientes activa, en escritorio «Sucursales», «Actualizar» y la hora de actualizacion pasan a la barra superior (ahorra una fila).
-// En movil no hay lugar en la barra superior: quedan donde estaban. Son los mismos nodos (mismos ids y eventos), solo cambian de lugar.
-function irUbicarAcciones() {
-  const bar = document.getElementById('rtBar'), top = document.querySelector('header.topbar .top-actions');
-  if (!bar || !top) return;
-  const activa = bar.classList.contains('ir-activa') || bar.classList.contains('ir-en-top');
-  const enTop = bar.classList.contains('ir-activa') && !(typeof ovEsMovil === 'function' && ovEsMovil());
-  const cont = document.querySelector('header.topbar .ir-top-acc');
-  const estado = document.querySelector('.rt-status'), fin = document.querySelector('.fbar-end');
-  if (!estado || !fin) return;
-  if (enTop && !cont) {
-    const c = document.createElement('div'); c.className = 'ir-top-acc';
-    c.appendChild(estado); c.appendChild(fin);
-    top.insertBefore(c, top.firstChild);
-  } else if (!enTop && cont) {
-    bar.appendChild(estado); bar.appendChild(fin); cont.remove();
-  }
-  bar.classList.toggle('ir-en-top', enTop);
-  if (!activa) bar.classList.remove('ir-en-top');
-}
-if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('resize', () => irUbicarAcciones());
-
 function irAplicar(fn, foco) { fn(); if (foco) IR.foco = foco; irReiniciar(); irCargar(); }
 // Redibuja conservando el scroll; despues enfoca 'foco' y deja visible 'mostrar' (selector) por debajo del encabezado fijo de la app.
 function irRedibujar(foco, mostrar) { if (foco) IR.foco = foco; IR.mostrar = mostrar || null; IR.scrollY = window.scrollY; rtRenderVistaActual(); }

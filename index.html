@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="croma-ds.css?v=20260714-1">
   <link rel="stylesheet" href="oportunidades-reglas.css?v=20261031-1">
   <link rel="stylesheet" href="oportunidades-vista.css?v=20261103-1">
-  <link rel="stylesheet" href="ingresos-recientes-vista.css?v=20261111-3">
+  <link rel="stylesheet" href="ingresos-recientes-vista.css?v=20261111-4">
   <style>
     /* --black, --white, --gray-100..800 y --accent ya vienen de croma-ds.css (valores
        idénticos, una sola fuente de verdad). Acá solo lo que croma-ds.css no define:
@@ -322,6 +322,16 @@
     /* Barra de período: fechas agrupadas a la izquierda, estado con indicador,
        Actualizar a la derecha (via .fbar-end existente). */
     .rt-periodobar{align-items:center}
+    /* cantidad de dias del rango, al lado de Desde/Hasta */
+    .rt-dias-periodo{font-size:12.5px;font-weight:700;color:var(--gray-600);white-space:nowrap}
+    .rt-dias-periodo:empty{display:none}
+    /* escritorio (>= 900 px): «Sucursales», «Actualizar» y la hora de actualizacion viven en la barra superior (oscura) para ahorrar una fila */
+    .rt-top-acc{display:flex;align-items:center;gap:10px;margin-right:6px}
+    .rt-top-acc .fbar-end{margin:0;padding:0;width:auto;flex-wrap:nowrap}
+    .rt-top-acc .rt-status .fname{color:#9ca3af;font-size:11.5px;white-space:nowrap}
+    .rt-top-acc .btn-sm{min-height:34px;white-space:nowrap}
+    .rt-top-acc .rt-btn-actualizar{background:transparent;border-color:rgba(255,255,255,.4);color:#fff}
+    .rt-top-acc .rt-btn-actualizar:hover{background:rgba(255,255,255,.14);border-color:#fff}
     .rt-periodo-grupo{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
     .rt-status{display:flex;align-items:center;gap:7px}
     .rt-status:has(#rtUltimaActualizacion:empty){display:none}
@@ -691,6 +701,7 @@
         <div class="rt-periodo-grupo">
           <label class="rt-periodo-label">Desde <input type="date" id="rtDesde" class="form-control rt-periodo-input"></label>
           <label class="rt-periodo-label">Hasta <input type="date" id="rtHasta" class="form-control rt-periodo-input"></label>
+          <span class="rt-dias-periodo" id="rtDiasPeriodo" role="status" aria-live="polite"></span>
         </div>
         <div class="rt-status"><span class="rt-status-dot" aria-hidden="true"></span><span class="fname" id="rtUltimaActualizacion"></span></div>
         <div class="fbar-end">
@@ -779,7 +790,8 @@ function getUser() {
   setup();
   // Diferido: RT_DESDE/RT_HASTA (let, más abajo en el mismo script) todavía no
   // están inicializadas cuando este IIFE corre de forma síncrona al parsear.
-  setTimeout(() => { rtSucursalesInit(); iniciarModoRT(); }, 0);
+  setTimeout(() => { rtSucursalesInit(); rtUbicarAcciones(); iniciarModoRT(); }, 0);
+  window.addEventListener('resize', rtUbicarAcciones);
 })();
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
@@ -796,6 +808,7 @@ function setup() {
   });
   document.getElementById('rtDesde').addEventListener('change', rtCambiarPeriodo);
   document.getElementById('rtHasta').addEventListener('change', rtCambiarPeriodo);
+  rtVincularDias(document.getElementById('rtDesde'), document.getElementById('rtHasta'), document.getElementById('rtDiasPeriodo'));
 }
 
 // ── Tiempo real (croma-api) ─────────────────────────────────────────────────
@@ -1013,6 +1026,37 @@ function rtSucursalesAplicar(seleccion) {
 }
 
 // Arma el boton + popover dentro de la barra de periodo (una vez, desde setup()).
+// Dias del rango (ambos extremos incluidos) o null si falta una fecha o estan invertidas.
+function rtDiasRango(desde, hasta) {
+  if (!desde || !hasta || desde > hasta) return null;
+  const d = Math.round((Date.parse(hasta + 'T00:00:00Z') - Date.parse(desde + 'T00:00:00Z')) / 86400000) + 1;
+  return isNaN(d) ? null : d;
+}
+function rtTextoDias(desde, hasta) { const d = rtDiasRango(desde, hasta); return d === null ? '' : d + (d === 1 ? ' día' : ' días'); }
+// Muestra en 'destino' los dias entre dos inputs de fecha y lo mantiene al escribir o elegir.
+function rtVincularDias(inDesde, inHasta, destino) {
+  const pintar = () => { destino.textContent = rtTextoDias(inDesde.value, inHasta.value); };
+  ['input', 'change'].forEach(ev => { inDesde.addEventListener(ev, pintar); inHasta.addEventListener(ev, pintar); });
+  pintar();
+}
+// En escritorio las acciones de la barra de periodo suben a la barra superior; en pantallas chicas vuelven a su fila (no caben junto al logo y la sesion).
+// Son los mismos nodos (mismos ids y eventos), solo cambian de lugar. Con Ingresos recientes activa la fila queda vacia y se oculta.
+function rtUbicarAcciones() {
+  const bar = document.getElementById('rtBar'), top = document.querySelector('header.topbar .top-actions');
+  const estado = document.querySelector('.rt-status'), fin = document.querySelector('.fbar-end');
+  if (!bar || !top || !estado || !fin) return;
+  const enTop = window.matchMedia('(min-width: 900px)').matches;
+  const cont = document.querySelector('header.topbar .rt-top-acc');
+  if (enTop && !cont) {
+    const c = document.createElement('div'); c.className = 'rt-top-acc';
+    c.appendChild(estado); c.appendChild(fin);
+    top.insertBefore(c, top.firstChild);
+  } else if (!enTop && cont) {
+    bar.appendChild(estado); bar.appendChild(fin); cont.remove();
+  }
+  bar.classList.toggle('rt-sin-contenido', enTop && bar.classList.contains('ir-activa'));
+}
+
 function rtSucursalesInit() {
   const fin = document.querySelector('#rtBar .fbar-end');
   if (!fin || document.getElementById('rtBtnSucursales')) return;
@@ -1288,6 +1332,7 @@ function iniciarModoRT() {
   RT_DESDE = periodo.desde; RT_HASTA = periodo.hasta;
   document.getElementById('rtDesde').value = RT_DESDE;
   document.getElementById('rtHasta').value = RT_HASTA;
+  document.getElementById('rtDesde').dispatchEvent(new Event('input')); // refresca la cantidad de dias
   rtCargarResumen();
   rtCargarResumenAnterior(); // en paralelo, nunca bloquea el dashboard principal
   rtCargarSeries();          // idem: sparklines llegan cuando llegan
@@ -1825,6 +1870,7 @@ function rtRotacionesHistorialFormularioFiltro(host) {
   const f = RT_ROTACIONES_HISTORIAL_FILTRO;
   const inDesde = campoFecha('rtHistDesde', 'Desde', f.desde);
   const inHasta = campoFecha('rtHistHasta', 'Hasta', f.hasta);
+  { const dias = rtEl('span', { className: 'rt-dias-periodo' }); inHasta.parentNode.appendChild(dias); rtVincularDias(inDesde, inHasta, dias); }
   const selOrigen = campoSelect('rtHistOrigen', 'Origen', f.origen, [['', 'Todas'], ...RT_CENTROS_TODOS.map(c => [c, RT_CENTRO_NOMBRE[c]])]);
   const selDestino = campoSelect('rtHistDestino', 'Destino', f.destino, [['', 'Todas'], ...RT_CENTROS_TODOS.map(c => [c, RT_CENTRO_NOMBRE[c]])]);
   const inUsuario = campoTexto('rtHistUsuario', 'Usuario', f.usuario);
@@ -2605,7 +2651,7 @@ function rtRenderVistaActual() {
   // En Oportunidades > Ingresos recientes el periodo global (Desde/Hasta) no aplica: la barra oculta esos campos para dejar lugar a la lista.
   const barra = document.getElementById('rtBar');
   if (barra) barra.classList.toggle('ir-activa', RT_VIEW === 'oportunidades' && typeof ovSubvistaActual === 'function' && ovSubvistaActual() === 'ingresos');
-  if (typeof irUbicarAcciones === 'function') irUbicarAcciones();
+  rtUbicarAcciones();
   host.replaceChildren();
   if (RT_VIEW === 'dashboard') renderRTDashboard(host);
   else if (RT_VIEW === 'marcas') renderRTMarcas(host);
@@ -4989,7 +5035,7 @@ function rtOportunidadesPanelDetalle(f) {
 <script src="oportunidades-grupos.js?v=20261103-1"></script>
 <script src="oportunidades-reglas.js?v=20261031-1"></script>
 <script src="oportunidades-vista.js?v=20261103-1"></script>
-<script src="ingresos-recientes-vista.js?v=20261111-3"></script>
+<script src="ingresos-recientes-vista.js?v=20261111-4"></script>
 <script>
   window.addEventListener('load', function() {
     var splash = document.getElementById('splashScreen');

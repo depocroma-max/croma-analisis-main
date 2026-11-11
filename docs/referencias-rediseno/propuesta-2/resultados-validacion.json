@@ -1,6 +1,6 @@
 {
-  "fecha": "2026-11-11T15:22:59.059Z",
-  "total": 113,
+  "fecha": "2026-11-11T15:33:03.064Z",
+  "total": 114,
   "fallidas": 0,
   "resultados": [
     {
@@ -27,6 +27,11 @@
       "nombre": "[1280] panel de sucursales desde la barra superior: dentro de la pantalla y por encima del contenido",
       "ok": true,
       "detalle": "{\"l\":614,\"r\":954,\"t\":56,\"vw\":1280,\"visible\":true}"
+    },
+    {
+      "nombre": "[1280] otras pestañas: acciones en la barra superior y cantidad de días junto a Desde/Hasta",
+      "ok": true,
+      "detalle": "{\"top\":true,\"dias\":\"91 días\",\"barra\":\"flex\"}"
     },
     {
       "nombre": "[1280] teclado: tras abrir el panel, Tab entra a las acciones del panel",
