@@ -4,6 +4,7 @@
 //   node tests/harness/servidor.js [--puerto=8795] [--sin-migrar] [--sin-senal]      (cerrar con Ctrl+C)
 // Parametros de la pagina (solo en el harness): ?rol=jefe (sin permiso), ?expirado=1, ?sinsesion=1.
 // Control en caliente: /__h/senal?valor=0|1 , /__h/retraso?ms=N , /__h/universo?n=chico|normal|vacio
+// Rendimiento desde el ingreso (I2): --rendimiento=<snapshot.db> [--rendimiento-incompatible=<db>] suma los 6 casos de revision y /__h/rend (ver rendimiento-fixture.js).
 // LIMITES: ver tests/harness/README.md (no es una prueba completa del entorno real).
 const path = require('path');
 const os = require('os');
@@ -24,8 +25,9 @@ const estado = { retrasoMs: 0, universo: 'normal' };
 // Ingresos recientes (propuesta visual 2): escenarios SIMULADOS con el router real de croma-api y un fixture sintetico (ver ingresos-fixture.js).
 const IR = require('./ingresos-fixture');
 const estadoIR = { escenario: 'alineado', vacio: false, error: false, retrasoMs: 0 };
+const REND = require('./rendimiento-fixture');
 const productosActuales = () => {
-  const todos = U.universo();
+  const todos = argv.rendimiento ? [...REND.productosCasos(U.CENTROS, U.OPERATIVAS), ...U.universo()] : U.universo();
   if (estado.universo === 'vacio') return [];
   if (estado.universo === 'chico') return todos.slice(0, 6);
   return todos;
@@ -60,7 +62,8 @@ const fakePool = {
         if (texto.includes('AS ventas_0001') && texto.includes('GROUP BY cod;')) return { recordset: aFilas(productosActuales()) };
         // Ingresos de proveedor (Deposito 90): sinteticos, derivados del Ultimo_ingreso del fixture (los pares impares no tienen ingreso)
         if (texto.includes('AS ingreso_prov_fecha')) return { recordset: productosActuales().filter((p, i) => p.Ultimo_ingreso && i % 7 !== 3).map((p, i) => ({ cod: p.Codigo_producto, ingreso_prov_fecha: p.Ultimo_ingreso, ingreso_prov_cantidad: 6 + (i % 5) * 6, ingreso_prov_unidades_periodo: i % 3 === 0 ? 6 + (i % 5) * 6 : 0, ingreso_prov_dias_periodo: i % 3 === 0 ? 1 : 0 })) };
-        if (texto.includes('AS ventas_30d')) return { recordset: productosActuales().filter(p => p.Ultima_venta).map(p => ({ cod: p.Codigo_producto, ultima_venta: p.Ultima_venta, ventas_30d: p.Ventas_ultimos_30_dias })) };
+        // Ultima venta y ventas recientes/netas por sucursal: funcion pura del fixture (probada en tests/harness-rendimiento-fixture.test.js).
+        if (texto.includes('AS ventas_30d')) return { recordset: REND.respuestaVentas30d(productosActuales(), texto, inputs, U.OPERATIVAS) };
         return { recordset: [] }; // otras pestanas: vacias (el harness no simula Sysneo completo)
       },
     };
@@ -97,6 +100,7 @@ app.get('/__h/ir', (q, s) => {
   s.json(estadoIR);
 });
 app.use('/analisis/ingresos-recientes', irRouter);
+const rend = REND.instalar({ app, API, argv }); // antes de /analisis: intercepta Oportunidades en el escenario "publicada"
 app.use('/analisis/oportunidades/perfiles', require(API + '/routes/oportunidades-perfiles'));
 app.use('/analisis/oportunidades/simulaciones', require(API + '/routes/oportunidades-simulaciones'));
 app.use('/analisis/oportunidades/activaciones', require(API + '/routes/oportunidades-activaciones'));
@@ -119,7 +123,7 @@ app.get(['/', '/index.html'], (req, res) => {
   res.type('html').send(html.replace('<head>', '<head>' + inyeccion + aviso));
 });
 app.use(express.static(FRONT));
-process.on('exit', () => { try { rotDb.close(); } catch (e) { /* ya cerrada */ } try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) { /* en uso: queda en tmpdir */ } });
+process.on('exit', () => { if (rend) rend.cerrar(); try { rotDb.close(); } catch (e) { /* ya cerrada */ } try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) { /* en uso: queda en tmpdir */ } });
 process.on('SIGINT', () => process.exit(0)); process.on('SIGTERM', () => process.exit(0));
 // Solo se relaja connect-src EN LA COPIA QUE SIRVE ESTE HARNESS (el index.html del repo y la CSP de produccion no se tocan).
-app.listen(PUERTO, () => console.log(`harness fase5 en http://localhost:${PUERTO} (db temporal: ${tmp}; senal=${process.env.OPORTUNIDADES_PERFILES_HABILITADOS || 'apagada'}; ${argv['sin-migrar'] ? 'SIN migrar' : 'migrada'})`));
+app.listen(PUERTO, () => console.log(`harness fase5 en http://localhost:${PUERTO} (db temporal: ${tmp}; rendimiento=${rend ? rend.estado.snapshot : 'sin base'}; senal=${process.env.OPORTUNIDADES_PERFILES_HABILITADOS || 'apagada'}; ${argv['sin-migrar'] ? 'SIN migrar' : 'migrada'})`));

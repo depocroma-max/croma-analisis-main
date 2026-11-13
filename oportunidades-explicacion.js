@@ -171,6 +171,8 @@ function rrDetalleOportunidad(panel, f, resp, bloque) {
     'Ventas del período: ' + nf.format(f.Ventas_total || 0) + ' (' + nf1.format(f.ventas_semana || 0) + ' por semana) · Stock en sucursales: ' + nf.format(f.Stock_sucursales || 0)
     + ' · Depósito 90: ' + nf.format(deposito) + ' · Fallados 93: ' + nf.format(f.Stock_fallados || 0) + ' · Ratio de venta: ' + ratio));
   if (typeof ovBloqueIngresos === 'function') panel.appendChild(bloque(f.ingreso_proveedor !== undefined ? 'Ingresos de proveedor' : 'Ingreso', ovBloqueIngresos(f, resp)));
+  // Rendimiento desde el ingreso y demanda reciente de la seleccion (§23, I2): informativos; sin los campos de I1 no se muestran.
+  if (typeof riBloquesDetalle === 'function') riBloquesDetalle(panel, f, resp, bloque);
   panel.appendChild(rrBloquePorQue(f, resp));
   if (typeof rrEsAdmin === 'function' && rrEsAdmin()) panel.appendChild(rrBloqueTecnico(f, resp)); // huellas y perfiles: solo administradores
   const rot = acciones.find(a => a.requiere_validacion_variante);

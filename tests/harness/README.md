@@ -7,6 +7,8 @@ node tests/harness/servidor.js --puerto=8795          # normal (migrada, perfile
 node tests/harness/servidor.js --puerto=8796 --sin-migrar   # estado "módulo no listo"
 node tests/harness/servidor.js --sin-senal            # perfiles no habilitados
 ```
+Rendimiento desde el ingreso (etapa I2): `--rendimiento=<snapshot.db> [--rendimiento-incompatible=<snapshot sin huella.db>]` conecta la ruta real a un snapshot SQLite (solo lectura) y suma seis productos sintéticos con los códigos de revisión (03010, 03113, 03183, R0001, T0783, T0847). Escenarios en caliente: `/__h/rend?escenario=vigente|atrasado|vencido|incompatible|ausente|error|publicada&cadena=normal|caida&cadena_retraso=<ms>` (ver `rendimiento-fixture.js`). `publicada` reproduce la API desplegada sin I1. Las ventas netas de la selección dependen de las sucursales pedidas (por sucursal en el fixture); `cadena_retraso` demora la consulta de cadena para probar respuestas tardías.
+
 Cerrar con Ctrl+C (borra la SQLite temporal, que vive en el directorio temporal del sistema). Entradas de `.claude/launch.json`: `fase5-harness` y `fase5-harness-sin-migrar`.
 Sin credenciales: el token admin se firma con un secreto propio del harness. Datos: universo sintético de `croma-api/scripts/fixtures`.
 
