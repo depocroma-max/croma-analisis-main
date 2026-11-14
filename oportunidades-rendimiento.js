@@ -82,6 +82,14 @@ function riVista(f, resp) {
     if (!f || !f.demanda_reciente_seleccion) return { tipo: 'omitir' };
     return { tipo: 'explicacion', estado: 'no_configurado', badge: 'No disponible', titulo: 'El rendimiento desde el ingreso no está disponible en este servidor.', texto: 'Todavía no hay un cálculo configurado. Las reglas y etiquetas de Oportunidades no cambian.' };
   }
+  // I4: las etiquetas activas y la lectura deben ser del MISMO calculo. Si no lo son (no deberia pasar: la API arma ambas con la misma lectura),
+  // no se muestra la lectura como fundamento de etiquetas calculadas con otra ejecucion.
+  const ap = ri && ri.aplicacion;
+  if (ap && ap.snapshot_ejecucion && ri.ejecucion && ap.snapshot_ejecucion !== ri.ejecucion) {
+    return { tipo: 'explicacion', estado: 'desfase_de_calculo', badge: 'Cálculo en actualización',
+      titulo: 'Las etiquetas de este producto se calcularon con el cálculo ' + ap.snapshot_ejecucion + ' y la lectura disponible es del cálculo ' + ri.ejecucion + '.',
+      texto: 'No se muestra esa lectura como fundamento de las etiquetas. Actualizá Oportunidades para ver las dos cosas del mismo cálculo.' };
+  }
   const estado = (ri && ri.estado) || top.estado;
   const motivo = (ri && ri.motivo) || top.motivo;
   const snap = top.snapshot || null;
@@ -90,7 +98,7 @@ function riVista(f, resp) {
     case 'disponible':
     case 'informativo_atrasado': {
       const atrasado = estado === 'informativo_atrasado';
-      if (ri && ri.lectura) return { tipo: 'lectura', estado, atrasado, lectura: ri.lectura, etiquetas: atrasado ? [] : (ri.etiquetas_candidatas || []) };
+      if (ri && ri.lectura) return { tipo: 'lectura', estado, atrasado, lectura: ri.lectura, etiquetas: atrasado ? [] : (ri.etiquetas_candidatas || []), activas: ri.etiquetas_activas || [], aplicacion: ri.aplicacion || null };
       const sc = (ri && ri.sin_conclusion) || { tipo: 'datos', motivo: 'codigo_sin_fila_en_snapshot' };
       return { tipo: 'sin_evidencia', estado, atrasado, sin_conclusion: sc, texto: RI_SIN_CONCLUSION[sc.motivo] || RI_SIN_CONCLUSION.sin_conclusion };
     }
@@ -191,11 +199,15 @@ function riCabecera(badgeTexto, badgeClase, pills) {
   (pills || []).forEach(p => cab.appendChild(riE('span', { className: 'ri-pill' + (p.aviso ? ' ri-pill-aviso' : ''), text: p.texto })));
   return cab;
 }
-function riPillsLectura(l, etiquetas) {
+function riPillsLectura(l, etiquetas, activas, aplicacion) {
   const p = [];
   if (l.cercania && l.cercania.cerca) p.push({ texto: 'Cerca del umbral' });
   if (l.pocas_ventas) p.push({ texto: 'Pocas ventas: solo se concluye salida lenta' });
-  (etiquetas || []).forEach(e => p.push({ texto: 'Etiqueta candidata, sin activar: ' + (RI_ETIQUETA[e] || e) }));
+  // I4: con un conjunto que usa el rendimiento, las etiquetas son ACTIVAS (las aplica el servidor) o estan suspendidas; sin el, candidatas.
+  if (aplicacion) {
+    (activas || []).forEach(e => p.push({ texto: 'Etiqueta activa: ' + (RI_ETIQUETA[e] || e) }));
+    if (!aplicacion.aplicado) p.push({ texto: 'Etiquetas suspendidas', aviso: true });
+  } else (etiquetas || []).forEach(e => p.push({ texto: 'Etiqueta candidata, sin activar: ' + (RI_ETIQUETA[e] || e) }));
   return p;
 }
 function riAvisoAtrasado(snap) {
@@ -423,7 +435,7 @@ function riBloqueRendimiento(f, resp) {
   const ri = riE('section', { className: 'ri', attrs: { 'aria-label': 'Rendimiento desde el ingreso', 'data-ri-estado': v.estado } });
   if (v.tipo === 'lectura') {
     const l = v.lectura;
-    ri.appendChild(riCabecera(l.texto || RI_TEXTO_NIVEL[l.nivel] || l.nivel, RI_CLASE_NIVEL[l.nivel] || 'ri-b-normal', riPillsLectura(l, v.etiquetas)));
+    ri.appendChild(riCabecera(l.texto || RI_TEXTO_NIVEL[l.nivel] || l.nivel, RI_CLASE_NIVEL[l.nivel] || 'ri-b-normal', riPillsLectura(l, v.etiquetas, v.activas, v.aplicacion)));
     if (v.atrasado) ri.appendChild(riAvisoAtrasado(snap));
     ri.appendChild(riLectura(l, { atenuar: v.atrasado }));
   } else if (v.tipo === 'sin_evidencia') {
@@ -437,7 +449,11 @@ function riBloqueRendimiento(f, resp) {
     ri.appendChild(riE('div', { className: 'ri-caja ri-caja-neutra' }, [riE('b', { text: v.titulo }), v.texto ? riE('span', { text: v.texto }) : null]));
   }
   if (top) ri.appendChild(riPie(snap));
-  ri.appendChild(riE('div', { className: 'ri-chico ri-nota', text: 'Informativo: no cambia el estado, la prioridad ni las etiquetas de Oportunidades.' }));
+  const ap = top && top.aplicacion;
+  ri.appendChild(riE('div', { className: 'ri-chico ri-nota', text: ap
+    ? (ap.aplicado ? 'Las reglas vigentes usan este cálculo para etiquetas secundarias' + ((ap.etiquetas_dependientes || []).includes('bien_vendido') ? ' y para decidir "Bien vendido" y "Venta destacada"' : '') + '. No cambia la prioridad.'
+      : 'Las reglas vigentes usan este cálculo, pero ahora está suspendido: no se otorgan sus etiquetas ni se usa otro criterio en su lugar.')
+    : 'Informativo: no cambia el estado, la prioridad ni las etiquetas de Oportunidades.' }));
   return ri;
 }
 
@@ -451,7 +467,9 @@ function riBloqueDemandaSeleccion(f) {
     riE('span', { text: d.dias_desde_ultima_venta === null || d.dias_desde_ultima_venta === undefined ? 'Sin ventas registradas' : 'Última venta hace ' + riDias(d.dias_desde_ultima_venta) })]));
   cont.appendChild(riE('div', { className: 'ri-chico', text: 'Ventas menos devoluciones al ' + riFecha(d.fecha_referencia) + ' (fecha «hasta») en ' + riListaSucursales(d.sucursales) + '. Distinta del rendimiento del ingreso.' }));
   const u = d.urgencia_candidata_2_6_30;
-  if (u && u.criterio) cont.appendChild(riE('div', { className: 'ri-chico', text: 'Criterio candidato de urgencia (≥ ' + u.criterio.v30_min + ' en 30 días, ≥ ' + u.criterio.v90_min + ' en 90, última venta ≤ ' + u.criterio.dias_ultima_venta_max + ' días): ' + (u.cumple ? 'lo cumpliría' : 'no lo cumpliría') + '. Informativo: no cambia la prioridad.' }));
+  const rv = d.regla_vigente; // I4: el perfil del producto usa la urgencia NETA: ya no es informativa
+  if (rv && rv.minimos) cont.appendChild(riE('div', { className: 'ri-chico ri-regla-vigente', text: 'Regla de urgencia vigente (neta: ventas menos devoluciones): ≥ ' + RI_NUM.format(rv.minimos.ventas_netas_30) + ' en 30 días, ≥ ' + RI_NUM.format(rv.minimos.ventas_netas_90) + ' en 90 y última venta ≤ ' + RI_NUM.format(rv.minimos.dias_desde_ultima_venta_max) + ' días: ' + (rv.cumple_urgencia ? 'la cumple' : 'no la cumple') + '. No se usan las ventas brutas, el umbral del grupo ni la muestra del período.' }));
+  else if (u && u.criterio) cont.appendChild(riE('div', { className: 'ri-chico', text: 'Criterio candidato de urgencia (≥ ' + u.criterio.v30_min + ' en 30 días, ≥ ' + u.criterio.v90_min + ' en 90, última venta ≤ ' + u.criterio.dias_ultima_venta_max + ' días): ' + (u.cumple ? 'lo cumpliría' : 'no lo cumpliría') + '. Informativo: no cambia la prioridad.' }));
   return cont;
 }
 

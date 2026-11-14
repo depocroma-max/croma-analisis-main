@@ -498,8 +498,26 @@ function ovCeldaAccion(f) {
   } else {
     wrap.appendChild(rtEl('span', { className: 'ov-sin', text: RR_SIN_RENDIMIENTO }));
   }
+  // Etiquetas de rendimiento desde el ingreso ACTIVADAS por el conjunto vigente (I4): secundarias, no cambian la prioridad.
+  ((f.rendimiento_ingreso && f.rendimiento_ingreso.etiquetas_activas) || []).forEach(e => {
+    wrap.appendChild(rtEl('span', { className: 'ov-pill ' + (e === 'buen_rendimiento_ingreso' ? 'ov-pill-ri-bueno' : 'ov-pill-ri-lenta'), text: RR_TEXTO_ETIQUETA_REND[e] || e,
+      attrs: { title: 'Etiqueta secundaria del rendimiento desde el ingreso: no cambia la prioridad ni la acción' } }));
+  });
   if (a && a.requiere_validacion_variante) wrap.appendChild(rtEl('span', { className: 'ov-validar', text: 'Validar por variante' }));
   return wrap;
+}
+
+// Aviso de nivel lista cuando el conjunto vigente usa el rendimiento desde el ingreso y el calculo no se pudo usar en esta consulta (I4).
+function ovAvisoRendimientoSuspendido(host, resp) {
+  const ap = resp && resp.rendimiento_ingreso && resp.rendimiento_ingreso.aplicacion;
+  if (!ap || ap.aplicado) return;
+  const txt = { snapshot_atrasado: 'el último cálculo tiene más de 2 días', snapshot_vencido: 'el último cálculo tiene más de 7 días', sin_snapshot: 'no hay un cálculo publicado',
+    sucursales_distintas_del_snapshot: 'elegiste menos sucursales que las 5 operativas del cálculo', snapshot_posterior_a_la_consulta: 'el período termina antes del corte del cálculo' }[ap.motivo] || 'el cálculo no se puede usar en esta consulta';
+  const reemplaza = (ap.suspendidas || []).includes('bien_vendido');
+  const caja = rtEl('div', { className: 'rr-aviso ov-aviso-ri', attrs: { role: 'status' } });
+  caja.appendChild(rtEl('b', { text: 'Etiquetas de rendimiento suspendidas: ' }));
+  caja.appendChild(document.createTextNode(txt + '. No se muestran "Buen rendimiento del ingreso" ni "Salida lenta del ingreso"' + (reemplaza ? ', y tampoco "Bien vendido" ni "Venta destacada", que en las reglas vigentes dependen de ese cálculo' : '') + '. Las demás reglas siguen igual.'));
+  host.appendChild(caja);
 }
 
 // "Por que aparece", version breve: siempre con valores concretos que entrega el motor. En rotacion se arma con el par estructurado
@@ -731,6 +749,7 @@ function renderRTOportunidades(host) {
 
   if (!RT_OPORTUNIDADES && !RT_OPORTUNIDADES_LOADING && !RT_OPORTUNIDADES_ERROR) ovProgramarCarga();
   if (RT_OPORTUNIDADES) ovAvisoSucursalesNoConsideradas(raiz, RT_OPORTUNIDADES);
+  if (RT_OPORTUNIDADES) ovAvisoRendimientoSuspendido(raiz, RT_OPORTUNIDADES);
   ovContexto(raiz, RT_OPORTUNIDADES);
 
   const cx = ovConteosActuales();
