@@ -166,6 +166,12 @@
       display:flex;align-items:center;justify-content:center;padding:20px}
     .rt-modal-box{max-width:480px;width:100%;max-height:80vh;overflow-y:auto;padding:20px}
     .rt-modal-box ul{margin:8px 0;padding-left:1.2em}
+    .rc-modal-box{max-width:760px}
+    .rc-contadores{font-weight:700;margin:8px 0}
+    .rc-aviso-fijo{border-left:3px solid currentColor;padding-left:8px}
+    .rc-frame{width:100%;height:420px;border:1px solid #ccc;background:#fff;margin-top:8px}
+    .rc-acciones{flex-wrap:wrap}
+    @media (max-width:600px){.rc-acciones .btn-sm{flex:1 1 100%}.rc-frame{height:360px}}
     .rt-modal-acciones{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
     .rt-modal-confirmar{background:var(--black);color:#fff;border-color:var(--black)}
     .rt-modal-confirmar:hover{opacity:.9}
@@ -2201,6 +2207,13 @@ function renderRTRotacionesSugeridas(host) {
   btnCopiar.type = 'button';
   btnCopiar.addEventListener('click', rtCopiarTextoRotaciones);
   acciones.appendChild(btnCopiar);
+
+  // Correos operativos con ChatGPT (rotaciones-chatgpt*.js): solo prepara y transfiere, no envia nada.
+  const btnChatGPT = rtEl('button', { className:'btn-sm', text:'Preparar correos con ChatGPT' });
+  btnChatGPT.type = 'button';
+  btnChatGPT.disabled = !RT_ROTACIONES || !RT_ROTACIONES.pares || !RT_ROTACIONES.pares.length;
+  btnChatGPT.addEventListener('click', rcMostrarModal);
+  acciones.appendChild(btnChatGPT);
 
   // "Marcar como enviado" aparece solo con seleccion activa -- evita el click en vacio
   // y deja claro que la accion opera sobre lo tildado, no sobre todo el plan.
@@ -5036,6 +5049,8 @@ function rtOportunidadesPanelDetalle(f) {
 <script src="oportunidades-reglas.js?v=20261031-1"></script>
 <script src="oportunidades-vista.js?v=20261103-1"></script>
 <script src="ingresos-recientes-vista.js?v=20261111-4"></script>
+<script src="rotaciones-chatgpt.js?v=20261116-2"></script>
+<script src="rotaciones-chatgpt-vista.js?v=20261116-2"></script>
 <script>
   window.addEventListener('load', function() {
     var splash = document.getElementById('splashScreen');
