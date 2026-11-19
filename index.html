@@ -3695,6 +3695,15 @@ function rtFiltroBorradorAutoSeleccion(campo, opciones, textoPrevio, textoNuevo)
   }
   rtRenderVistaActual();
 }
+// Marcar todas (pedido 2026-11-19): sin seleccion el filtro ya incluye todo, pero para SACAR
+// una o dos opciones (por ejemplo, todas las marcas menos una) habia que tildar el resto una
+// por una. Este boton tilda de una vez todas las opciones VISIBLES (las que deja el buscador,
+// o todas si no hay texto); despues se destilda lo que se quiere excluir.
+function rtFiltroBorradorMarcarTodas(campo, visibles) {
+  visibles.forEach(v => RT_FILTRO_BORRADOR[campo].add(v));
+  if (campo === 'rubro') rtFiltroPodarDependientes();
+  rtRenderVistaActual();
+}
 function rtFiltroBorradorLimpiarCampo(campo) {
   RT_FILTRO_BORRADOR[campo].clear();
   rtRenderVistaActual();
@@ -3763,6 +3772,7 @@ function rtFormularioFiltro(host, alAplicar, opts) {
       (valor, marcado) => rtFiltroBorradorToggle(campo, valor, marcado),
       () => rtFiltroBorradorLimpiarCampo(campo),
       { id:'rtFiltroBuscar_' + campo, valor: RT_FILTRO_BUSQUEDA[campo],
+        onMarcarTodas: (visibles) => rtFiltroBorradorMarcarTodas(campo, visibles),
         onBuscar: (texto) => {
           const previo = RT_FILTRO_BUSQUEDA[campo];
           RT_FILTRO_BUSQUEDA[campo] = texto;
@@ -4460,7 +4470,7 @@ function rtFiltroDropdown(titulo, opciones, seleccionados, abierto, onToggleAbie
   details.open = abierto;
   details.addEventListener('toggle', () => onToggleAbierto(details.open));
   const summary = rtEl('summary', { className:'btn-sm rt-sv-filtro-btn',
-    text: titulo + (seleccionados.size ? ' (' + seleccionados.size + ')' : '') + ' ▾' });
+    text: titulo + (seleccionados.size ? ' (' + seleccionados.size + (busqueda && busqueda.onMarcarTodas && opciones.length ? ' de ' + opciones.length : '') + ')' : '') + ' ▾' });
   details.appendChild(summary);
 
   const panel = rtEl('div', { className:'rt-sv-filtro-panel' });
@@ -4497,6 +4507,17 @@ function rtFiltroDropdown(titulo, opciones, seleccionados, abierto, onToggleAbie
     if (busqueda.valor) {
       const q = busqueda.valor.toLocaleLowerCase('es');
       opcionesFiltradas = opciones.filter(o => o.toLocaleLowerCase('es').includes(q));
+    }
+  }
+  if (busqueda && busqueda.onMarcarTodas) {
+    const faltan = opcionesFiltradas.filter(v => !seleccionados.has(v));
+    if (faltan.length) {
+      const texto = !busqueda.valor ? 'Marcar todas'
+        : (opcionesFiltradas.length === 1 ? 'Marcar la encontrada' : 'Marcar las ' + opcionesFiltradas.length + ' encontradas');
+      const marcar = rtEl('button', { className:'rt-sv-filtro-limpiar', text: texto });
+      marcar.type = 'button';
+      marcar.addEventListener('click', () => busqueda.onMarcarTodas(opcionesFiltradas));
+      panel.appendChild(marcar);
     }
   }
   if (!opcionesFiltradas.length) {
