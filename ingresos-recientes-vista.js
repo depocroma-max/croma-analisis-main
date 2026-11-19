@@ -83,7 +83,7 @@ function irResumenFiltros(e, filtro) {
   partes.push(e.personalizado ? irDM(e.desde) + ' al ' + irDM(e.hasta) : e.dias + ' días');
   if (e.tipo) partes.push((IR_TIPOS.find(t => t[0] === e.tipo) || [0, e.tipo])[1]);
   if (e.lectura) partes.push((IR_LECTURAS.find(l => l[0] === e.lectura) || [0, e.lectura])[1]);
-  if (filtro) [['codigo', 'Código'], ['marca', 'Marca'], ['rubro', 'Rubro'], ['subrubro', 'Subrubro']].forEach(([c, n]) => { if (filtro[c]) partes.push(n + ': ' + (Array.isArray(filtro[c]) ? filtro[c].join(', ') : filtro[c])); });
+  if (filtro) [['codigo', 'Código'], ['buscar', 'Búsqueda'], ['marca', 'Marca'], ['rubro', 'Rubro'], ['subrubro', 'Subrubro']].forEach(([c, n]) => { if (filtro[c]) partes.push(n + ': ' + (Array.isArray(filtro[c]) ? filtro[c].join(', ') : filtro[c])); });
   return partes.join(' · ');
 }
 function irParams(e, centros, filtro) {
@@ -344,7 +344,7 @@ function irControlesFiltro(host, resp) {
 function irFiltrosActivos(host) {
   if (!RT_FILTRO) return;
   const fila = rtEl('div', { className: 'ov-activos', attrs: { role: 'group', 'aria-label': 'Filtros activos' } });
-  [['codigo', 'Código'], ['marca', 'Marca'], ['rubro', 'Rubro'], ['subrubro', 'Subrubro']].forEach(([campo, nombre]) => {
+  [['codigo', 'Código'], ['buscar', 'Búsqueda'], ['marca', 'Marca'], ['rubro', 'Rubro'], ['subrubro', 'Subrubro']].forEach(([campo, nombre]) => {
     const v = RT_FILTRO[campo]; if (!v) return;
     const texto = nombre + ': ' + (Array.isArray(v) ? v.join(', ') : v);
     const chip = rtEl('span', { className: 'ov-chip-filtro' });

@@ -144,6 +144,8 @@ function ovValidarFiltro(filtro) {
   const c = filtro && filtro.codigo;
   if (c && c.length > OV_CODIGO_MAX) return 'El código es demasiado largo (máximo ' + OV_CODIGO_MAX + ' caracteres).';
   if (c && /[\u0000-\u001f\u007f]/.test(c)) return 'El código tiene caracteres no válidos.';
+  const b = filtro && filtro.buscar; // codigo o nombre (rtBusquedaInvalida, mismos limites que la API)
+  if (b && typeof rtBusquedaInvalida === 'function') return rtBusquedaInvalida(b);
   return null;
 }
 function ovFiltroInvalido(mensaje) { OV_ERROR_FILTRO = mensaje; OV_FILTROS_ABIERTO = true; rtRenderVistaActual(); }
@@ -151,7 +153,7 @@ function ovAlAplicarFiltro() { OV_ERROR_FILTRO = null; OV_FILTROS_ABIERTO = fals
 // Resumen de los filtros activos (se muestra con el desplegable cerrado).
 function ovResumenFiltros() {
   if (!RT_FILTRO) return 'ninguno';
-  return [['codigo', 'Código'], ['marca', 'Marca'], ['rubro', 'Rubro'], ['subrubro', 'Subrubro']]
+  return [['codigo', 'Código'], ['buscar', 'Búsqueda'], ['marca', 'Marca'], ['rubro', 'Rubro'], ['subrubro', 'Subrubro']]
     .filter(([c]) => RT_FILTRO[c]).map(([c, n]) => n + ': ' + (Array.isArray(RT_FILTRO[c]) ? RT_FILTRO[c].join(', ') : RT_FILTRO[c])).join(' · ');
 }
 function ovFormularioFiltros(raiz) {
@@ -230,7 +232,7 @@ function ovFiltrosActivos(host) {
   if (!RT_FILTRO) return;
   const fila = rtEl('div', { className: 'ov-activos', attrs: { role: 'group', 'aria-label': 'Filtros activos' } });
   fila.appendChild(rtEl('span', { className: 'ov-activos-rot', text: 'Filtros activos:' }));
-  [['codigo', 'Código'], ['marca', 'Marca'], ['rubro', 'Rubro'], ['subrubro', 'Subrubro']].forEach(([campo, nombre]) => {
+  [['codigo', 'Código'], ['buscar', 'Búsqueda'], ['marca', 'Marca'], ['rubro', 'Rubro'], ['subrubro', 'Subrubro']].forEach(([campo, nombre]) => {
     const v = RT_FILTRO[campo]; if (!v) return;
     const texto = nombre + ': ' + (Array.isArray(v) ? v.join(', ') : v);
     const chip = rtEl('span', { className: 'ov-chip-filtro' });

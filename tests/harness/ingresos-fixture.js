@@ -109,7 +109,11 @@ function consultar(texto, inputs, esc) {
   const fallados = [{ ultima_novedad_tabla: '2026-11-10 15:34:12.620', ultima_modificacion_93: '2026-10-16 12:03:53.263', punteros_invalidos: 0, filas: 35830 }];
   const desde = String(inputs.desde), hasta = String(inputs.hasta), corte = String(inputs.corte);
   const f = { marca: entradas(inputs, 'marca'), rubro: entradas(inputs, 'rubro'), subrubro: entradas(inputs, 'subrubro'), codigo: entradas(inputs, 'codigo') };
-  const sel = esc.vacio ? [] : DATOS.productos.filter((p) => p.ultimo >= desde && p.ultimo <= hasta && p.ultimo <= corte
+  // Busqueda por codigo o nombre (`buscar`, croma-api motor/sql-comun.js construirClausulaBusqueda): codigo exacto o todas las palabras en el nombre.
+  const palabras = entradas(inputs, 'buscar').map((w) => w.replace(/^%|%$/g, '').replace(/\[(.)\]/g, '$1'));
+  const sinTildes = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+  const coincideBusqueda = (p) => inputs.buscarCod === undefined || p.cod.toUpperCase() === String(inputs.buscarCod) || palabras.every((w) => sinTildes(p.nombre || p.nombre_producto).includes(w));
+  const sel = esc.vacio ? [] : DATOS.productos.filter((p) => p.ultimo >= desde && p.ultimo <= hasta && p.ultimo <= corte && coincideBusqueda(p)
     && (!f.marca.length || f.marca.includes(p.marca)) && (!f.rubro.length || f.rubro.includes(p.rubro)) && (!f.subrubro.length || f.subrubro.includes(p.subrubro)) && (!f.codigo.length || f.codigo.includes(p.cod.toUpperCase())));
   const cods = new Set(sel.map((p) => p.cod));
   const enAlcance = (r) => cods.has(r.cod) && centros.includes(r.centro);

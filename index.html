@@ -2647,6 +2647,7 @@ function rtFiltroTexto() {
   if (!RT_FILTRO) return '';
   if (RT_FILTRO.codigo) return 'Código: ' + RT_FILTRO.codigo;
   const partes = [];
+  if (RT_FILTRO.buscar) partes.push('Búsqueda: "' + RT_FILTRO.buscar + '"');
   if (RT_FILTRO.rubro) partes.push('Rubro: ' + RT_FILTRO.rubro.join(', '));
   if (RT_FILTRO.subrubro) partes.push('Subrubro: ' + RT_FILTRO.subrubro.join(', '));
   if (RT_FILTRO.marca) partes.push('Marca: ' + RT_FILTRO.marca.join(', '));
@@ -3586,6 +3587,19 @@ function rtProductosNormalizarCodigo(valor) {
   return String(valor ?? '').replace(/\s+/g, ' ').trim();
 }
 
+// Busqueda por codigo o nombre (filtro `buscar`, pedido 2026-11-19). La API (croma-api,
+// parseBusqueda) toma el texto como codigo EXACTO o, si no, exige que TODAS las palabras
+// esten en el nombre del producto, sin distinguir mayusculas ni tildes. Mismos limites que
+// la API: 2 a 60 caracteres y hasta 6 palabras. Devuelve el mensaje de error o null.
+function rtBusquedaInvalida(texto) {
+  const t = rtProductosNormalizarCodigo(texto);
+  if (t.length < 2) return 'Escribí al menos 2 caracteres para buscar.';
+  if (t.length > 60) return 'La búsqueda admite hasta 60 caracteres.';
+  if (new Set(t.split(' ')).size > 6) return 'La búsqueda admite hasta 6 palabras.';
+  if (/[\u0000-\u001f\u007f]/.test(t)) return 'La búsqueda tiene caracteres no válidos.';
+  return null;
+}
+
 // alAplicar: callback opcional que reemplaza la accion por defecto al enviar el filtro
 // (reset de pagina/expandido de Productos + rtCargarCompleto()) -- Oportunidades pasa
 // el suyo propio (reset de offset + rtCargarOportunidades()), ya que no usa RT_COMPLETO.
@@ -3737,9 +3751,10 @@ function rtFormularioFiltro(host, alAplicar, opts) {
   form.setAttribute('novalidate', 'novalidate');
 
   const fcCodigo = rtEl('div', { className:'fc' });
-  fcCodigo.appendChild(rtEl('label', { text:'Código exacto', attrs:{ for:'rtProdCodigo' } }));
-  const inCodigo = rtEl('input', { attrs:{ type:'text', id:'rtProdCodigo', name:'rtProdCodigo', autocomplete:'off' } });
-  inCodigo.value = (RT_FILTRO && RT_FILTRO.codigo) || '';
+  fcCodigo.appendChild(rtEl('label', { text:'Código o nombre', attrs:{ for:'rtProdCodigo' } }));
+  const inCodigo = rtEl('input', { attrs:{ type:'text', id:'rtProdCodigo', name:'rtProdCodigo', autocomplete:'off',
+    placeholder:'Ej.: T0004 o zapatilla vans', title:'Código exacto, o palabras que contenga el nombre del producto' } });
+  inCodigo.value = (RT_FILTRO && (RT_FILTRO.buscar || RT_FILTRO.codigo)) || '';
   fcCodigo.appendChild(inCodigo);
   form.appendChild(fcCodigo);
 
@@ -3807,9 +3822,15 @@ function rtFormularioFiltro(host, alAplicar, opts) {
 
   form.addEventListener('submit', e => {
     e.preventDefault();
-    const codigo = rtProductosNormalizarCodigo(inCodigo.value);
+    // El campo de texto viaja como `buscar` (codigo exacto o palabras del nombre). Los filtros
+    // { codigo } que llegan desde otras vistas ("Ver producto") se siguen aceptando tal cual.
+    const texto = rtProductosNormalizarCodigo(inCodigo.value);
     const filtro = {};
-    if (codigo) filtro.codigo = codigo;
+    if (texto) {
+      const error = rtBusquedaInvalida(texto);
+      if (error && !compacto) { inCodigo.setCustomValidity(error); inCodigo.reportValidity(); inCodigo.addEventListener('input', () => inCodigo.setCustomValidity(''), { once: true }); return; }
+      filtro.buscar = texto;
+    }
     // Orden alfabetico fijo (no el orden en que se tildo) -- rtFiltroKey()=JSON.stringify
     // necesita una key deterministica para que el cache de RT_COMPLETO por filtroKey
     // funcione: el mismo conjunto de valores tildados en distinto orden de click no debe
@@ -3842,8 +3863,8 @@ function rtEstadoInicialFiltro(host, vista) {
   icono.innerHTML = icon('search', ''); // icono estatico del helper
   card.appendChild(icono);
   card.appendChild(rtEl('h4', { text:'Ingresá al menos un filtro para consultar ' + vista, className:'rt-subtitulo' }));
-  card.appendChild(rtEl('p', { text:'Podés combinar código, marca, rubro y subrubro. La búsqueda usa el período seleccionado arriba.' }));
-  card.appendChild(rtEl('p', { className:'rt-note', text:'Ejemplos: código exacto "T0004" · marca "RIP CURL" · rubro "CALZADO"' }));
+  card.appendChild(rtEl('p', { text:'Podés combinar código o nombre, marca, rubro y subrubro. La búsqueda usa el período seleccionado arriba.' }));
+  card.appendChild(rtEl('p', { className:'rt-note', text:'Ejemplos: código "T0004" · nombre "zapatilla vans" · marca "RIP CURL" · rubro "CALZADO"' }));
   host.appendChild(card);
 }
 
@@ -5057,8 +5078,8 @@ function rtOportunidadesPanelDetalle(f) {
 <script src="oportunidades-explicacion.js?v=20261103-1"></script>
 <script src="oportunidades-grupos.js?v=20261103-1"></script>
 <script src="oportunidades-reglas.js?v=20261031-1"></script>
-<script src="oportunidades-vista.js?v=20261103-1"></script>
-<script src="ingresos-recientes-vista.js?v=20261111-4"></script>
+<script src="oportunidades-vista.js?v=20261119-1"></script>
+<script src="ingresos-recientes-vista.js?v=20261119-1"></script>
 <script src="rotaciones-chatgpt.js?v=20261116-2"></script>
 <script src="rotaciones-chatgpt-vista.js?v=20261116-2"></script>
 <script>
