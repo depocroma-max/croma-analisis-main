@@ -212,11 +212,8 @@
     table.rt-table td.rt-td-truncate{max-width:220px;overflow:hidden;text-overflow:ellipsis}
     table.rt-table tbody tr.rt-row-click{cursor:pointer}
     table.rt-table tbody tr.rt-row-click:hover{background:var(--gray-50)}
-    .rt-filtro-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-s);color:var(--accent);
-      font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:99px;margin-bottom:12px}
-    .rt-filtro-chip-icon{display:inline-flex}
-    .rt-filtro-chip button{background:none;border:none;cursor:pointer;color:inherit;padding:0 2px;
-      display:inline-flex;align-items:center}
+    .rt-productos-filtros-acciones .btn-sm.rt-filtro-activo{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .rt-productos-filtros-acciones .btn-sm.rt-filtro-activo:hover{opacity:.9}
     .rt-pagination{display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:10px 12px;font-size:12.5px;color:var(--gray-400)}
     .rt-progress{font-size:12.5px;color:var(--gray-400);display:flex;align-items:center;gap:8px;margin:8px 0}
     .rt-buscador-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
@@ -2701,20 +2698,6 @@ function rtTabla(headers, filas, renderFila, opts) {
   return wrap;
 }
 
-function rtFiltroChip(host) {
-  if (!RT_FILTRO) return;
-  const chip = rtEl('div', { className:'rt-filtro-chip' });
-  const iconoFiltro = rtEl('span', { className:'rt-filtro-chip-icon' });
-  iconoFiltro.innerHTML = icon('filter', 'icon-16'); // icono estatico del helper, no dato de API
-  chip.appendChild(iconoFiltro);
-  chip.appendChild(rtEl('span', { text: rtFiltroTexto() }));
-  const btn = rtEl('button', { attrs:{ 'aria-label':'Quitar filtro' } });
-  btn.type = 'button';
-  btn.innerHTML = icon('x', 'icon-16');
-  btn.addEventListener('click', rtQuitarFiltro);
-  chip.appendChild(btn);
-  host.appendChild(chip);
-}
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 // Tarjeta de KPI con icono del helper icon() + valor + (opcional) delta vs periodo
@@ -3799,6 +3782,14 @@ function rtFormularioFiltro(host, alAplicar, opts) {
   const acciones = rtEl('div', { className:'rt-productos-filtros-acciones' });
   const btnFiltrar = rtBotonIcono('btn-sm' + (compacto ? ' ov-aplicar' : ''), 'filter', (opts && opts.textoAplicar) || 'Filtrar');
   btnFiltrar.type = 'submit';
+  // Filtro aplicado (pedido 2026-11-19): en lugar del chip con todo el texto del filtro
+  // (con muchas marcas ocupaba media pantalla), el boton cambia de color y el detalle
+  // queda en el texto emergente.
+  if (RT_FILTRO) {
+    btnFiltrar.classList.add('rt-filtro-activo');
+    btnFiltrar.title = 'Filtro aplicado — ' + rtFiltroTexto();
+    btnFiltrar.setAttribute('aria-label', ((opts && opts.textoAplicar) || 'Filtrar') + ' (filtro aplicado)');
+  }
   const btnLimpiar = rtEl('button', { className:'btn-sm', text:(opts && opts.textoLimpiar) || 'Limpiar filtros' });
   btnLimpiar.type = 'button';
   btnLimpiar.disabled = !RT_FILTRO;
@@ -4303,7 +4294,6 @@ function renderRTTallesColores(host) {
   rtFormularioFiltro(host);
 
   if (!RT_FILTRO) { rtEstadoInicialFiltro(host, 'talles y colores'); return; }
-  rtFiltroChip(host);
 
   const key = rtFiltroKey();
   if (!RT_COMPLETO_LOADING && (!RT_COMPLETO || RT_COMPLETO.filtroKey !== key)) { rtCargarCompleto(); }
@@ -4659,7 +4649,6 @@ function renderRTStockVentas(host) {
   rtFormularioFiltro(host);
 
   if (!RT_FILTRO) { rtEstadoInicialFiltro(host, 'stock y ventas'); return; }
-  rtFiltroChip(host);
 
   // Mismo patron lazy-load-on-render que Productos/Talles y colores (ver rtCargarCompleto):
   // comparten RT_COMPLETO por filtroKey, asi que si ya se visito otra de esas vistas con
@@ -4777,7 +4766,7 @@ function rtStockVentasTabla(host, todasLasFilas) {
     (abierto) => { RT_STOCKVENTAS_COLOR_ABIERTO = abierto; }, rtStockVentasToggleColor, rtStockVentasLimpiarColores));
 
   // Rubro/Subrubro salen de la lista de columnas (ni el dropdown "Columnas" las ofrece)
-  // cuando el filtro ya los fija -- quedan en el chip de arriba (ver rtFiltroChip), son
+  // cuando el filtro ya los fija -- quedan en el formulario de filtro de arriba, son
   // la misma columna repetida en todas las filas.
   const mostrarRubro = !(RT_FILTRO && RT_FILTRO.rubro);
   const mostrarSubrubro = !(RT_FILTRO && RT_FILTRO.subrubro);
