@@ -3753,7 +3753,7 @@ function rtFormularioFiltro(host, alAplicar, opts) {
   const fcCodigo = rtEl('div', { className:'fc' });
   fcCodigo.appendChild(rtEl('label', { text:'Código o nombre', attrs:{ for:'rtProdCodigo' } }));
   const inCodigo = rtEl('input', { attrs:{ type:'text', id:'rtProdCodigo', name:'rtProdCodigo', autocomplete:'off',
-    placeholder:'Ej.: T0004 o zapatilla vans', title:'Código exacto, o palabras que contenga el nombre del producto' } });
+    placeholder:'Ej.: T0004 o rompeviento', title:'Código exacto, o palabras que contenga el nombre del producto' } });
   inCodigo.value = (RT_FILTRO && (RT_FILTRO.buscar || RT_FILTRO.codigo)) || '';
   fcCodigo.appendChild(inCodigo);
   form.appendChild(fcCodigo);
@@ -3864,7 +3864,7 @@ function rtEstadoInicialFiltro(host, vista) {
   card.appendChild(icono);
   card.appendChild(rtEl('h4', { text:'Ingresá al menos un filtro para consultar ' + vista, className:'rt-subtitulo' }));
   card.appendChild(rtEl('p', { text:'Podés combinar código o nombre, marca, rubro y subrubro. La búsqueda usa el período seleccionado arriba.' }));
-  card.appendChild(rtEl('p', { className:'rt-note', text:'Ejemplos: código "T0004" · nombre "zapatilla vans" · marca "RIP CURL" · rubro "CALZADO"' }));
+  card.appendChild(rtEl('p', { className:'rt-note', text:'Ejemplos: código "T0004" · nombre "rompeviento" · marca "RIP CURL" · rubro "CALZADO"' }));
   host.appendChild(card);
 }
 
