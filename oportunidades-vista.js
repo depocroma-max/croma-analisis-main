@@ -7,6 +7,8 @@
 
 // Extensiones de la interfaz nueva (cds-v3, Etapa B2). Sin la bandera el archivo no se carga y esto es null: la vista es la de siempre.
 function ovCds() { return (typeof window !== 'undefined' && window.CDS_POR_ACCION) || null; }
+function ovCdsRes() { return (typeof window !== 'undefined' && window.CDS_RESULTADOS) || null; } // B3: tabla y tarjetas nuevas
+function ovCdsDet() { return (typeof window !== 'undefined' && window.CDS_DETALLE) || null; } // B3: detalle comercial
 const OV_DIAS_RAPIDOS = [30, 60, 90];
 const OV_PRIORIDADES =[['', 'Prioridad: todas'], ['alta', 'Prioridad: alta'], ['media', 'Prioridad: media'], ['baja', 'Prioridad: baja']];
 const OV_ESTADOS_REPOSICION = ['reposicion_urgente', 'reponer_desde_deposito', 'reposicion_a_evaluar', 'reposicion_proxima'];
@@ -600,6 +602,7 @@ function ovFilaProducto(f, resp) {
 }
 
 function ovTabla(datos, resp, periodoDias) {
+  if (ovCdsRes()) return ovCdsRes().tabla(datos, resp, periodoDias); // cds-v3 (B3): tabla comercial
   const wrap = rtEl('div', { className: 'ov-tabla-wrap rt-oportunidades-tabla' });
   const tabla = rtEl('table', { className: 'ov-tabla' });
   const thead = rtEl('thead'); const trh = rtEl('tr');
@@ -614,6 +617,7 @@ function ovTabla(datos, resp, periodoDias) {
 }
 
 function ovTarjetas(datos, resp) {
+  if (ovCdsRes()) return ovCdsRes().tarjetas(datos, resp); // cds-v3 (B3): tarjetas moviles
   const wrap = rtEl('div', { className: 'ov-tarjetas rt-oportunidades-cards' });
   datos.forEach(f => {
     const expandido = RT_OPORTUNIDADES_EXPANDIDO === f.Codigo_producto;
@@ -767,5 +771,6 @@ function renderRTOportunidades(host) {
   ovChipsEstados(raiz, cx);
   ovNotasConteo(raiz, cx);
   ovPanelLista(raiz, cx);
+  if (ovCdsDet()) ovCdsDet().dibujar(raiz); // cds-v3 (B3): detalle comercial (panel lateral)
   ovRestaurarFoco();
 }

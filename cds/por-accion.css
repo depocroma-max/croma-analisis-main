@@ -22,8 +22,8 @@ html.cds-v3 .cds-grupo-nd,html.cds-v3 .cds-grupo-pag{color:var(--cds-muted)}
 html.cds-v3 .cds-grupo-ayuda{grid-column:1 / -1;margin:0;font-family:var(--cds-font-ui);font-size:var(--cds-fs-sm);color:var(--cds-muted)}
 html.cds-v3 .cds-grupo .ov-tabla-wrap{border-top:0}
 /* un solo encabezado de columnas visible (el del primer grupo); en los demas queda para lectores de pantalla */
-html.cds-v3 .cds-grupo ~ .cds-grupo .ov-tabla thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-html.cds-v3 .cds-grupo ~ .cds-grupo .ov-tabla thead th{position:static}
+html.cds-v3 .cds-grupo ~ .cds-grupo .ov-tabla thead,html.cds-v3 .cds-grupo ~ .cds-grupo .cds-tabla thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+html.cds-v3 .cds-grupo ~ .cds-grupo .ov-tabla thead th,html.cds-v3 .cds-grupo ~ .cds-grupo .cds-tabla thead th{position:static}
 @media (max-width:700px){
   html.cds-v3 .cds-grupo-cab{grid-template-columns:1fr}
   html.cds-v3 .cds-grupo-cuenta{text-align:left}

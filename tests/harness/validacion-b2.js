@@ -27,8 +27,8 @@ const nums = t => (String(t || '').match(/\d[\d.]*/g) || []).map(x => parseInt(x
     o.reset = () => { o.lista.length = 0; o.union.length = 0; };
     return o;
   }
-  const grupos = p => p.evaluate(() => [...document.querySelectorAll('.cds-grupo')].map(s => { const c = s.querySelector('.cds-grupo-cuenta'); return { estado: s.getAttribute('data-estado'), nombre: s.querySelector('.cds-grupo-nombre').textContent, cuenta: c.textContent, continua: c.getAttribute('data-continua'), codigos: [...new Set([...s.querySelectorAll('.ov-tabla [data-detalle-codigo]')].map(x => x.getAttribute('data-detalle-codigo')))] }; }));
-  const filasLista = p => p.evaluate(() => [...document.querySelectorAll('.ov-panel .ov-tabla tbody tr')].map(tr => (tr.querySelector('[data-detalle-codigo]') || {}).getAttribute ? tr.querySelector('[data-detalle-codigo]').getAttribute('data-detalle-codigo') : null).filter(Boolean));
+  const grupos = p => p.evaluate(() => [...document.querySelectorAll('.cds-grupo')].map(s => { const c = s.querySelector('.cds-grupo-cuenta'); return { estado: s.getAttribute('data-estado'), nombre: s.querySelector('.cds-grupo-nombre').textContent, cuenta: c.textContent, continua: c.getAttribute('data-continua'), codigos: [...new Set([...s.querySelectorAll('.cds-tabla [data-detalle-codigo]')].map(x => x.getAttribute('data-detalle-codigo')))] }; }));
+  const filasLista = p => p.evaluate(() => [...document.querySelectorAll('.ov-panel .cds-tabla tbody tr')].map(tr => (tr.querySelector('[data-detalle-codigo]') || {}).getAttribute ? tr.querySelector('[data-detalle-codigo]').getAttribute('data-detalle-codigo') : null).filter(Boolean));
   const info = p => p.evaluate(() => { const r = document.querySelector('.cds-resultados'); return { res: r ? r.textContent : null, nota: !!document.querySelector('.cds-grupos-nota'), notaTxt: (document.querySelector('.cds-grupos-nota') || {}).textContent || '', chips: [...document.querySelectorAll('.ov-chip-filtro span:first-child')].map(x => x.textContent), panel: (document.querySelector('.ov-panel') || {}).textContent || '', vista: (document.querySelector('.cds-vista-btn.cds-activo') || {}).textContent || null, offsetInfo: (document.querySelector('.ov-pag-info') || {}).textContent || '', grupoActivo: (document.querySelector('.ov-grupo.ov-activo .ov-grupo-rot') || {}).textContent || '', inputBusca: (document.getElementById('rtProdCodigo') || {}).value }; });
   const api = (p, params, off) => p.evaluate(async ([q, off]) => { const u = new URLSearchParams(q); if (off !== undefined) u.set('offset', String(off)); const t = sessionStorage.getItem('croma_token'); const r = await fetch('/analisis/oportunidades?' + u.toString(), { headers: { Authorization: 'Bearer ' + t } }); return r.json(); }, [params.toString(), off]);
   const aplicar = async (p, ms = 1700) => { await p.click('form.ov-filtros button.ov-aplicar'); await sleep(ms); };
@@ -70,7 +70,7 @@ const nums = t => (String(t || '').match(/\d[\d.]*/g) || []).map(x => parseInt(x
   const lista = await filasLista(P); inf = await info(P);
   ok('Vistas', 'Cambiar a «Lista» NO consulta nada (ni lista ni auxiliares) y no cambia filtros ni página', on.lista.length === 0 && on.union.length === 0 && inf.vista === 'Lista' && inf.offsetInfo === cabAntes.offsetInfo && JSON.stringify(inf.chips) === JSON.stringify(cabAntes.chips), 'consultas ' + on.lista.length + '/' + on.union.length);
   ok('Vistas', '«Lista» conserva el orden y los resultados del motor (mismos productos, mismo orden que los grupos y que la API)', JSON.stringify(lista) === JSON.stringify(antes.flatMap(x => x.codigos)) && JSON.stringify(lista) === JSON.stringify(a1.data.map(f => f.Codigo_producto)), lista.length + ' filas');
-  ok('Vistas', 'En «Lista» no hay secciones de grupo ni encabezados repetidos', (await P.$$('.cds-grupo')).length === 0 && (await P.$$('.ov-panel .ov-tabla thead')).length === 1);
+  ok('Vistas', 'En «Lista» no hay secciones de grupo ni encabezados repetidos', (await P.$$('.cds-grupo')).length === 0 && (await P.$$('.ov-panel .cds-tabla thead')).length === 1);
   await P.screenshot({ path: path.join(OUT, 'on-lista-1280.png') });
   await pagina(P, 2); const lista2 = await filasLista(P);
   ok('Vistas', 'La paginación funciona igual en «Lista» (página 2: otros productos, offset 50)', lista2.length > 0 && lista2.every(c => !lista.includes(c)) && on.lista[on.lista.length - 1].get('offset') === '50');
@@ -79,9 +79,9 @@ const nums = t => (String(t || '').match(/\d[\d.]*/g) || []).map(x => parseInt(x
   await pagina(P, 1);
 
   // detalle dentro de un grupo
-  await P.evaluate(() => { const b = document.querySelector('.cds-grupo .ov-tabla [data-detalle-codigo]'); b.click(); }); await sleep(900);
-  ok('Funciones', 'El detalle de un producto se abre dentro de su grupo (función existente conservada)', await P.evaluate(() => !!document.querySelector('.cds-grupo .rt-oport-detalle-fila, .cds-grupo .ov-tarjeta .rt-oport-detalle, .cds-grupo [class*=detalle]:not([data-detalle-codigo])')));
-  await P.evaluate(() => { RT_OPORTUNIDADES_EXPANDIDO = null; rtRenderVistaActual(); }); await sleep(300);
+  await P.evaluate(() => { const b = document.querySelector('.cds-grupo .cds-tabla [data-detalle-codigo]'); b.click(); }); await sleep(900);
+  ok('Funciones', 'El detalle de un producto se abre (panel lateral) y se cierra con Escape', await P.evaluate(() => !!document.querySelector('.cds-dr[role=dialog]'))); await P.keyboard.press('Escape'); await sleep(500);
+  await sleep(200);
 
   // ======================= C) FILTROS COMBINADOS (B1) =======================
   on.reset(); await P.fill('#rtProdCodigo', 'producto'); await sleep(100);
@@ -161,7 +161,7 @@ const nums = t => (String(t || '').match(/\d[\d.]*/g) || []).map(x => parseInt(x
 
   // ======================= F) MÓVIL 375 =======================
   const mv = await abrir(BASE, true, 375, 812), M = mv.page;
-  const m1 = await M.evaluate(() => { const t = document.querySelector('.cds-grupo .ov-tabla'), c = document.querySelector('.cds-grupo .ov-tarjetas'), btn = document.querySelector('.cds-vista-btn'); return { tabla: t && getComputedStyle(t.closest('.ov-tabla-wrap')).display, tarjetas: c && getComputedStyle(c).display, alto: btn && btn.getBoundingClientRect().height, scroll: document.documentElement.scrollWidth <= innerWidth, grupos: document.querySelectorAll('.cds-grupo').length, cab: document.querySelector('.cds-grupo-cab').getBoundingClientRect().right <= innerWidth }; });
+  const m1 = await M.evaluate(() => { const t = document.querySelector('.cds-grupo .cds-tabla'), c = document.querySelector('.cds-grupo .cds-res-cards'), btn = document.querySelector('.cds-vista-btn'); return { tabla: t && getComputedStyle(t.closest('.cds-res-tabla')).display, tarjetas: c && getComputedStyle(c).display, alto: btn && btn.getBoundingClientRect().height, scroll: document.documentElement.scrollWidth <= innerWidth, grupos: document.querySelectorAll('.cds-grupo').length, cab: document.querySelector('.cds-grupo-cab').getBoundingClientRect().right <= innerWidth }; });
   ok('Móvil 375', 'Por acción en móvil: grupos con tarjetas (no tabla), sin desborde horizontal, selector táctil ≥ 44 px', m1.grupos >= 3 && m1.tabla === 'none' && m1.tarjetas !== 'none' && m1.scroll && m1.cab && m1.alto >= 44, JSON.stringify(m1));
   await M.evaluate(() => document.querySelector('.cds-grupos').scrollIntoView()); await sleep(300); await M.screenshot({ path: path.join(OUT, 'on-por-accion-375.png') });
   mv.reset(); await M.click('.cds-vista-btn[data-vista=lista]'); await sleep(600); await M.evaluate(() => document.querySelector('.ov-panel').scrollIntoView()); await M.screenshot({ path: path.join(OUT, 'on-lista-375.png') });

@@ -21,11 +21,12 @@
     } catch (e) { /* sin almacenamiento: vale el valor por defecto */ }
     if (!activa) return;
     var h = document.documentElement; h.classList.add('cds-v3');
-    ['cds/tokens.css', 'cds/componentes.css', 'cds/app-shell.css', 'cds/filtros.css', 'cds/por-accion.css'].forEach(function (f) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = f + '?v=' + V; document.head.appendChild(l); });
+    ['cds/tokens.css', 'cds/componentes.css', 'cds/app-shell.css', 'cds/filtros.css', 'cds/por-accion.css', 'cds/resultados.css'].forEach(function (f) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = f + '?v=' + V; document.head.appendChild(l); });
     var fu = document.createElement('link'); fu.rel = 'stylesheet'; fu.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap'; document.head.appendChild(fu);
     var s = document.createElement('script'); s.src = 'cds/shell.js?v=' + V; s.defer = true; document.head.appendChild(s);
     var sf = document.createElement('script'); sf.src = 'cds/filtros.js?v=' + V; sf.defer = true; document.head.appendChild(sf); /* Etapa B1: filtros pendientes/aplicados de Oportunidades */
     var sp = document.createElement('script'); sp.src = 'cds/por-accion.js?v=' + V; sp.defer = true; document.head.appendChild(sp); /* Etapa B2: vista Por acción / Lista */
+    ['cds/resultados.js', 'cds/detalle.js'].forEach(function (f) { var sr = document.createElement('script'); sr.src = f + '?v=' + V; sr.defer = true; document.head.appendChild(sr); }); /* Etapa B3: tabla, tarjetas y detalle */
   })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
