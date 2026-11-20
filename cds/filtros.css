@@ -14,3 +14,4 @@ html.cds-v3 .cds-filtros-estado[data-estado=sin-cambios]{color:var(--cds-ink-2)}
 /* Dos cifras con nombre propio: consulta actual y resumen de acciones */
 html.cds-v3 .cds-resultados{display:flex;flex-wrap:wrap;gap:var(--cds-s-1) var(--cds-s-5);margin:var(--cds-s-2) 0 var(--cds-s-3);font-family:var(--cds-font-ui);font-size:var(--cds-fs-sm);color:var(--cds-muted)}
 html.cds-v3 .cds-resultados b{color:var(--cds-ink);font-weight:var(--cds-fw-semi);font-family:var(--cds-font-num)}
+html.cds-v3 .cds-res-nota{flex:1 0 100%;color:var(--cds-muted);font-size:var(--cds-fs-xs)}

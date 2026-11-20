@@ -80,6 +80,12 @@
       }
       p.appendChild(par('Consulta actual (' + ovTituloPanel() + '):', nf.format(lista.paginacion.total) + (lista.paginacion.total === 1 ? ' producto' : ' productos'), 'Productos de la lista que estás viendo: respeta el grupo, el estado, la prioridad y los filtros aplicados.'));
       p.appendChild(par('Resumen de acciones:', res === null ? '—' : nf.format(res) + ' con acción', 'Respeta el período, las sucursales y los filtros aplicados; no cambia con el grupo, el estado ni la prioridad elegidos.'));
+      // B2: «sin acción» (resumen.total_sin_clasificacion), los productos visibles en esta pagina y, si la lista esta mas acotada que el resumen, el aviso.
+      var rs = (cx.base && cx.base.resumen) || {}, sin = typeof rs.total_sin_clasificacion === 'number' ? rs.total_sin_clasificacion : null;
+      p.appendChild(par('Sin acción:', sin === null ? '—' : nf.format(sin), 'Productos evaluados a los que el motor no les detectó ninguna acción. Mismo alcance que el resumen de acciones.'));
+      p.appendChild(par('En esta página:', nf.format(lista.data.length), 'Productos visibles ahora; la lista completa puede tener más páginas.'));
+      var acotada = !(window.CDS_POR_ACCION && window.CDS_POR_ACCION.alcanceCompleto());
+      if (acotada) { var n = document.createElement('span'); n.className = 'cds-res-nota'; n.textContent = 'El resumen y «sin acción» no cambian con el grupo, el estado ni la prioridad elegidos.'; p.appendChild(n); }
       host.appendChild(p);
     },
   };

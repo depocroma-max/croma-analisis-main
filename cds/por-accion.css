@@ -1,0 +1,31 @@
+/* CROMA DESIGN SYSTEM 2.0 · Etapa B2: Oportunidades «Por acción» y «Lista». Solo con la bandera cds-v3 (todo cuelga de html.cds-v3). */
+
+/* Selector Por acción / Lista */
+html.cds-v3 .cds-vista-sel{display:inline-flex;padding:2px;gap:2px;background:var(--cds-canvas-2);border:1px solid var(--cds-rule);border-radius:var(--cds-r-md)}
+html.cds-v3 .cds-vista-btn{font:inherit;font-family:var(--cds-font-ui);font-size:var(--cds-fs-sm);font-weight:var(--cds-fw-medium);color:var(--cds-ink-2);background:transparent;border:0;border-radius:var(--cds-r-sm);padding:0 var(--cds-s-3);min-height:32px;cursor:pointer}
+html.cds-v3 .cds-vista-btn.cds-activo{background:var(--cds-paper);color:var(--cds-ink);font-weight:var(--cds-fw-semi);box-shadow:var(--cds-shadow-seg)}
+html.cds-v3 .cds-vista-btn:focus-visible{outline:2px solid var(--cds-focus);outline-offset:1px}
+@media (max-width:700px){html.cds-v3 .cds-vista-btn{min-height:44px}}
+
+/* Grupos por accion: secciones con banda de color, no una tabla continua */
+html.cds-v3 .cds-grupos{display:flex;flex-direction:column;gap:var(--cds-s-5);padding:var(--cds-s-4) 0 0}
+html.cds-v3 .cds-grupos-nota{margin:0;padding:var(--cds-s-2) var(--cds-s-3);background:var(--cds-info-bg);border-radius:var(--cds-r-md);font-family:var(--cds-font-ui);font-size:var(--cds-fs-sm);color:var(--cds-ink-2)}
+html.cds-v3 .cds-grupo:not([data-cds-g]){--cds-c:var(--cds-muted);--cds-ab:var(--cds-canvas-2);--cds-ai:var(--cds-ink-2)}
+html.cds-v3 .cds-grupo{background:var(--cds-paper);border:1px solid var(--cds-rule);border-inline-start:4px solid var(--cds-c);border-radius:var(--cds-r-lg);overflow:clip}
+html.cds-v3 .cds-grupo-cab{display:grid;grid-template-columns:1fr auto;gap:var(--cds-s-1) var(--cds-s-4);align-items:center;padding:var(--cds-s-3) var(--cds-s-4);background:var(--cds-ab)}
+html.cds-v3 .cds-grupo-tit{display:flex;align-items:center;gap:var(--cds-s-2);min-width:0}
+html.cds-v3 .cds-grupo-punto{flex:none;width:10px;height:10px;border-radius:50%;background:var(--cds-c)}
+html.cds-v3 .cds-grupo-nombre{margin:0;font-family:var(--cds-font-ui);font-size:var(--cds-fs-lg);font-weight:var(--cds-fw-bold);color:var(--cds-ai)}
+html.cds-v3 .cds-grupo-cuenta{font-family:var(--cds-font-ui);font-size:var(--cds-fs-sm);color:var(--cds-ink-2);text-align:right}
+html.cds-v3 .cds-grupo-cuenta b{font-family:var(--cds-font-num);font-size:var(--cds-fs-lg);color:var(--cds-ink)}
+html.cds-v3 .cds-grupo-nd,html.cds-v3 .cds-grupo-pag{color:var(--cds-muted)}
+html.cds-v3 .cds-grupo-ayuda{grid-column:1 / -1;margin:0;font-family:var(--cds-font-ui);font-size:var(--cds-fs-sm);color:var(--cds-muted)}
+html.cds-v3 .cds-grupo .ov-tabla-wrap{border-top:0}
+/* un solo encabezado de columnas visible (el del primer grupo); en los demas queda para lectores de pantalla */
+html.cds-v3 .cds-grupo ~ .cds-grupo .ov-tabla thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+html.cds-v3 .cds-grupo ~ .cds-grupo .ov-tabla thead th{position:static}
+@media (max-width:700px){
+  html.cds-v3 .cds-grupo-cab{grid-template-columns:1fr}
+  html.cds-v3 .cds-grupo-cuenta{text-align:left}
+  html.cds-v3 .cds-grupos{gap:var(--cds-s-4)}
+}

@@ -49,7 +49,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     ok('Bandera encendida', 'Clase cds-v3, barra lateral de 216 px, 8 secciones, pestañas viejas ocultas y barra inferior oculta', info.clase && info.side !== 'none' && Math.round(info.ancho) === 216 && info.n === 8 && info.tabs === 'none' && info.tabbar === 'none', JSON.stringify(info));
     ok('Bandera encendida', 'Encabezado claro de 56 px y --ov-sticky-top = 56 px (las tablas fijas se pegan debajo)', info.h === 56 && info.sticky === '56px' && !/13, 13, 13/.test(info.topbar), info.h + ' ' + info.sticky + ' ' + info.topbar);
     ok('Bandera encendida', 'La interfaz nueva usa Geist (con respaldo del sistema)', /Geist/.test(info.fuente), info.fuente);
-    ok('Bandera encendida', 'Se descargan exactamente los 6 archivos de cds/ (cuatro hojas y dos scripts)', pedidos.filter(p => /\/cds\//.test(p)).length === 6, pedidos.filter(p => /cds/.test(p)).join(','));
+    ok('Bandera encendida', 'Se descargan exactamente los 8 archivos de cds/ (cinco hojas y tres scripts)', pedidos.filter(p => /\/cds\//.test(p)).length === 8, pedidos.filter(p => /cds/.test(p)).join(','));
     // espía de rtCambiarVista
     await page.evaluate(() => { window.__cv = 0; const o = window.rtCambiarVista; window.rtCambiarVista = function (v) { window.__cv++; return o.apply(this, arguments); }; });
     for (const v of VISTAS) {
@@ -79,7 +79,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     // sticky de las tablas de oportunidades
     const st = await page.evaluate(() => { const th = document.querySelector('.ov-tabla thead th'); return th ? { top: getComputedStyle(th).top, pos: getComputedStyle(th).position } : null; });
     ok('Scripts existentes', 'El encabezado fijo de la tabla de Oportunidades se ancla a 56 px (debajo del encabezado nuevo)', st && st.pos === 'sticky' && st.top === '56px', JSON.stringify(st));
-    await page.evaluate(() => window.scrollTo(0, 700)); await sleep(300); const rect = await page.evaluate(() => { const th = document.querySelector('.ov-tabla thead th'), tb = document.querySelector('header.topbar'); return th ? { thTop: Math.round(th.getBoundingClientRect().top), tbBottom: Math.round(tb.getBoundingClientRect().bottom) } : null; });
+    await page.evaluate(() => window.scrollTo(0, 1300)); await sleep(300); const rect = await page.evaluate(() => { const th = document.querySelector('.ov-tabla thead th'), tb = document.querySelector('header.topbar'); return th ? { thTop: Math.round(th.getBoundingClientRect().top), tbBottom: Math.round(tb.getBoundingClientRect().bottom) } : null; });
     ok('Scripts existentes', 'Al desplazarse, el encabezado de la tabla queda justo debajo del encabezado fijo, sin taparse ni dejar hueco', rect && Math.abs(rect.thTop - rect.tbBottom) <= 1, JSON.stringify(rect)); await page.evaluate(() => window.scrollTo(0, 0));
     // eventos y funcionalidad de Oportunidades conservados
     const ev = await page.evaluate(async () => { const out = {}; const g = [...document.querySelectorAll('.ov-grupo')]; out.grupos = g.length; if (g[1]) { g[1].click(); await new Promise(r => setTimeout(r, 1200)); out.grupoActivo = document.querySelectorAll('.ov-grupo.ov-activo').length; } const b = document.querySelector('.ov-detalle-btn'); if (b) { b.click(); await new Promise(r => setTimeout(r, 400)); out.detalle = document.querySelector('.ov-detalle-btn[aria-expanded="true"]') ? 'abre' : 'no'; } return out; });
@@ -127,7 +127,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       await irLegacy(A.page, v); await irNuevo(B.page, v);
       const oa = await A.page.evaluate(() => document.documentElement.scrollWidth - innerWidth), ob = await B.page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
       filas.push({ w, v, legacy: oa, nuevo: ob }); if (ob > oa && ob > 1) { peor++; peores.push(`${w}/${v}: ${oa}->${ob}`); }
-      if (w === 1440 || w === 375) { const ha = await hashPanel(A.page), hb = await hashPanel(B.page); ok('Vistas intactas', `[${w}] ${v}: el contenido de la vista (#rtPanelHost) es idéntico con y sin la bandera`, ha === hb, ha + ' vs ' + hb); }
+      if ((w === 1440 || w === 375) && v !== 'oportunidades') { /* Oportunidades cambia a proposito con las Etapas B1 y B2 (se valida en validacion-b1.js y validacion-b2.js) */ const ha = await hashPanel(A.page), hb = await hashPanel(B.page); ok('Vistas intactas', `[${w}] ${v}: el contenido de la vista (#rtPanelHost) es idéntico con y sin la bandera`, ha === hb, ha + ' vs ' + hb); }
     }
     await A.ctx.close(); await B.ctx.close();
   }

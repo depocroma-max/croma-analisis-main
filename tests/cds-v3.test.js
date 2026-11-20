@@ -36,7 +36,7 @@ test('bandera apagada (por defecto): no agrega clase ni descarga ningun archivo'
 test('?cds-v3=1 enciende, recuerda la eleccion y descarga tokens, componentes, estructura, filtros, fuente y scripts', () => {
   const r = correr({ search: '?cds-v3=1' }); assert.equal(r.activa, true); assert.equal(r.almacen.get('cds-v3'), '1');
   const urls = r.agregados.map(n => n.href || n.src);
-  assert.equal(urls.filter(u => /^cds\//.test(u)).length, 6); assert.ok(urls.some(u => /^cds\/filtros\.css/.test(u))); assert.ok(urls.some(u => /^cds\/filtros\.js/.test(u))); assert.ok(urls.some(u => /^cds\/tokens\.css/.test(u))); assert.ok(urls.some(u => /^cds\/componentes\.css/.test(u))); assert.ok(urls.some(u => /^cds\/app-shell\.css/.test(u))); assert.ok(urls.some(u => /^cds\/shell\.js/.test(u)));
+  assert.equal(urls.filter(u => /^cds\//.test(u)).length, 8); assert.ok(urls.some(u => /^cds\/por-accion\.css/.test(u))); assert.ok(urls.some(u => /^cds\/por-accion\.js/.test(u))); assert.ok(urls.some(u => /^cds\/filtros\.css/.test(u))); assert.ok(urls.some(u => /^cds\/filtros\.js/.test(u))); assert.ok(urls.some(u => /^cds\/tokens\.css/.test(u))); assert.ok(urls.some(u => /^cds\/componentes\.css/.test(u))); assert.ok(urls.some(u => /^cds\/app-shell\.css/.test(u))); assert.ok(urls.some(u => /^cds\/shell\.js/.test(u)));
   assert.ok(urls.some(u => /fonts\.googleapis\.com\/css2\?family=Geist/.test(u)));
 });
 test('la eleccion guardada ("1") se respeta sin parametro; ("0") la apaga', () => {

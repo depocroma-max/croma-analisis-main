@@ -45,7 +45,7 @@ test('compatibilidad: todos los ganchos de index.html y de la vista dependen de 
   assert.match(html, /const v3 = compacto && window\.CDS_FILTROS;/);
   const usos = html.match(/\bv3\.[a-zA-Z]+/g) || []; assert.ok(usos.length >= 6);
   [...html.matchAll(/^.*\bv3\b.*$/gm)].map(m => m[0]).filter(l => /\bv3\./.test(l)).forEach(l => assert.match(l, /v3\s*(\?|&&|\)|\()|if \(v3\)|\(v3\)/, l));
-  assert.match(vista, /if \(window\.CDS_FILTROS\) window\.CDS_FILTROS\.resultados\(raiz\);/);
+  assert.match(vista, /if \(typeof window !== 'undefined' && window\.CDS_FILTROS\) window\.CDS_FILTROS\.resultados\(raiz\);/);
   assert.doesNotMatch(html.replace(/<script>\s*\(function \(\) \{\s*var CDS_V3_POR_DEFECTO[\s\S]*?<\/script>/, ''), /cds\/filtros/);
 });
 

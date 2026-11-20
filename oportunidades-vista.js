@@ -5,6 +5,8 @@
 // resuelve croma-api (acciones, rendimiento, motivo, explicacion, cobertura, stock...). Texto de la API: siempre textContent.
 // La logica de grupos y contadores vive en oportunidades-grupos.js (pura y con pruebas).
 
+// Extensiones de la interfaz nueva (cds-v3, Etapa B2). Sin la bandera el archivo no se carga y esto es null: la vista es la de siempre.
+function ovCds() { return (typeof window !== 'undefined' && window.CDS_POR_ACCION) || null; }
 const OV_DIAS_RAPIDOS = [30, 60, 90];
 const OV_PRIORIDADES =[['', 'Prioridad: todas'], ['alta', 'Prioridad: alta'], ['media', 'Prioridad: media'], ['baja', 'Prioridad: baja']];
 const OV_ESTADOS_REPOSICION = ['reposicion_urgente', 'reponer_desde_deposito', 'reposicion_a_evaluar', 'reposicion_proxima'];
@@ -39,6 +41,7 @@ function ovParamsLista() {
   const params = rtOportunidadesParamsBase();
   params.set('limit', String(RT_OPORTUNIDADES_LIMITE)); params.set('offset', String(RT_OPORTUNIDADES_OFFSET));
   params.set('estado', ogParametroEstado(RT_OPORTUNIDADES_GRUPO, RT_OPORTUNIDADES_ESTADO));
+  if (ovCds() && ovCds().sinFiltroDeEstado()) params.delete('estado'); // cds-v3 (B2): «Todos» incluye los productos sin acción
   if (RT_OPORTUNIDADES_PRIORIDAD) params.set('prioridad', RT_OPORTUNIDADES_PRIORIDAD);
   if (ovSoloRotacion()) {
     if (RT_OPORTUNIDADES_CONFIANZA) params.set('confianza', RT_OPORTUNIDADES_CONFIANZA);
@@ -298,7 +301,8 @@ function ovFmtConteo(v) { return v === null || v === undefined ? '—' : nf.form
 function ovConteosActuales() {
   const base = RT_OPORTUNIDADES_BASE && RT_OPORTUNIDADES_BASE.clave === rtOportunidadesClaveBase() ? RT_OPORTUNIDADES_BASE : null;
   const un = RT_OPORTUNIDADES_UNIONES && RT_OPORTUNIDADES_UNIONES.clave === rtOportunidadesClaveBase() ? RT_OPORTUNIDADES_UNIONES : null;
-  return { base, un, conteos: ogConteos(base && base.resumen, un && un.estado === 'ok' ? un.valores : null) };
+  const cx = { base, un, conteos: ogConteos(base && base.resumen, un && un.estado === 'ok' ? un.valores : null) };
+  return ovCds() ? ovCds().ajustarConteos(cx) : cx; // cds-v3 (B2): «Todos» = productos evaluados
 }
 
 const OV_CLASE_GRUPO = { todas: 'ov-g-todas', reposicion: 'ov-g-reposicion', rotaciones: 'ov-g-rotaciones', rendimiento: 'ov-g-rendimiento', estancados: 'ov-g-estancados', revisar_datos: 'ov-g-datos' };
@@ -675,6 +679,7 @@ function ovPanelLista(host, cx) {
   OV_PRIORIDADES.forEach(([v, t]) => sel.appendChild(rtEl('option', { attrs: { value: v }, text: t })));
   sel.value = RT_OPORTUNIDADES_PRIORIDAD || '';
   sel.addEventListener('change', () => ovElegirPrioridad(sel.value));
+  if (ovCds()) ovCds().selector(ctl); // cds-v3 (B2): Por acción / Lista
   ctl.appendChild(sel);
   ctl.appendChild(rtEl('span', { className: 'ov-orden', text: 'Ordenado por urgencia', attrs: { title: 'Prioridad del estado principal y, dentro de cada estado, el criterio propio del motor' } }));
   cab.appendChild(ctl);
@@ -699,8 +704,10 @@ function ovPanelLista(host, cx) {
     if (!ovHayFiltroExtra() && esperado !== null && esperado !== lista.paginacion.total) {
       panel.appendChild(rtEl('p', { className: 'ov-nota ov-nota-alerta', text: 'El listado (' + nf.format(lista.paginacion.total) + ') no coincide con el contador (' + nf.format(esperado) + '): los datos pudieron cambiar entre consultas. Volvé a consultar para actualizar.' }));
     }
-    panel.appendChild(ovTabla(lista.data, lista, dias));
-    panel.appendChild(ovTarjetas(lista.data, lista));
+    if (!(ovCds() && ovCds().lista(panel, lista, dias))) { // cds-v3 (B2): vista Por acción; false = Lista (la de siempre)
+      panel.appendChild(ovTabla(lista.data, lista, dias));
+      panel.appendChild(ovTarjetas(lista.data, lista));
+    }
     panel.appendChild(ovPaginacion(lista.paginacion));
   }
   host.appendChild(panel);
@@ -748,7 +755,7 @@ function renderRTOportunidades(host) {
   }
   ovFormularioFiltros(raiz);
   ovFiltrosActivos(raiz);
-  if (window.CDS_FILTROS) window.CDS_FILTROS.resultados(raiz); // cds-v3 (B1): consulta actual vs. resumen de acciones
+  if (typeof window !== 'undefined' && window.CDS_FILTROS) window.CDS_FILTROS.resultados(raiz); // cds-v3 (B1): consulta actual vs. resumen de acciones
 
   if (!RT_OPORTUNIDADES && !RT_OPORTUNIDADES_LOADING && !RT_OPORTUNIDADES_ERROR) ovProgramarCarga();
   if (RT_OPORTUNIDADES) ovAvisoSucursalesNoConsideradas(raiz, RT_OPORTUNIDADES);
