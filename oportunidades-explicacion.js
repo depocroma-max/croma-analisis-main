@@ -12,6 +12,8 @@ const RR_ACCION_TEXTO = {
 };
 // El motor solo clasifica "destacado" y "bueno"; sin clasificar NO se rotula "normal" ni "bajo".
 const RR_NIVEL_TEXTO = { destacado: 'Destacado', bueno: 'Bueno' };
+// Etiquetas de rendimiento desde el ingreso activadas por un perfil (I4): secundarias, nunca acciones.
+const RR_TEXTO_ETIQUETA_REND = { buen_rendimiento_ingreso: 'Buen rendimiento del ingreso', salida_lenta_ingreso: 'Salida lenta del ingreso' };
 const RR_OPERADOR = { '>=': '≥', '<=': '≤', '>': '>', '<': '<', '==': '=' };
 
 // "seguimiento" es el identificador interno del estado; su etiqueta visible es "Ingreso reciente" ("Seguimiento" queda
@@ -91,13 +93,15 @@ function rrBloquePorQue(f, resp) {
   cuerpo.appendChild(rtEl('p', { className: 'rt-note', text: 'Período analizado: ' + periodo }));
   const sucursales = rrSucursalesDeLaExplicacion(f);
   if (sucursales) cuerpo.appendChild(rtEl('p', { className: 'rt-note rr-sucursales', text: sucursales }));
-  const estados = [f.estado_principal, ...(f.etiquetas_secundarias || [])].filter(Boolean);
+  const etiquetasRend = f.etiquetas_rendimiento_ingreso || [];
+  const estados = [f.estado_principal, ...(f.etiquetas_secundarias || []), ...etiquetasRend].filter(Boolean);
   if (!estados.length) cuerpo.appendChild(rtEl('p', { text: 'No cumple ninguna regla de oportunidad en este período.' }));
   let hayRatio = false;
   estados.forEach(estado => {
     const bloque = rtEl('div');
-    bloque.appendChild(rtEl('h5', { className: 'rt-subtitulo', text: rrTextoEstado(estado) + (estado === f.estado_principal ? ' (principal)' : ' (secundaria)') }));
-    const motivo = estado === f.estado_principal ? f.motivo : (f.motivos_secundarios || {})[estado];
+    const deRend = etiquetasRend.includes(estado);
+    bloque.appendChild(rtEl('h5', { className: 'rt-subtitulo', text: (deRend ? RR_TEXTO_ETIQUETA_REND[estado] || estado : rrTextoEstado(estado)) + (estado === f.estado_principal ? ' (principal)' : deRend ? ' (etiqueta secundaria; no cambia la prioridad)' : ' (secundaria)') }));
+    const motivo = estado === f.estado_principal ? f.motivo : deRend ? (f.motivos_rendimiento_ingreso || {})[estado] : (f.motivos_secundarios || {})[estado];
     if (motivo) bloque.appendChild(rtEl('p', { text: motivo }));
     ((ex.condiciones_por_estado || {})[estado] || []).forEach(c => {
       const fila = rtEl('div', { className: 'rr-cond' });
@@ -171,6 +175,8 @@ function rrDetalleOportunidad(panel, f, resp, bloque) {
     'Ventas del período: ' + nf.format(f.Ventas_total || 0) + ' (' + nf1.format(f.ventas_semana || 0) + ' por semana) · Stock en sucursales: ' + nf.format(f.Stock_sucursales || 0)
     + ' · Depósito 90: ' + nf.format(deposito) + ' · Fallados 93: ' + nf.format(f.Stock_fallados || 0) + ' · Ratio de venta: ' + ratio));
   if (typeof ovBloqueIngresos === 'function') panel.appendChild(bloque(f.ingreso_proveedor !== undefined ? 'Ingresos de proveedor' : 'Ingreso', ovBloqueIngresos(f, resp)));
+  // Rendimiento desde el ingreso y demanda reciente de la seleccion (§23, I2): informativos; sin los campos de I1 no se muestran.
+  if (typeof riBloquesDetalle === 'function') riBloquesDetalle(panel, f, resp, bloque);
   panel.appendChild(rrBloquePorQue(f, resp));
   if (typeof rrEsAdmin === 'function' && rrEsAdmin()) panel.appendChild(rrBloqueTecnico(f, resp)); // huellas y perfiles: solo administradores
   const rot = acciones.find(a => a.requiere_validacion_variante);

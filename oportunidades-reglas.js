@@ -175,6 +175,103 @@ function rrLocalizarEsquema(es) {
   return { ...es, grupos, relaciones };
 }
 const rrParamsEsquema = () => RR.base.esquema.grupos.flatMap(g => g.parametros);
+
+// ── Rendimiento desde el ingreso (I4): solo presentacion de lo que decide el servidor ───────────────────────────────────────
+// Texto de un valor: para un parametro enumerado (opciones del esquema) su titulo; si no, el numero con su unidad.
+function rrTextoValor(p, v) {
+  if (v === undefined || v === null || v === '') return '—';
+  const o = (p.opciones || []).find(x => String(x.valor) === String(v));
+  return o ? 'Modo ' + o.valor + ' · ' + o.titulo : nf1.format(Number(v)) + ' ' + p.unidad;
+}
+const RR_ETIQUETA_REND = { buen_rendimiento_ingreso: 'Buen rendimiento del ingreso', salida_lenta_ingreso: 'Salida lenta del ingreso', bien_vendido: 'Bien vendido', venta_destacada: 'Venta destacada', reposicion_urgente: 'Reposición urgente' };
+const RR_MOTIVO_REND = {
+  sin_snapshot: 'no hay un cálculo de rendimiento publicado', lectura_fallida: 'no se pudo leer el cálculo de rendimiento', sin_metadatos: 'el cálculo no tiene datos de identificación',
+  version_distinta: 'el cálculo es de otra versión', configuracion_de_calculo_distinta: 'el cálculo se hizo con otra configuración', snapshot_atrasado: 'el cálculo está atrasado (más de 2 días desde el corte)',
+  snapshot_vencido: 'el cálculo está vencido (más de 7 días desde el corte)', sucursales_distintas_del_snapshot: 'la consulta no usa las 5 sucursales operativas del cálculo',
+  snapshot_posterior_a_la_consulta: 'el período termina antes del corte del cálculo (usaría información posterior)', alcance_del_snapshot_distinto_de_las_operativas: 'el cálculo no corresponde a las 5 sucursales operativas',
+  snapshot_inconsistente: 'el cálculo se estaba publicando (filas de otra ejecución)', snapshot_distinto_del_activado: 'el cálculo tiene otra versión o configuración que el registrado al activar',
+  corte_posterior_a_hoy: 'el corte del cálculo es posterior a hoy', huella_calculo_ilegible: 'no se pudo leer la configuración del cálculo', sin_ejecucion_por_fila: 'el cálculo no identifica la ejecución de cada fila',
+};
+const rrMotivoRend = m => RR_MOTIVO_REND[m] || (String(m || '').startsWith('faltan_metadatos') ? 'al cálculo le faltan datos de identificación' : (m || 'motivo no informado'));
+// Identidad del snapshot en una linea: ejecucion, version, corte, alcance y huella.
+function rrSnapshotTexto(s) {
+  if (!s) return 'Sin cálculo de rendimiento';
+  return 'Ejecución ' + (s.ejecucion || '—') + ' · versión ' + (s.version || '—') + ' · corte ' + (s.corte || '—') + ' · alcance ' + ((s.sucursales || []).length) + ' sucursales (' + (s.sucursales || []).join(', ') + ') · huella ' + rrCorta(s.huella_calculo || '') + (s.vigencia && s.vigencia.dias_desde_corte !== undefined ? ' · ' + s.vigencia.dias_desde_corte + ' día(s) desde el corte' : '');
+}
+// Explicacion del grupo "Rendimiento desde el ingreso" en el formulario: comportamiento de cada modo y condiciones del snapshot.
+function rrExplicacionRendimiento() {
+  const ri = RR.base.esquema.rendimiento_ingreso;
+  if (!ri) return null;
+  const caja = rtEl('div', { className: 'rr-grupo-desc rr-rend-explicacion' });
+  caja.appendChild(rtEl('b', { text: 'Qué hace cada modo' }));
+  caja.appendChild(rrLista(ri.modos.map(m => 'Modo ' + m.valor + ' — ' + m.titulo + ': ' + m.descripcion)));
+  caja.appendChild(rtEl('b', { text: 'El cálculo nocturno solo se usa si es' }));
+  caja.appendChild(rrLista(ri.condiciones_del_snapshot));
+  caja.appendChild(rtEl('p', { text: ri.suspension }));
+  caja.appendChild(rtEl('p', { text: ri.sin_evidencia }));
+  (ri.etiquetas || []).filter(e => e.nota).forEach(e => caja.appendChild(rtEl('p', { className: 'rr-muted', text: e.texto + ': ' + e.nota })));
+  return caja;
+}
+// Condiciones EFECTIVAS de la reposicion urgente (las publica el esquema): cual rige segun el valor de "ventas netas minimas en 90 dias".
+function rrExplicacionUrgencia(f, esGeneral, general) {
+  const pol = RR.base.esquema.politicas_urgencia;
+  if (!pol || !pol.length) return null;
+  const ruta = 'reposicion_urgente.demanda_90_min';
+  const valor = esGeneral || f.sobrescribe[ruta] ? f.valores[ruta] : (general && general.plano ? general.plano[ruta] : undefined);
+  const rige = Number(valor) > 0 ? 'neta' : 'vigente';
+  const caja = rtEl('div', { className: 'rr-grupo-desc rr-rend-explicacion rr-urgencia-politicas' });
+  caja.appendChild(rtEl('b', { text: 'Reposición urgente: condiciones según "Ventas netas mínimas en 90 días"' }));
+  pol.forEach(p => {
+    caja.appendChild(rtEl('p', { text: (p.id === 'neta' ? 'Urgencia neta' : 'Regla vigente') + ' — ' + p.cuando + (p.id === rige ? ' (es la que rige con el valor actual)' : '') }));
+    caja.appendChild(rrLista(p.condiciones));
+    if (p.no_aplica && p.no_aplica.length) caja.appendChild(rtEl('p', { className: 'rr-muted', text: 'No se exige: ' + p.no_aplica.join(', ') + '.' }));
+  });
+  return caja;
+}
+// Bloque del snapshot de rendimiento en una simulacion guardada (evidencia), con altas y bajas de las etiquetas afectadas.
+function rrBloqueRendimientoSim(host, sim) {
+  const ri = sim.rendimiento_ingreso;
+  if (!ri || (!ri.requerido && !(ri.modos_referencia || []).some(m => m > 0))) return;
+  rrSecundario(host, 'Rendimiento desde el ingreso');
+  const usa = ri.requerido ? 'El conjunto simulado usa el rendimiento desde el ingreso (modo ' + (ri.modos_escenario || []).filter(m => m > 0).join(', ') + ').' : 'Solo las reglas de referencia usan el rendimiento desde el ingreso (el conjunto simulado no).';
+  if (ri.referencia && !ri.referencia.aplicable) host.appendChild(rrAviso('', rrNegrita('Las reglas vigentes tienen hoy las etiquetas de rendimiento suspendidas: '), rrFrase(rrMayus(rrMotivoRend(ri.referencia.motivo))), ' La columna «Antes» refleja lo que Oportunidades muestra ahora, sin esas etiquetas.'));
+  if (ri.aplicable) host.appendChild(rrAviso('ok', rrNegrita('Cálculo usado: '), rrFrase(rrSnapshotTexto(ri.snapshot)), ' ' + usa));
+  else host.appendChild(rrAviso('peligro', rrNegrita('Etiquetas de rendimiento suspendidas: '), rrFrase(rrMayus(rrMotivoRend(ri.motivo))), ' ' + usa + ' Mientras estén suspendidas no se usa otro criterio en su lugar' + (ri.requerido ? ', y esta simulación no sirve para activar.' : '.')));
+  const et = ri.etiquetas || {};
+  const filas = Object.keys(et).filter(k => et[k].antes || et[k].despues);
+  if (filas.length) {
+    host.appendChild(rtTabla(['Etiqueta', 'Antes', 'Después', 'Altas', 'Bajas'], filas, k => {
+      const tr = rtEl('tr');
+      tr.appendChild(rtEl('td', { className: 'rr-wrap', text: RR_ETIQUETA_REND[k] || k }));
+      tr.appendChild(rtEl('td', { text: nf.format(et[k].antes) })); tr.appendChild(rtEl('td', { text: nf.format(et[k].despues) }));
+      tr.appendChild(rtEl('td', { className: et[k].altas ? 'rr-num-pos' : 'rr-muted', text: '+' + nf.format(et[k].altas) }));
+      tr.appendChild(rtEl('td', { className: et[k].bajas ? 'rr-num-neg' : 'rr-muted', text: '−' + nf.format(et[k].bajas) }));
+      return tr;
+    }, { tableClassName: 'rr-tabla' }));
+  }
+  const ne = Object.entries(ri.no_evaluables || {});
+  const partes = [];
+  if (ri.productos_con_modo) partes.push(nf.format(ri.productos_con_modo) + ' productos evaluados con el rendimiento');
+  if (ri.suspendidos) partes.push(nf.format(ri.suspendidos) + ' con las etiquetas suspendidas');
+  if (ne.length) partes.push('sin evidencia suficiente (no reciben etiquetas positivas): ' + ne.map(([m, n]) => nf.format(n) + ' ' + rrTextoSinEvidencia(m)).join(', '));
+  if (partes.length) host.appendChild(rtEl('p', { className: 'rt-note', text: partes.join(' · ') + '.' }));
+}
+const RR_SIN_EVIDENCIA = { sin_ingreso_registrado: 'sin ingreso registrado', codigo_sin_fila_en_snapshot: 'fuera del cálculo', nivel_sin_referencia_verificable: 'nivel sin referencia verificable', excluido_por_devoluciones: 'excluidos por devoluciones',
+  exposicion_insuficiente: 'con poca exposición (pocas ventas y poco tiempo con stock)', ventas_insuficientes_en_ventana: 'con pocas ventas en la ventana', historial_no_confiable: 'con historial no confiable' };
+const rrTextoSinEvidencia = m => RR_SIN_EVIDENCIA[m] || String(m || '').replace(/_/g, ' ');
+const rrMayus = t => { const x = String(t || ''); return x.charAt(0).toUpperCase() + x.slice(1); };
+// Snapshot exigido por una activacion: el de la simulacion y el de ahora (lo decide el servidor en la elegibilidad).
+function rrSnapshotActivacion(el) {
+  const ri = el && el.rendimiento_ingreso;
+  if (!ri || !ri.requerido) return null;
+  const caja = rtEl('div', { className: 'rr-card rr-rend-snap' });
+  caja.appendChild(rtEl('h4', { text: 'Cálculo de rendimiento que exige esta activación' }));
+  caja.appendChild(rtEl('p', { text: 'En la simulación: ' + rrSnapshotTexto(ri.snapshot_simulacion) + (ri.aplicado_en_simulacion ? '' : ' (suspendido)') }));
+  const a = ri.actual || {};
+  caja.appendChild(rtEl('p', { text: 'Ahora: ' + (a.snapshot ? rrSnapshotTexto(a.snapshot) : 'sin cálculo') + (a.elegible ? ' · utilizable' : ' · no utilizable: ' + rrMotivoRend(a.motivo)) }));
+  if (a.elegible && ri.snapshot_simulacion && a.snapshot && ri.snapshot_simulacion.ejecucion !== a.snapshot.ejecucion) caja.appendChild(rtEl('p', { className: 'rr-muted', text: 'Hay un cálculo más nuevo que el simulado, de la misma versión y configuración: se admite y queda registrado en la activación.' }));
+  return caja;
+}
 function rrEnVigente(perfilId) {
   const v = RR.base && RR.base.vigente;
   if (!v) return null;
@@ -389,7 +486,7 @@ function rrTablaParametrosEfectivos(host, v) {
     det.appendChild(rtTabla(['Parámetro', 'Valor', 'Origen'], g.parametros, par => {
       const tr = rtEl('tr');
       tr.appendChild(rtEl('td', { className: 'rr-wrap', text: par.etiqueta }));
-      tr.appendChild(rtEl('td', { text: nf1.format(plano[par.ruta]) + ' ' + par.unidad }));
+      tr.appendChild(rtEl('td', { className: 'rr-wrap', text: rrTextoValor(par, plano[par.ruta]) }));
       const propio = v.origen_parametros[par.ruta] === 'perfil';
       const tdOrigen = rtEl('td');
       tdOrigen.appendChild(rrTag(v.general_version ? (propio ? 'Propio de este perfil' : 'Heredado del General v' + v.general_version) : 'General', propio ? 'warn' : ''));
@@ -520,6 +617,8 @@ function rrRenderForm(host) {
     if (n) resumen.appendChild(rrTag(n + (esGeneral ? ' modificado(s)' : ' sobrescrito(s)'), 'warn'));
     det.appendChild(resumen);
     det.appendChild(rtEl('p', { className: 'rr-grupo-desc', text: g.descripcion }));
+    if (g.id === 'rendimiento_ingreso') { const ex = rrExplicacionRendimiento(); if (ex) det.appendChild(ex); }
+    if (g.id === 'reposicion') { const ex = rrExplicacionUrgencia(f, esGeneral, general); if (ex) det.appendChild(ex); }
     g.parametros.forEach(p => det.appendChild(rrFilaParametro(f, p, general, esGeneral)));
     form.appendChild(det);
   });
@@ -559,6 +658,29 @@ function rrFilaParametro(f, p, general, esGeneral) {
   fila.appendChild(nom);
   const ctl = rtEl('div', { className: 'rr-param-ctl' });
   const attrs = { step: String(p.paso), min: String(p.min), max: String(p.max), inputmode: 'decimal' };
+  if (p.opciones) { // parametro enumerado (modo de rendimiento): lista con el titulo de cada valor
+    const ops = p.opciones.map(o => [String(o.valor), 'Modo ' + o.valor + ' · ' + o.titulo]);
+    const activo = esGeneral || Boolean(f.sobrescribe[p.ruta]);
+    const actual = esGeneral || activo ? (f.valores[p.ruta] ?? String(base ?? p.valor_por_defecto ?? 0)) : String(base ?? p.valor_por_defecto ?? 0);
+    const sel = rrSelect(ops, actual, v => { f.valores[p.ruta] = v; rrRender(); }, { 'aria-label': p.etiqueta });
+    sel.disabled = !activo;
+    ctl.appendChild(sel);
+    if (!esGeneral) {
+      const check = rtEl('input', { attrs: { type: 'checkbox' } }); check.checked = activo;
+      const lab = rtEl('label', { className: 'rr-sobrescribir' }); lab.appendChild(check); lab.appendChild(document.createTextNode('Sobrescribir'));
+      check.addEventListener('change', () => { f.sobrescribe[p.ruta] = check.checked; if (check.checked && f.valores[p.ruta] === undefined) f.valores[p.ruta] = String(base ?? 0); rrRender(); });
+      ctl.appendChild(lab);
+    }
+    if (esGeneral ? actual !== String(base) : activo) fila.classList.add('rr-cambiado');
+    fila.appendChild(ctl);
+    const elegido = p.opciones.find(o => String(o.valor) === String(actual));
+    const info = rtEl('div', { className: 'rr-herencia' });
+    if (elegido) info.appendChild(rtEl('div', { className: 'rr-modo-desc', text: elegido.descripcion }));
+    info.appendChild(rtEl('div', { className: 'rr-muted', text: esGeneral ? 'Valor actual: ' + rrTextoValor(p, base) : 'Heredado del General v' + f.generalVersion + ': ' + rrTextoValor(p, base) }));
+    if (err) { info.appendChild(rtEl('div', { className: 'rr-error', text: err })); fila.classList.add('rr-con-error'); }
+    fila.appendChild(info);
+    return fila;
+  }
   if (esGeneral) {
     const inp = rrInput('number', f.valores[p.ruta], v => { f.valores[p.ruta] = v; fila.classList.toggle('rr-cambiado', v !== String(base)); }, { ...attrs, 'aria-label': p.etiqueta });
     if (f.valores[p.ruta] !== String(base)) fila.classList.add('rr-cambiado');
@@ -961,17 +1083,19 @@ function rrRenderResultadoSim(host) {
   if (!el) host.appendChild(rtEl('p', { className: 'rt-note', text: 'Verificando si esta simulación puede respaldar una activación…' }));
   else if (el.error) host.appendChild(rrAviso('', rrNegrita('No se pudo verificar la elegibilidad para activar: '), el.error.mensaje));
   else if (el.elegible) {
-    const a = rrAviso('ok', rrNegrita('Esta simulación puede usarse para activar '), 'hasta el ' + rrFecha(el.vigente_hasta) + ' (vigencia de ' + el.vigencia_horas + ' horas). Activar es una acción aparte y explícita.');
+    const a = rrAviso('ok', rrNegrita('Esta simulación puede usarse para activar '), 'hasta el ' + rrFecha(el.vigente_hasta) + ' (vigencia de ' + el.vigencia_horas + ' horas' + (el.rendimiento_ingreso && el.rendimiento_ingreso.requerido ? ', y mientras el cálculo de rendimiento siga utilizable' : '') + '). Activar es una acción aparte y explícita.');
     a.querySelector('div').appendChild(rtEl('div', { className: 'rr-row' }));
     a.querySelector('.rr-row').appendChild(rrBtn('Revisar para activar', () => { RR.act.revision = { sim, eleg: el }; RR.act.motivo = ''; RR.act.confirmo = false; RR.act.error = null; RR.sub = 'activacion'; rrRender(); }, 'btn-sm rr-btn-principal'));
     host.appendChild(a);
   } else {
-    const a = rrAviso('', rrNegrita('Esta simulación no puede respaldar una activación. '), el.motivo ? rrFrase(el.motivo.mensaje) : 'No es elegible.', ' Hace falta volver a simular.');
+    const a = rrAviso('', rrNegrita('Esta simulación no puede respaldar una activación. '), el.motivo ? rrFrase(RR_TXT_RECHAZO_REND[el.motivo.codigo] || el.motivo.mensaje) : 'No es elegible.', el.motivo && el.motivo.codigo === 'snapshot_no_vigente' ? ' Cuando haya un cálculo vigente se puede volver a consultar.' : ' Hace falta volver a simular.');
     a.querySelector('div').appendChild(rtEl('div', { className: 'rr-row' }));
     a.querySelector('.rr-row').appendChild(rrBtn('Simular de nuevo con esta selección', () => rrFormDesdeSim(sim)));
     host.appendChild(a);
   }
 
+  const snapEl = rrSnapshotActivacion(el);
+  if (snapEl) host.appendChild(snapEl);
   // Cabecera de datos
   const grid = rtEl('div', { className: 'rr-grid' });
   const card = (t, ...lineas) => { const c = rtEl('div', { className: 'rr-card' }); c.appendChild(rtEl('h4', { text: t })); lineas.forEach(l => c.appendChild(rtEl('p', { text: l }))); grid.appendChild(c); return c; };
@@ -1012,6 +1136,8 @@ function rrRenderResultadoSim(host) {
   if (sim.rendimiento.cambian) {
     host.appendChild(rtEl('p', { className: 'rt-note', text: nf.format(sim.rendimiento.cambian) + ' productos cambian de rendimiento: ' + sim.rendimiento.matriz.slice(0, 6).map(m => rrEtNivel(m.de) + ' → ' + rrEtNivel(m.a) + ' (' + nf.format(m.n) + ')').join(' · ') }));
   }
+
+  rrBloqueRendimientoSim(host, sim);
 
   // Perfiles que resolvieron
   rrSecundario(host, 'Qué perfil aplicó a cada producto');
@@ -1092,6 +1218,11 @@ function rrDetalleProductoSim(p) {
     fila('Etiquetas', (x.etiquetas_secundarias || []).map(rrTextoEstado).join(', ') || '—');
     fila('Acciones', (x.acciones || []).map(a => (RR_ACCION_TEXTO[a.accion] || a.accion) + (a.principal ? ' (principal)' : '')).join(', ') || '—');
     fila('Rendimiento', x.rendimiento && x.rendimiento.nivel ? (RR_NIVEL_TEXTO[x.rendimiento.nivel] || x.rendimiento.nivel) : 'Sin clasificar');
+    if (x.evaluacion_rendimiento_ingreso) {
+      const ev = x.evaluacion_rendimiento_ingreso;
+      fila('Rendimiento desde el ingreso', !ev.aplicado ? 'Suspendido: ' + rrMotivoRend(ev.motivo)
+        : ((x.etiquetas_rendimiento_ingreso || []).map(e => RR_ETIQUETA_REND[e] || e).join(', ') || (ev.sin_evidencia ? 'Sin evidencia suficiente' : 'Sin etiqueta')) + ' (modo ' + ev.modo + ')');
+    }
     c.appendChild(dl); return c;
   };
   const dos = rtEl('div', { className: 'rr-comparar' });
@@ -1130,6 +1261,7 @@ function rrVistaActivacion(host) {
     c.appendChild(rtEl('p', { text: rrFilaConjunto(b.vigente.conjunto) }));
     c.appendChild(rtEl('p', { className: 'rr-muted', text: 'Activado el ' + rrFecha(b.vigente.creada.en) + ' por ' + b.vigente.creada.nombre + ' · "' + b.vigente.motivo + '" · huella ' + rrCorta(b.vigente.conjunto.huella) }));
     b.vigente.advertencias.forEach(w => c.appendChild(rtEl('p', { className: 'rr-muted', text: 'Advertencia al activar: ' + w.mensaje })));
+    if (b.vigente.rendimiento_ingreso) c.appendChild(rtEl('p', { className: 'rr-muted', text: 'Usa el rendimiento desde el ingreso (modo ' + ((b.vigente.rendimiento_ingreso.modos || []).filter(m => m > 0).join(', ') || '—') + '). Cálculo al activar: ' + rrSnapshotTexto(b.vigente.rendimiento_ingreso.snapshot_activacion) + '. Cada día usa el último cálculo vigente de la misma versión y configuración; si no hay, sus etiquetas se suspenden con aviso.' }));
     host.appendChild(c);
   }
   if (a.revision) rrRenderRevision(host);
@@ -1170,6 +1302,8 @@ function rrRenderRevision(host) {
     : ['Reglas estándar (no hay conjunto activado)']));
   grid.appendChild(lado('Conjunto propuesto', ['Versiones exactas simuladas:', 'General v' + sim.escenario.general.version, ...sim.escenario.especificos.map(e => e.nombre + ' v' + e.version + ' — ' + rrAlcanceTexto(e.alcance) + ' (General v' + e.general_version_referenciada + ')'), ...(sim.escenario.especificos.length ? [] : ['Sin perfiles específicos'])]));
   host.appendChild(grid);
+  const snapRev = rrSnapshotActivacion(a.revision.eleg);
+  if (snapRev) host.appendChild(snapRev);
   const c = sim.cambios, t = sim.transiciones;
   host.appendChild(rrAviso('info', rrNegrita('Impacto medido: '), 'período ' + sim.periodo.desde + ' a ' + sim.periodo.hasta + ' (' + sim.periodo.dias + ' días), ' + nf.format(sim.datos.productos_evaluados) + ' productos. ' + nf.format(c.cambia_estado) + ' cambian de estado (' + nf.format(t.entran) + ' entran, ' + nf.format(t.salen) + ' salen), ' + nf.format(c.mismo_estado_cambia_detalle) + ' cambian el detalle, ' + nf.format(c.solo_umbrales) + ' solo cambian umbrales, ' + nf.format(c.sin_cambios) + ' sin cambios.'));
   const adv = [...sim.advertencias.map(w => w.mensaje), ...sim.alcances.filter(x => x.estado !== 'ok').map(x => x.nombre + ': ' + (RR_TXT_ALCANCE_ESTADO[x.estado] || x.estado))];
@@ -1214,7 +1348,11 @@ async function rrActivar() {
   const fl = r.falla;
   const volver = rrBtn('Volver a simular', () => rrFormDesdeSim(sim));
   const caja = (tipo, titulo, texto, extra) => { const av = rrAviso(tipo, rrNegrita(titulo), texto); if (extra) av.querySelector('div').appendChild(extra); av.querySelector('div').appendChild(rtEl('div', { className: 'rr-row' })); return av; };
-  const necesitaNueva = ['evidencia_vencida', 'vigente_cambio_tras_simular', 'conflicto_vigente', 'evidencia_incompleta', 'evidencia_incompatible', 'referencia_no_vigente', 'escenario_distinto'];
+  const necesitaNueva = ['evidencia_vencida', 'vigente_cambio_tras_simular', 'conflicto_vigente', 'evidencia_incompleta', 'evidencia_incompatible', 'referencia_no_vigente', 'escenario_distinto', 'evidencia_sin_snapshot', 'snapshot_incompatible'];
+  if (fl.tipo === 'conflicto' && fl.codigo === 'snapshot_no_vigente') {
+    a.error = rrAviso('peligro', rrNegrita('No se activó: '), RR_TXT_RECHAZO_REND.snapshot_no_vigente, ' ', rrFrase(rrMayus(rrMotivoRend(fl.datos && fl.datos.motivo))), ' Nada cambió en Oportunidades.');
+    rrRender(); return;
+  }
   if (fl.tipo === 'conflicto' && necesitaNueva.includes(fl.codigo)) {
     const av = caja('peligro', 'Hace falta volver a simular. ', fl.codigo === 'evidencia_vencida' ? 'La evidencia de esta simulación venció.' : fl.codigo === 'vigente_cambio_tras_simular' || fl.codigo === 'conflicto_vigente' ? 'El conjunto vigente cambió después de simular. ' + rrFrase(fl.mensaje) : rrFrase(fl.mensaje));
     av.querySelector('.rr-row').appendChild(volver);
@@ -1230,6 +1368,12 @@ async function rrActivar() {
   else a.error = rrAviso('peligro', (fl.codigo === 'catalogo_no_disponible' || (r.data && r.data.codigo === 'catalogo_no_disponible')) ? 'No se pudo consultar el catálogo para revalidar los alcances, por eso no se activó nada. Reintentá en unos minutos.' : fl.mensaje);
   rrRender();
 }
+
+const RR_TXT_RECHAZO_REND = {
+  snapshot_no_vigente: 'El cálculo de rendimiento no se puede usar ahora, y este conjunto depende de él.',
+  snapshot_incompatible: 'El cálculo de rendimiento actual es de otra versión o configuración que el de la simulación.',
+  evidencia_sin_snapshot: 'La simulación se hizo con las etiquetas de rendimiento suspendidas: no muestra el efecto real del conjunto.',
+};
 
 // Oculta la pestana a quienes no son administradores (el servidor igual exige admin en cada ruta).
 (function rrOcultarPestanaSiNoAdmin() {

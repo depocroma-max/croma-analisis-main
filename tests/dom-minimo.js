@@ -10,17 +10,26 @@ class Nodo {
   constructor(tag, reg) {
     this.tagName = String(tag).toUpperCase(); this.reg = reg; this.children = []; this.attrs = {}; this.listeners = {};
     this.className = ''; this.value = ''; this.checked = false; this.disabled = false; this.open = false; this._texto = ''; this.hidden = false; this.type = '';
-    this.style = {}; this.tabIndex = 0;
+    this.style = { setProperty(k, v) { this[k] = String(v); } }; this.tabIndex = 0; this.parentNode = null;
   }
   get esTexto() { return false; }
-  appendChild(n) { if (n.esFragmento) { n.children.slice().forEach(c => this.appendChild(c)); return n; } this.children.push(n); return n; }
-  replaceChildren() { this.children = []; }
+  appendChild(n) {
+    if (n.esFragmento) { n.children.slice().forEach(c => this.appendChild(c)); return n; }
+    if (n.parentNode) n.parentNode.removeChild(n);
+    n.parentNode = this; this.children.push(n); return n;
+  }
+  removeChild(n) { const i = this.children.indexOf(n); if (i >= 0) this.children.splice(i, 1); n.parentNode = null; return n; }
+  replaceChildren(...nodos) { this.children.forEach(c => { c.parentNode = null; }); this.children = []; nodos.forEach(n => this.appendChild(n)); }
+  // Arbol minimo: conectado = cuelga de document.body; foco = el ultimo nodo enfocado (document.activeElement).
+  get isConnected() { for (let n = this; n; n = n.parentNode) if (n === this.reg.body) return true; return false; }
+  contains(x) { for (let n = x; n; n = n.parentNode) if (n === this) return true; return false; }
+  focus() { this.reg.activo = this; }
   setAttribute(k, v) { this.attrs[k] = String(v); if (k === 'open') this.open = true; }
   getAttribute(k) { return this.attrs[k]; }
   addEventListener(t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); }
   click() { (this.listeners.click || []).forEach(f => f({ stopPropagation() {}, preventDefault() {}, target: this })); }
   dispararInput(valor) { this.value = valor; (this.listeners.input || []).forEach(f => f({ target: this })); (this.listeners.change || []).forEach(f => f({ target: this })); }
-  set textContent(v) { this.children = []; this._texto = String(v); }
+  set textContent(v) { this.children.forEach(c => { c.parentNode = null; }); this.children = []; this._texto = String(v); }
   get textContent() { return this._texto + this.children.map(c => c.textContent).join(''); }
   set innerHTML(v) { this.reg.innerHTML.push(String(v)); this.children = []; this._texto = ''; }
   get innerHTML() { return ''; }
@@ -42,8 +51,10 @@ class Texto extends Nodo { constructor(t, reg) { super('#text', reg); this._text
 class Fragmento extends Nodo { constructor(reg) { super('#fragment', reg); } get esFragmento() { return true; } }
 
 function crearEntorno({ rutas = {}, usuario = { rol: 'admin', usuario: 'tester' }, globales = {} } = {}) {
-  const reg = { innerHTML: [], llamadas: [] };
+  const reg = { innerHTML: [], llamadas: [], activo: null, body: null };
   const documento = {
+    get body() { return reg.body; },
+    get activeElement() { return reg.activo && reg.activo.isConnected ? reg.activo : reg.body; },
     createElement: t => new Nodo(t, reg), createTextNode: t => new Texto(t, reg), createDocumentFragment: () => new Fragmento(reg),
     getElementById: () => null, addEventListener() {}, readyState: 'complete', querySelector: () => null, querySelectorAll: () => [],
   };
@@ -55,10 +66,11 @@ function crearEntorno({ rutas = {}, usuario = { rol: 'admin', usuario: 'tester' 
     reg.llamadas.push({ metodo, ruta, cuerpo, url: String(url) });
     let def = rutas[metodo + ' ' + ruta];
     if (def === undefined) def = rutas[metodo + ' *'] ;
-    if (typeof def === 'function') def = def(cuerpo, ruta);
+    if (typeof def === 'function') def = await def(cuerpo, ruta); // puede devolver una promesa (respuestas tardias)
     if (!def) def = { status: 404, body: { ok: false, error: 'no simulado: ' + metodo + ' ' + ruta } };
     return { ok: def.status >= 200 && def.status < 300, status: def.status, json: async () => def.body, headers: { get: k => (def.headers || {})[k] || null } };
   };
+  reg.body = new Nodo('body', reg);
   const ctx = vm.createContext({
     console, document: documento, fetch, setTimeout, URLSearchParams, location: { href: '' }, STOCK_API_URL: '', HUB_URL: 'https://hub.example/',
     getUser: () => usuario, rtRotAuthHeaders: () => ({ Authorization: 'Bearer prueba' }), ...globales,
@@ -91,7 +103,7 @@ function crearEntorno({ rutas = {}, usuario = { rol: 'admin', usuario: 'tester' 
     function rtCambiarVista(v) { RT_VIEW = v; ultimaVista = v; }
   `, 'auxiliares');
   const raiz = path.join(__dirname, '..');
-  for (const f of ['oportunidades-explicacion.js', 'oportunidades-grupos.js', 'oportunidades-reglas.js', 'oportunidades-vista.js', 'ingresos-recientes-vista.js']) sandbox(fs.readFileSync(path.join(raiz, f), 'utf8'), f);
+  for (const f of ['oportunidades-explicacion.js', 'oportunidades-rendimiento.js', 'oportunidades-grupos.js', 'oportunidades-reglas.js', 'oportunidades-vista.js', 'ingresos-recientes-vista.js']) sandbox(fs.readFileSync(path.join(raiz, f), 'utf8'), f);
   sandbox('HOST = document.createElement("div");', 'host');
   return { ctx, reg, ev: c => vm.runInContext(c, ctx), host: () => vm.runInContext('HOST', ctx), Nodo };
 }
