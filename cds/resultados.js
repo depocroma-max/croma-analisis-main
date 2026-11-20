@@ -40,12 +40,12 @@
     var a = rrAccionPrincipal(f); if (a && a.requiere_validacion_variante) t.push('validar por variante');
     return t;
   }
-  function celdaProducto(f) {
+  function celdaProducto(f, sinEtiquetas) {
     var w = el('div', 'cds-prod');
     w.appendChild(el('b', 'cds-prod-nombre', f.Nombre_producto || f.Codigo_producto));
     var meta = el('div', 'cds-prod-meta');
     meta.appendChild(el('span', 'cds-mono', f.Codigo_producto));
-    etiquetasProducto(f).forEach(function (x) { meta.appendChild(el('span', 'cds-flag', x)); });
+    if (!sinEtiquetas) etiquetasProducto(f).forEach(function (x) { meta.appendChild(el('span', 'cds-flag', x)); });
     var mr = [f.Nombre_marca, f.Nombre_rubro].filter(Boolean).join(' · '); if (mr) meta.appendChild(el('span', null, mr));
     w.appendChild(meta);
     return w;
@@ -58,10 +58,13 @@
     if (sec.length) s.appendChild(el('span', 'cds-state-mas', '+' + sec.length, { title: 'También cumple: ' + sec.map(function (e) { return rrTextoEstado(e); }).join(', ') + '. El detalle explica cada uno.', 'aria-label': 'y ' + sec.length + (sec.length === 1 ? ' estado secundario' : ' estados secundarios') }));
     return s;
   }
-  function celdaAccion(f) {
+  function celdaAccion(f, conEtiquetas) {
     var a = rrAccionPrincipal(f), fam = familia(f.estado_principal);
     var s = el('span', a ? 'cds-accion' : 'cds-accion cds-accion--ninguna', a ? rrTextoAccion(a) : 'Sin acción sugerida'); if (fam && a) s.setAttribute('data-cds-g', fam);
-    return s;
+    if (!conEtiquetas) return s;
+    var w = el('div', 'cds-accion-col'); w.appendChild(s); // tabla: las etiquetas de calidad van bajo la acción para que el producto ocupe 2 líneas
+    var et = etiquetasProducto(f); if (et.length) { var fl = el('div', 'cds-prod-flags'); et.forEach(function (x) { fl.appendChild(el('span', 'cds-flag', x)); }); w.appendChild(fl); }
+    return w;
   }
   function stock(f) { return typeof f.Stock_sucursales === 'number' ? f.Stock_sucursales : null; }
   function deposito(f) { var d = f.Stock_deposito !== undefined ? f.Stock_deposito : f.Stock_ctro_0000; return typeof d === 'number' ? d : null; }
@@ -72,7 +75,7 @@
     var tr = el('tr', 'cds-fila' + (abierto ? ' cds-fila--abierta' : '')); var fam = familia(f.estado_principal); if (fam) tr.setAttribute('data-cds-g', fam);
     tr.addEventListener('click', function () { rtOportunidadesToggleDetalle(f.Codigo_producto); });
     function td(cls, nodo) { var c = el('td', cls); c.appendChild(nodo); tr.appendChild(c); }
-    td('c-urg', celdaUrgencia(f)); td('c-prod', celdaProducto(f)); td('c-est', celdaEstado(f)); td('c-acc', celdaAccion(f));
+    td('c-urg', celdaUrgencia(f)); td('c-prod', celdaProducto(f, true)); td('c-est', celdaEstado(f)); td('c-acc', celdaAccion(f, true));
     td('c-n', el('span', 'cds-num', num(f.Ventas_total))); td('c-n', el('span', 'cds-num', num(stock(f)))); td('c-n c-dep', el('span', 'cds-num', num(deposito(f))));
     td('c-cob', cobertura(f, resp));
     var b = ovBotonDetalle(f, abierto); b.classList.add('cds-ver'); b.setAttribute('aria-haspopup', 'dialog'); td('c-det', b);

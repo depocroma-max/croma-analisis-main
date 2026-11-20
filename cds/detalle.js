@@ -8,8 +8,8 @@
   if (!document.documentElement.classList.contains('cds-v3')) return;
 
   var nf = new Intl.NumberFormat('es-AR'), nf1 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
-  var TABS = [['resumen', 'Resumen'], ['motivos', 'Motivos'], ['ingreso', 'Ingreso y rendimiento'], ['sucursales', 'Sucursales']];
-  var tab = 'resumen', ultimoCodigo = null, scrollGuardado = 0, focoGuardado = null;
+  var TABS = [['resumen', 'Resumen', ''], ['motivos', 'Motivos', ''], ['ingreso', 'Ingreso', ' y rendimiento'], ['sucursales', 'Sucursales', '']]; // el 3.er texto se oculta en pantallas chicas (sigue en el DOM y en el nombre accesible)
+  var tab = 'resumen', ultimoCodigo = null, scrollGuardado = 0, focoGuardado = null, pendientesTabs = null;
 
   function el(tag, cls, texto, attrs) {
     var e = document.createElement(tag); if (cls) e.className = cls; if (texto != null) e.textContent = texto;
@@ -49,7 +49,8 @@
     h.appendChild(est);
     var tl = el('div', 'cds-tabs', null, { role: 'tablist', 'aria-label': 'Secciones del detalle' });
     TABS.forEach(function (t) {
-      var b = el('button', 'cds-tab', t[1], { type: 'button', role: 'tab', id: 'cdsTab_' + t[0], 'aria-selected': tab === t[0] ? 'true' : 'false', 'aria-controls': 'cdsDrCuerpo', tabindex: tab === t[0] ? '0' : '-1', 'data-fk': 'tab_' + t[0] });
+      var b = el('button', 'cds-tab', t[1], { type: 'button', role: 'tab', id: 'cdsTab_' + t[0], 'aria-label': t[1] + t[2], 'aria-selected': tab === t[0] ? 'true' : 'false', 'aria-controls': 'cdsDrCuerpo', tabindex: tab === t[0] ? '0' : '-1', 'data-fk': 'tab_' + t[0] });
+      if (t[2]) b.appendChild(el('span', 'cds-tab-x', t[2]));
       b.addEventListener('click', function () { tab = t[0]; rtRenderVistaActual(); });
       b.addEventListener('keydown', function (e) {
         var i = TABS.findIndex(function (z) { return z[0] === tab; }), n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? TABS.length - 1 : null;
@@ -58,6 +59,7 @@
       tl.appendChild(b);
     });
     h.appendChild(tl);
+    pendientesTabs = tl;
     return h;
   }
 
@@ -164,7 +166,11 @@
     var cod = RT_OPORTUNIDADES_EXPANDIDO, lista = RT_OPORTUNIDADES, f = cod && lista && lista.data ? lista.data.filter(function (x) { return x.Codigo_producto === cod; })[0] : null;
     if (!f) { ultimoCodigo = null; return; }
     var nuevo = ultimoCodigo !== cod; if (nuevo) { tab = 'resumen'; scrollGuardado = 0; focoGuardado = null; } ultimoCodigo = cod;
-    var cerrar = function () { rtOportunidadesToggleDetalle(cod); };
+    var cerrar = function () { // cierra y devuelve el foco al boton de la fila (aunque el click haya dejado el foco en otro contenedor)
+      rtOportunidadesToggleDetalle(cod);
+      var b = [].filter.call(document.querySelectorAll('[data-detalle-codigo="' + String(cod).replace(/"/g, '') + '"]'), function (x) { return x.offsetParent !== null; })[0];
+      if (b) b.focus({ preventScroll: true });
+    };
     var raiz = el('div', 'cds-dr-raiz');
     var scrim = el('div', 'cds-dr-scrim'); scrim.addEventListener('click', cerrar); raiz.appendChild(scrim);
     var a = el('aside', 'cds-dr', null, { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'cdsDrTitulo' }); var fam = R().familia(f.estado_principal); if (fam) a.setAttribute('data-cds-g', fam);
@@ -180,7 +186,11 @@
     cuerpo.scrollTop = scrollGuardado;
     var objetivo = nuevo ? a.querySelector('[data-fk="x"]') : (focoGuardado ? a.querySelector('[data-fk="' + focoGuardado + '"]') : null);
     if (objetivo) objetivo.focus({ preventScroll: true });
+    var sel = pendientesTabs && pendientesTabs.querySelector('[aria-selected=true]'); // la pestaña elegida siempre queda a la vista en el desplazamiento horizontal
+    if (sel && pendientesTabs.scrollWidth > pendientesTabs.clientWidth) pendientesTabs.scrollLeft = Math.max(0, sel.offsetLeft - (pendientesTabs.clientWidth - sel.offsetWidth) / 2);
   }
+  // Salir de Oportunidades cierra el detalle y no se reabre al volver (index.html lo llama desde rtCambiarVista).
+  function cerrar() { RT_OPORTUNIDADES_EXPANDIDO = null; ultimoCodigo = null; scrollGuardado = 0; focoGuardado = null; try { OV_FOCO = null; } catch (e) { /* sin foco pendiente */ } }
 
-  window.CDS_DETALLE = { dibujar: dibujar, pestana: function () { return tab; }, fijarPestana: function (t) { tab = t; } };
+  window.CDS_DETALLE = { dibujar: dibujar, cerrar: cerrar, pestana: function () { return tab; }, fijarPestana: function (t) { tab = t; } };
 })();

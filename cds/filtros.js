@@ -86,6 +86,8 @@
       var rs = (cx.base && cx.base.resumen) || {}, sin = typeof rs.total_sin_clasificacion === 'number' ? rs.total_sin_clasificacion : null;
       p.appendChild(par('Sin acción:', sin === null ? '—' : nf.format(sin), 'Productos evaluados a los que el motor no les detectó ninguna acción. Mismo alcance que el resumen de acciones.'));
       p.appendChild(par('En esta página:', nf.format(lista.data.length), 'Productos visibles ahora; la lista completa puede tener más páginas.'));
+      var cj = lista.conjunto; // reglas personalizadas: se avisa siempre (en móvil se oculta el bloque de contexto, que lo repetía)
+      if (cj && cj.origen === 'activacion') p.appendChild(par('Reglas:', ['personalizadas', typeof rrEsAdmin === 'function' && rrEsAdmin() ? ' #' + cj.activacion_id : ''], 'Hay un conjunto de reglas personalizado activo para esta consulta.'));
       var acotada = !(window.CDS_POR_ACCION && window.CDS_POR_ACCION.alcanceCompleto());
       if (acotada) { var n = document.createElement('span'); n.className = 'cds-res-nota'; n.textContent = 'El resumen y «sin acción» no cambian con el grupo, el estado ni la prioridad elegidos.'; p.appendChild(n); }
       host.appendChild(p);

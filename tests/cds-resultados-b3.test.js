@@ -46,7 +46,8 @@ test('guardas: los archivos de B3 salen sin la bandera, no consultan la API, no 
 });
 test('guardas: resultados.css solo cuelga de html.cds-v3 y solo usa variables --cds-*', () => {
   const t = css.replace(/\/\*[\s\S]*?\*\//g, ''); const sels = [...t.matchAll(/(^|\})\s*([^{}@]+)\{/g)].map(m => m[2].trim()).filter(Boolean);
-  assert.ok(sels.length > 80); sels.forEach(s => s.split(',').forEach(p => assert.match(p.trim(), /^html\.cds-v3[ :]/, p)));
+  assert.ok(sels.length > 80); const partes = s => { const o = []; let d = 0, i0 = 0; for (let i = 0; i < s.length; i++) { const c = s[i]; if (c === '(' || c === '[') d++; else if (c === ')' || c === ']') d--; else if (c === ',' && d === 0) { o.push(s.slice(i0, i)); i0 = i + 1; } } o.push(s.slice(i0)); return o; }; // comas de primer nivel (no las de :is(...))
+  sels.forEach(s => partes(s).forEach(p => assert.match(p.trim(), /^html\.cds-v3[ :]/, p)));
   [...t.matchAll(/var\((--[a-z0-9-]+)/g)].filter(m => m[1] !== '--ov-sticky-top').forEach(m => assert.match(m[1], /^--cds-/, m[1])); // --ov-sticky-top: variable de la tabla actual que app-shell.css ya redefine
 });
 test('compatibilidad: los ganchos de la vista pasan por ovCdsRes()/ovCdsDet() (null sin la bandera) y index.html solo carga los archivos con la bandera', () => {

@@ -137,7 +137,7 @@ html.cds-v3 .cds-btn{font:inherit;font-family:var(--cds-font-ui);font-size:var(-
   html.cds-v3 .ov-grupos{gap:var(--cds-s-2);margin:0 0 var(--cds-s-2)}
   html.cds-v3 .ov-grupo{flex-direction:row;align-items:center;justify-content:space-between;min-height:var(--cds-hit);padding:0 var(--cds-s-2);gap:var(--cds-s-1)}
   html.cds-v3 .ov-grupo-num{font-size:var(--cds-fs-lg);line-height:1}
-  html.cds-v3 .ov-nota{display:none}
+  html.cds-v3 .ov>.ov-nota{display:none} /* solo la nota «un producto puede aparecer en varios grupos»; la advertencia de rotaciones y las alertas del panel siguen visibles */
   html.cds-v3 .ov-panel-tit,html.cds-v3 .ov-orden{display:none}
   html.cds-v3 .ov-panel-cab{padding:var(--cds-s-2) var(--cds-s-3)}
   html.cds-v3 .ov-panel-ctl{display:flex;gap:var(--cds-s-2);align-items:center;width:100%}
@@ -171,13 +171,10 @@ html.cds-v3 .cds-btn{font:inherit;font-family:var(--cds-font-ui);font-size:var(-
   html.cds-v3 .ov-panel-ctl .ov-select{font-size:var(--cds-fs-sm);padding-inline:var(--cds-s-2)}
   html.cds-v3 .cds-vista-btn{padding-inline:var(--cds-s-2)}
 }
-@media (max-width:700px) and (max-height:700px){
-  html.cds-v3 .ov-rapidos{display:none} /* en pantallas bajas el producto va primero: las fechas siguen en la barra de período */
-}
+
 @media (max-width:360px){
   html.cds-v3 .cds-resultados .cds-res-par:last-of-type{display:none} /* «En esta página»: lo informa «Mostrando X–Y de N» al pie */
 }
-@media (max-width:700px) and (max-height:700px){html.cds-v3 .ov-contexto{display:none}}
 @media (max-width:360px){html.cds-v3 .ov-panel-ctl .ov-select{font-size:var(--cds-fs-xs)}}
 html.cds-v3 .cds-tabla th,html.cds-v3 .cds-tabla td,html.cds-v3 .cds-prod-nombre,html.cds-v3 .cds-card *{white-space:normal;text-overflow:clip}
 html.cds-v3 .cds-tabla thead th{overflow:visible}
@@ -198,3 +195,77 @@ html.cds-v3 .cds-tabla td{padding-block:var(--cds-s-2)}
 @media (max-width:1100px){html.cds-v3 .cds-tabla .cds-state{flex-wrap:wrap;white-space:normal}}
 html.cds-v3 .cds-tabla col.col-urg{width:76px}html.cds-v3 .cds-tabla col.col-est{width:15%}html.cds-v3 .cds-tabla col.col-acc{width:13%}html.cds-v3 .cds-tabla col.col-cob{width:88px}html.cds-v3 .cds-tabla col.col-det{width:112px}
 html.cds-v3 .cds-tabla .cds-ver{padding-inline:var(--cds-s-2)}
+
+/* tablet (hasta 900 px): los mismos controles tactiles de 44 px que en el movil */
+@media (max-width:900px){
+  html.cds-v3 #rtBar button,html.cds-v3 #rtBar .btn-sm,html.cds-v3 #rtBar input{min-height:var(--cds-hit)}
+  html.cds-v3 .ov-subtab,html.cds-v3 .ov-rapido,html.cds-v3 .ov-grupo,html.cds-v3 .ov-filtros-plegable summary{min-height:var(--cds-hit)}
+  html.cds-v3 .ov-pag-btn{min-height:var(--cds-hit);min-width:var(--cds-hit)}
+}
+/* ================= B4 ================= */
+/* filas mas compactas: las etiquetas de calidad van bajo la accion y el producto ocupa dos lineas */
+html.cds-v3 .cds-accion-col{display:grid;gap:var(--cds-s-1);justify-items:start}
+html.cds-v3 .cds-accion-col .cds-prod-flags{margin:0;display:flex;flex-wrap:wrap;gap:var(--cds-s-1)}
+html.cds-v3 .cds-tabla td{padding-block:var(--cds-s-2)}
+html.cds-v3 .cds-tabla .cds-prod-nombre{font-size:var(--cds-fs-md)}
+
+/* tablet (701-900 px): tarjetas en dos columnas; la tabla vuelve desde 901 px */
+@media (min-width:701px) and (max-width:900px){
+  html.cds-v3 .cds-res-tabla{display:none}
+  html.cds-v3 .cds-res-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0}
+  html.cds-v3 .cds-card{display:grid;gap:var(--cds-s-2);padding:var(--cds-s-3);border-bottom:1px solid var(--cds-rule);border-inline-end:1px solid var(--cds-rule);background:var(--cds-paper);font-family:var(--cds-font-ui)}
+  html.cds-v3 .cds-card--abierta{background:var(--cds-canvas-2)}
+  html.cds-v3 .cds-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--cds-s-3)}
+  html.cds-v3 .cds-card-top .cds-prod{min-width:0;flex:1}
+  html.cds-v3 .cds-card-acc{display:flex;align-items:center;justify-content:space-between;gap:var(--cds-s-2)}
+  html.cds-v3 .cds-card-acc-txt{display:flex;flex-wrap:wrap;align-items:center;gap:var(--cds-s-1) var(--cds-s-3);min-width:0}
+  html.cds-v3 .cds-card-m{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--cds-s-2);margin:0}
+  html.cds-v3 .cds-card-m dt{font-size:var(--cds-fs-xs);color:var(--cds-muted)}
+  html.cds-v3 .cds-card-m dd{margin:0;font-family:var(--cds-font-num);font-weight:var(--cds-fw-semi);font-size:var(--cds-fs-md)}
+  html.cds-v3 .cds-ver{flex:none;min-height:var(--cds-hit);min-width:var(--cds-hit);padding-inline:var(--cds-s-3)}
+}
+
+/* pestañas del detalle en pantallas chicas: texto corto, desplazamiento con rebote y borde de aviso */
+@media (max-width:480px){
+  html.cds-v3 .cds-tab-x{display:none}
+  html.cds-v3 .cds-tabs{scroll-snap-type:x proximity;scrollbar-width:none;mask-image:linear-gradient(to right,transparent 0,var(--cds-ink) var(--cds-s-4),var(--cds-ink) calc(100% - var(--cds-s-5)),transparent 100%)}
+  html.cds-v3 .cds-tabs::-webkit-scrollbar{display:none}
+  html.cds-v3 .cds-tab{scroll-snap-align:center;padding-inline:var(--cds-s-2)}
+}
+
+/* avisos y estados con el sistema nuevo (los mismos elementos y textos; solo cambia la piel) */
+html.cds-v3 .ov .rr-aviso{font-family:var(--cds-font-ui);font-size:var(--cds-fs-sm);border-radius:var(--cds-r-md);border:1px solid var(--cds-rule);border-inline-start:4px solid var(--cds-st-estancados);background:var(--cds-warn-bg);color:var(--cds-ink);padding:var(--cds-s-3);margin:0 0 var(--cds-s-3)}
+html.cds-v3 .ov .rr-aviso.rr-peligro{border-inline-start-color:var(--cds-brand-red);background:var(--cds-red-tint)}
+html.cds-v3 .ov .rr-aviso.rr-info{border-inline-start-color:var(--cds-muted);background:var(--cds-canvas)}
+html.cds-v3 .ov .rr-aviso .btn-sm{min-height:var(--cds-hit)}
+html.cds-v3 .ov-panel .rt-state{font-family:var(--cds-font-ui);color:var(--cds-ink-2);padding:var(--cds-s-7) var(--cds-s-4)}
+html.cds-v3 .ov-panel .rt-state .btn-sm{min-height:var(--cds-hit)}
+html.cds-v3 .ov-nota-alerta{font-family:var(--cds-font-ui);background:var(--cds-warn-bg);border-radius:var(--cds-r-md);padding:var(--cds-s-2) var(--cds-s-3)}
+
+/* filtros de rotacion */
+html.cds-v3 .ov-rot-filtros{display:grid;gap:var(--cds-s-3);padding:var(--cds-s-3) var(--cds-s-4);border-bottom:1px solid var(--cds-rule);background:var(--cds-canvas);font-family:var(--cds-font-ui)}
+html.cds-v3 .ov-rot-filtros .ov-nota{margin:0;font-size:var(--cds-fs-sm);color:var(--cds-ink-2)}
+html.cds-v3 .ov-rot-filtros .rt-buscador-row{display:flex;flex-wrap:wrap;gap:var(--cds-s-2);align-items:center}
+html.cds-v3 .ov-rot-filtros select,html.cds-v3 .ov-rot-filtros input{font:inherit;font-size:var(--cds-fs-md);min-height:36px;padding:0 var(--cds-s-3);border:1px solid var(--cds-rule-strong);border-radius:var(--cds-r-md);background:var(--cds-paper);color:var(--cds-ink);box-sizing:border-box}
+html.cds-v3 .ov-rot-filtros input[type=number]{width:11rem}
+html.cds-v3 .ov-rot-filtros .btn-sm{min-height:36px;border:1px solid var(--cds-rule-strong);border-radius:var(--cds-r-md);background:var(--cds-paper);color:var(--cds-ink);font:inherit;font-size:var(--cds-fs-sm);font-weight:var(--cds-fw-medium);padding:0 var(--cds-s-3)}
+html.cds-v3 .ov-rot-filtros .btn-sm[aria-pressed=true]{background:var(--cds-ink);color:var(--cds-paper);border-color:var(--cds-ink)}
+html.cds-v3 .ov-rot-filtros :is(select,input,button):focus-visible{outline:2px solid var(--cds-focus);outline-offset:2px}
+@media (max-width:700px){
+  html.cds-v3 .ov-rot-filtros{padding:var(--cds-s-3)}
+  html.cds-v3 .ov-rot-filtros select,html.cds-v3 .ov-rot-filtros input,html.cds-v3 .ov-rot-filtros .btn-sm{min-height:var(--cds-hit)}
+  html.cds-v3 .ov-rot-filtros select,html.cds-v3 .ov-rot-filtros input[type=number]{flex:1 1 calc(50% - var(--cds-s-2));width:auto;min-width:0}
+}
+html.cds-v3 .cds-tabla col.col-est{width:15%}html.cds-v3 .cds-tabla col.col-acc{width:21%}html.cds-v3 .cds-tabla col.col-cob{width:104px}
+html.cds-v3 .cds-tabla td.c-cob .ov-pill,html.cds-v3 .cds-tabla td.c-cob span{white-space:nowrap}
+html.cds-v3 .cds-accion{white-space:normal}
+@media (max-width:900px){
+  html.cds-v3 .cds-card-m{grid-template-columns:1fr 1fr 1fr 1.6fr}
+  html.cds-v3 .cds-card-m .ov-pill,html.cds-v3 .cds-card-m dd span{white-space:nowrap}
+  html.cds-v3 .cds-card-top .cds-prod-meta{gap:0 var(--cds-s-2)}
+}
+@media (max-width:700px) and (max-height:700px){
+  html.cds-v3 .ov-contexto{display:none} /* pantallas bajas (p. ej. 320×640): el producto va primero; las fechas siguen en la barra de período y «Reglas personalizadas» se avisa en la línea de cifras */
+}
+html.cds-v3 .cds-tabla col.col-est{width:14%}html.cds-v3 .cds-tabla col.col-acc{width:16%}
+@media (max-width:900px){html.cds-v3 .cds-vista-btn,html.cds-v3 .ov-panel-ctl .ov-select{min-height:var(--cds-hit)}}

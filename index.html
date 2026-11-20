@@ -2613,6 +2613,7 @@ function rtDeltaBadge(delta) {
 
 // ── Navegación ───────────────────────────────────────────────────────────────
 function rtCambiarVista(view) {
+  if (view !== 'oportunidades' && window.CDS_DETALLE) window.CDS_DETALLE.cerrar(); // cds-v3 (B4): el detalle no sobrevive a salir de Oportunidades
   RT_VIEW = view;
   document.querySelectorAll('#rtTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
   rtRenderVistaActual();
