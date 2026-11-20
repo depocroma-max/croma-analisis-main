@@ -1,0 +1,16 @@
+/* CROMA DESIGN SYSTEM 2.0 · Etapa B1: filtros de Oportunidades (pendientes vs. aplicados). Solo con la bandera cds-v3 (todo cuelga de html.cds-v3). */
+
+/* Boton Aplicar con cambios pendientes: punto de aviso + borde discontinuo (no depende solo del color) */
+html.cds-v3 .ov-filtros .ov-aplicar.cds-pendiente{position:relative;border-style:dashed;border-color:var(--cds-red-600);box-shadow:inset 0 0 0 1px var(--cds-red-600)}
+html.cds-v3 .ov-filtros .ov-aplicar.cds-pendiente::after{content:"";position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--cds-red-600);border:2px solid var(--cds-paper)}
+html.cds-v3 .ov-filtros.cds-hay-pendientes{outline:1px dashed var(--cds-rule-strong);outline-offset:4px}
+
+/* Aviso de estado del formulario */
+html.cds-v3 .cds-filtros-estado{grid-column:1 / -1;flex:1 0 100%;margin:var(--cds-s-1) 0 0;font-family:var(--cds-font-ui);font-size:var(--cds-fs-sm);color:var(--cds-muted);min-height:0}
+html.cds-v3 .cds-filtros-estado:empty{display:none}
+html.cds-v3 .cds-filtros-estado[data-estado=pendiente]{color:var(--cds-red-ink)}
+html.cds-v3 .cds-filtros-estado[data-estado=sin-cambios]{color:var(--cds-ink-2)}
+
+/* Dos cifras con nombre propio: consulta actual y resumen de acciones */
+html.cds-v3 .cds-resultados{display:flex;flex-wrap:wrap;gap:var(--cds-s-1) var(--cds-s-5);margin:var(--cds-s-2) 0 var(--cds-s-3);font-family:var(--cds-font-ui);font-size:var(--cds-fs-sm);color:var(--cds-muted)}
+html.cds-v3 .cds-resultados b{color:var(--cds-ink);font-weight:var(--cds-fw-semi);font-family:var(--cds-font-num)}

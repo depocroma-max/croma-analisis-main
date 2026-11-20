@@ -21,9 +21,10 @@
     } catch (e) { /* sin almacenamiento: vale el valor por defecto */ }
     if (!activa) return;
     var h = document.documentElement; h.classList.add('cds-v3');
-    ['cds/tokens.css', 'cds/componentes.css', 'cds/app-shell.css'].forEach(function (f) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = f + '?v=' + V; document.head.appendChild(l); });
+    ['cds/tokens.css', 'cds/componentes.css', 'cds/app-shell.css', 'cds/filtros.css'].forEach(function (f) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = f + '?v=' + V; document.head.appendChild(l); });
     var fu = document.createElement('link'); fu.rel = 'stylesheet'; fu.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap'; document.head.appendChild(fu);
     var s = document.createElement('script'); s.src = 'cds/shell.js?v=' + V; s.defer = true; document.head.appendChild(s);
+    var sf = document.createElement('script'); sf.src = 'cds/filtros.js?v=' + V; sf.defer = true; document.head.appendChild(sf); /* Etapa B1: filtros pendientes/aplicados de Oportunidades */
   })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3753,6 +3754,19 @@ function rtFiltroAParams(params, filtro, omitir) {
 // alAplicar: callback opcional que reemplaza la accion por defecto al enviar el filtro
 // (reset de pagina/expandido de Productos + rtCargarCompleto()) -- Oportunidades pasa
 // el suyo propio (reset de offset + rtCargarOportunidades()), ya que no usa RT_COMPLETO.
+// Filtro a partir del texto del buscador y del borrador de seleccion multiple. Orden alfabetico fijo (no el orden en que se tildo)
+// -- rtFiltroKey()=JSON.stringify necesita una key deterministica para que el cache de RT_COMPLETO por filtroKey funcione: el mismo
+// conjunto de valores tildados en distinto orden de click no debe producir una key distinta.
+function rtFiltroDesdeBorrador(texto) {
+  const filtro = {};
+  const t = rtProductosNormalizarCodigo(texto);
+  if (t) filtro.buscar = t;
+  ['marca', 'rubro', 'subrubro', 'talle', 'color'].forEach(c => {
+    if (RT_FILTRO_BORRADOR[c].size) filtro[c] = [...RT_FILTRO_BORRADOR[c]].sort((a, b) => a.localeCompare(b, 'es'));
+  });
+  return filtro;
+}
+
 function rtFormularioFiltro(host, alAplicar, opts) {
   if (!RT_CATALOGO && !RT_CATALOGO_LOADING) rtCargarCatalogo();
   rtFiltroSincronizarBorrador();
@@ -3774,6 +3788,8 @@ function rtFormularioFiltro(host, alAplicar, opts) {
   const inCodigo = rtEl('input', { attrs:{ type:'text', id:'rtProdCodigo', name:'rtProdCodigo', autocomplete:'off',
     placeholder:'Ej.: T0004 o rompeviento', title:'Código exacto, o palabras que contenga el nombre del producto' } });
   inCodigo.value = (RT_FILTRO && (RT_FILTRO.buscar || RT_FILTRO.codigo)) || '';
+  const v3 = compacto && window.CDS_FILTROS; // cds-v3 (Etapa B1): filtros pendientes vs. aplicados; sin la bandera es undefined y nada cambia
+  if (v3) inCodigo.value = v3.textoInicial(inCodigo.value);
   fcCodigo.appendChild(inCodigo);
   form.appendChild(fcCodigo);
 
@@ -3829,9 +3845,10 @@ function rtFormularioFiltro(host, alAplicar, opts) {
   btnLimpiar.disabled = !RT_FILTRO;
   // rtQuitarFiltro() ya limpia RT_PRODUCTOS_FILTRO_ORIGEN -- tambien saca un filtro
   // recibido desde Marcas, no solo el armado a mano.
-  btnLimpiar.addEventListener('click', rtQuitarFiltro);
+  btnLimpiar.addEventListener('click', v3 ? () => v3.limpiar(rtQuitarFiltro) : rtQuitarFiltro);
   acciones.appendChild(btnFiltrar); acciones.appendChild(btnLimpiar);
   form.appendChild(acciones);
+  if (v3) v3.montar({ form, inCodigo, btnFiltrar, btnLimpiar });
 
   const hayBorrador = () => inCodigo.value.trim() || Object.keys(RT_FILTRO_BORRADOR).some(c => RT_FILTRO_BORRADOR[c].size);
   if (!compacto) { // en la version compacta se puede enviar vacio: se explica el error en vez de deshabilitar el boton
@@ -3844,22 +3861,15 @@ function rtFormularioFiltro(host, alAplicar, opts) {
     // El campo de texto viaja como `buscar` (codigo exacto o palabras del nombre). Los filtros
     // { codigo } que llegan desde otras vistas ("Ver producto") se siguen aceptando tal cual.
     const texto = rtProductosNormalizarCodigo(inCodigo.value);
-    const filtro = {};
     if (texto) {
       const error = rtBusquedaInvalida(texto);
       if (error && !compacto) { inCodigo.setCustomValidity(error); inCodigo.reportValidity(); inCodigo.addEventListener('input', () => inCodigo.setCustomValidity(''), { once: true }); return; }
-      filtro.buscar = texto;
     }
-    // Orden alfabetico fijo (no el orden en que se tildo) -- rtFiltroKey()=JSON.stringify
-    // necesita una key deterministica para que el cache de RT_COMPLETO por filtroKey
-    // funcione: el mismo conjunto de valores tildados en distinto orden de click no debe
-    // producir una key distinta.
-    ['marca', 'rubro', 'subrubro', 'talle', 'color'].forEach(c => {
-      if (RT_FILTRO_BORRADOR[c].size) filtro[c] = [...RT_FILTRO_BORRADOR[c]].sort((a, b) => a.localeCompare(b, 'es'));
-    });
+    const filtro = rtFiltroDesdeBorrador(texto);
     // Oportunidades (compacto): aplicar sin filtros es valido = todas las oportunidades del periodo y las sucursales elegidas.
     // Solo se rechaza un valor realmente invalido (opts.validar devuelve el mensaje).
     if (compacto && opts.validar) { const msg = opts.validar(filtro); if (msg) { if (opts.onError) opts.onError(msg); return; } }
+    if (v3) { if (v3.sinCambios(filtro)) { v3.avisarSinCambios(); return; } v3.alAplicar(); } // cds-v3: aplicar sin cambios no repite la consulta
     if (!Object.keys(filtro).length) {
       if (!compacto) return;
       RT_FILTRO = null; RT_FILTRO_BORRADOR_KEY = rtFiltroKey(); RT_PRODUCTOS_FILTRO_ORIGEN = null;

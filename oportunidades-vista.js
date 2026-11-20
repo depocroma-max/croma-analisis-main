@@ -748,6 +748,7 @@ function renderRTOportunidades(host) {
   }
   ovFormularioFiltros(raiz);
   ovFiltrosActivos(raiz);
+  if (window.CDS_FILTROS) window.CDS_FILTROS.resultados(raiz); // cds-v3 (B1): consulta actual vs. resumen de acciones
 
   if (!RT_OPORTUNIDADES && !RT_OPORTUNIDADES_LOADING && !RT_OPORTUNIDADES_ERROR) ovProgramarCarga();
   if (RT_OPORTUNIDADES) ovAvisoSucursalesNoConsideradas(raiz, RT_OPORTUNIDADES);

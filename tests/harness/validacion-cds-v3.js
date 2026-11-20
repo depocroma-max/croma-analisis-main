@@ -25,7 +25,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' }); await page.waitForSelector('#app', { state: 'visible', timeout: 30000 }); await sleep(1200);
     return { ctx, page, errores, pedidos };
   }
-  const hashPanel = page => page.evaluate(() => { const c = document.getElementById('rtPanelHost').cloneNode(true); return c.innerHTML.replace(/\d{1,2}[:/]\d{2}([:/]\d{2,4})?/g, '#').replace(/\s+/g, ' ').length + ':' + c.querySelectorAll('*').length; });
+  const hashPanel = page => page.evaluate(() => { const c = document.getElementById('rtPanelHost').cloneNode(true); c.querySelectorAll('.cds-resultados,#cdsFiltrosEstado').forEach(e => e.remove()); /* B1: solo estos dos elementos son nuevos con la bandera */ c.querySelectorAll('[aria-describedby=cdsFiltrosEstado]').forEach(e => e.removeAttribute('aria-describedby')); return c.innerHTML.replace(/\d{1,2}[:/]\d{2}([:/]\d{2,4})?/g, '#').replace(/\s+/g, ' ').length + ':' + c.querySelectorAll('*').length; });
   const irLegacy = async (page, v) => { await page.evaluate(v => document.querySelector('#rtTabs .tab[data-view="' + v + '"]').click(), v); await sleep(v === 'oportunidades' ? 2200 : 800); };
   const irNuevo = async (page, v) => {
     const visible = await page.evaluate(v => !![...document.querySelectorAll('[data-cds-view="' + v + '"]')].find(e => e.offsetParent !== null), v);
@@ -49,7 +49,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     ok('Bandera encendida', 'Clase cds-v3, barra lateral de 216 px, 8 secciones, pestañas viejas ocultas y barra inferior oculta', info.clase && info.side !== 'none' && Math.round(info.ancho) === 216 && info.n === 8 && info.tabs === 'none' && info.tabbar === 'none', JSON.stringify(info));
     ok('Bandera encendida', 'Encabezado claro de 56 px y --ov-sticky-top = 56 px (las tablas fijas se pegan debajo)', info.h === 56 && info.sticky === '56px' && !/13, 13, 13/.test(info.topbar), info.h + ' ' + info.sticky + ' ' + info.topbar);
     ok('Bandera encendida', 'La interfaz nueva usa Geist (con respaldo del sistema)', /Geist/.test(info.fuente), info.fuente);
-    ok('Bandera encendida', 'Se descargan exactamente los 4 archivos de cds/ (tres hojas y el script)', pedidos.filter(p => /\/cds\//.test(p)).length === 4, pedidos.filter(p => /cds/.test(p)).join(','));
+    ok('Bandera encendida', 'Se descargan exactamente los 6 archivos de cds/ (cuatro hojas y dos scripts)', pedidos.filter(p => /\/cds\//.test(p)).length === 6, pedidos.filter(p => /cds/.test(p)).join(','));
     // espía de rtCambiarVista
     await page.evaluate(() => { window.__cv = 0; const o = window.rtCambiarVista; window.rtCambiarVista = function (v) { window.__cv++; return o.apply(this, arguments); }; });
     for (const v of VISTAS) {
