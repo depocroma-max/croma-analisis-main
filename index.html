@@ -8,6 +8,24 @@
   <link rel="apple-touch-icon" href="tridente_solo.png">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src https://stock-api.croma-app.com.ar;">
   <meta name="referrer" content="no-referrer">
+  <!-- cds-v3 (Etapa A, base visual del Croma Design System 2.0). BANDERA APAGADA POR DEFECTO: sin ella la aplicacion es identica a la de siempre
+       y no se descarga ningun archivo de cds/. Para probar: abrir la pagina con ?cds-v3=1 (se recuerda en este navegador) y ?cds-v3=0 para volver.
+       Cuando se apruebe publicarla, basta cambiar CDS_V3_POR_DEFECTO a true. Es una preferencia de interfaz, no un dato de negocio. -->
+  <script>
+  (function () {
+    var CDS_V3_POR_DEFECTO = false, CLAVE = 'cds-v3', activa = CDS_V3_POR_DEFECTO, V = '20261120-1';
+    try {
+      var q = new URLSearchParams(location.search).get(CLAVE);
+      if (q === '1' || q === 'on') localStorage.setItem(CLAVE, '1'); else if (q === '0' || q === 'off') localStorage.setItem(CLAVE, '0');
+      var g = localStorage.getItem(CLAVE); if (g === '1') activa = true; else if (g === '0') activa = false;
+    } catch (e) { /* sin almacenamiento: vale el valor por defecto */ }
+    if (!activa) return;
+    var h = document.documentElement; h.classList.add('cds-v3');
+    ['cds/tokens.css', 'cds/componentes.css', 'cds/app-shell.css'].forEach(function (f) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = f + '?v=' + V; document.head.appendChild(l); });
+    var fu = document.createElement('link'); fu.rel = 'stylesheet'; fu.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap'; document.head.appendChild(fu);
+    var s = document.createElement('script'); s.src = 'cds/shell.js?v=' + V; s.defer = true; document.head.appendChild(s);
+  })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="croma-ds.css?v=20260714-1">
