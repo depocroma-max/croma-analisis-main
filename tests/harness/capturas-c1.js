@@ -20,7 +20,7 @@ const TAMS = [[1920, 1080], [1280, 900], [1024, 768], [768, 1024], [430, 932], [
     return { ctx, page };
   }
   const abrirTab = async (p, cod) => { await p.evaluate(c => { [...document.querySelectorAll('[data-detalle-codigo="' + c + '"]')].find(x => x.offsetParent).click(); }, cod); await sleep(700); await p.click('#cdsTab_variantes'); };
-  const espera = async p => { for (let i = 0; i < 150; i++) { if (await p.evaluate(() => !!document.querySelector('.cds-var-t, .cds-var-error, .cds-var-vacio, .cds-var-parcial'))) break; await sleep(80); } await sleep(250); };
+  const espera = async p => { for (let i = 0; i < 150; i++) { if (await p.evaluate(() => !!document.querySelector('.cds-var-t, .cds-var-lista, .cds-var-error, .cds-var-vacio, .cds-var-parcial'))) break; await sleep(80); } await sleep(250); };
   const scrollA = async (p, sel, extra = 0) => { await p.evaluate(([s, e]) => { const c = document.getElementById('cdsDrCuerpo'), t = document.querySelector(s); if (c && t) c.scrollTop = t.getBoundingClientRect().top - c.getBoundingClientRect().top + c.scrollTop - 8 - e; }, [sel, extra]); await sleep(150); };
   const foto = async (p, nombre) => { await p.screenshot({ path: path.join(OUT, nombre + '.png') }); console.log('foto', nombre); };
 

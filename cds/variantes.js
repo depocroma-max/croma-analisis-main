@@ -1,4 +1,4 @@
-/* CROMA DESIGN SYSTEM 2.0 · Etapa C1: pestaña «Talle y color» del detalle de Oportunidades. Solo con la bandera cds-v3.
+/* CROMA DESIGN SYSTEM 2.0 · Etapa C1: pestaña «Talle y color» del detalle de Oportunidades (C1 datos y tabla · C2 señal de rotación · C3 tarjetas móviles, plegables y accesibilidad). Solo con la bandera cds-v3.
    Datos: GET /analisis/stock-ventas?codigo=… (endpoint existente, sin cambios en la API). Reglas (INFORME-C0): consulta SOLO al abrir la pestaña,
    sucursales = las de la consulta de Oportunidades (se valida el eco), código/talle/color como CADENAS (ceros iniciales, sin largos fijos), ventas netas
    aunque el stock sea 0, Dep. 90 = Stock_ctro_0000 − Stock_fallados recortado a 0 por variante (nunca Stock_total), cantidades negativas NO son
@@ -264,7 +264,7 @@
     cargarPaginas(st).catch(function (e) { if (vuelo === st) { vuelo = null; errores.set(k, { mensaje: String(e && e.message || e), tipo: 'api' }); avisar(); } });
     return st;
   }
-  function cancelar() { if (vuelo) { vuelo.controller.abort(); vuelo = null; } rotCancelar(); vista = null; } // salir de la pestaña, cambiar de producto o cerrar el detalle también reinicia búsqueda, filtro y orden
+  function cancelar() { if (vuelo) { vuelo.controller.abort(); vuelo = null; } rotCancelar(); vista = null; ultimosAnuncios = {}; plegables = { senal: false, sug: false }; } // salir de la pestaña, cambiar de producto o cerrar el detalle también reinicia búsqueda, filtro y orden
   function invalidar(p) { if (!p) { rotCache.clear(); rotErrores.clear(); } if (p) { var k = clave(p); cache.delete(k); errores.delete(k); parciales.delete(k); } else { cache.clear(); errores.clear(); parciales.clear(); } }
   function reintentar(p) { invalidar(p); return iniciar(p); }
 
@@ -283,6 +283,7 @@
   function hora(ts) { try { return new Date(ts).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
   function nombreSuc(c) { return (SUCURSAL[c] || c) + ' (' + c + ')'; }
 
+  var plegables = { senal: false, sug: false }; // explicaciones plegables abiertas (se reinician al salir de la pestaña)
   var vista = null; // estado de pantalla de la variante abierta: búsqueda, filtro, orden, tanda y filas desplegadas
   function vistaDe(k) {
     if (!vista || vista.key !== k) vista = { key: k, q: '', chip: 'todas', campo: 'color', dir: 1, mostrar: CFG.tanda, abiertas: new Set() };
@@ -300,6 +301,7 @@
   }
 
   var AVISOS = { saldo_negativo: 'Saldo negativo', deposito_menor_a_fallados: 'Fallados mayores al depósito', sin_ventas: 'Sin ventas', ventas_negativas: 'Ventas netas negativas', fallados: 'Con fallados', color_sin_nombre: 'Color sin nombre', talle_unico: 'Talle único', datos_faltantes: 'Datos incompletos' };
+  var AVISOS_ALERTA = ['color_sin_nombre', 'saldo_negativo', 'deposito_menor_a_fallados', 'datos_faltantes', 'ventas_negativas'];
   function textoRevision(r) { return r.estado === 'sin_stock_origen' && r.saldoNegativoOrigen ? 'Saldo negativo en origen' : r.estado === 'sin_ventas_destino' && r.ventasNegativasDestino ? 'Ventas netas negativas en destino' : REV[r.estado]; }
   function lineaRotacion(v, rc) { // C2: stock de la variante en el origen y ventas en el destino de la señal + sugerencias manuales de Rotaciones (si se consultaron)
     var cont = el('div', 'cds-var-rot'), r = rc.rev && rc.rev.get(v.clave), its = rc.sug && rc.sug.get(v.clave);
@@ -316,6 +318,7 @@
     });
     return cont.childNodes.length ? cont : null;
   }
+  function pildorasFlags(v, cont) { v.flags.forEach(function (f) { if (AVISOS[f]) { var c = el('span', 'cds-var-flag' + (AVISOS_ALERTA.indexOf(f) >= 0 ? ' cds-var-flag--aviso' : ''), AVISOS[f]); c.setAttribute('data-flag', f); cont.appendChild(c); } }); }
   function celdaId(v, rc) {
     var td = el('td', 'cds-var-id'); td.setAttribute('data-cds-talle', claveSeguimiento('talle', v)); td.setAttribute('data-cds-color', claveSeguimiento('color', v));
     var l1 = el('div', 'cds-var-l1'); l1.appendChild(el('span', 'cds-var-talle cds-mono', v.talle === '' ? '(sin talle)' : v.talle, { 'data-cds-campo': 'talle' }));
@@ -323,44 +326,84 @@
     td.appendChild(l1);
     var l2 = el('div', 'cds-var-l2'); l2.appendChild(el('span', 'cds-mono cds-var-cod', 'color ' + (v.color === '' ? '(sin código)' : v.color), { 'data-cds-campo': 'color' }));
     var est = el('span', 'cds-var-est', ESTADOS[v.estado]); est.setAttribute('data-estado', v.estado); l2.appendChild(est);
-    v.flags.forEach(function (f) { if (AVISOS[f]) { var c = el('span', 'cds-var-flag' + (f === 'color_sin_nombre' || f === 'saldo_negativo' || f === 'deposito_menor_a_fallados' || f === 'datos_faltantes' || f === 'ventas_negativas' ? ' cds-var-flag--aviso' : ''), AVISOS[f]); c.setAttribute('data-flag', f); l2.appendChild(c); } });
+    pildorasFlags(v, l2);
     td.appendChild(l2);
     var l3 = rc ? lineaRotacion(v, rc) : null; if (l3) td.appendChild(l3);
     return td;
   }
   function celdaNum(valor, sub, attr) { var td = el('td', 'r cds-var-n', n(valor)); if (attr) td.setAttribute('data-cds-campo', attr); if (sub) td.appendChild(el('small', 'cds-var-sub', sub)); return td; }
-  function detalleSucursales(v, activas, cols, rc) {
-    var tr = el('tr', 'cds-var-det'), td = el('td', null, null, { colspan: String(cols) });
-    var t = el('table', 'cds-mini'); t.appendChild(el('caption', 'cds-sr', 'Distribución por sucursal de la variante talle ' + v.talle + ' color ' + v.color));
-    var h = el('thead'), hr = el('tr'); ['Ubicación', 'Ventas netas', 'Stock'].forEach(function (x, i) { hr.appendChild(el('th', i ? 'r' : '', x, { scope: 'col' })); }); h.appendChild(hr); t.appendChild(h);
-    var b = el('tbody');
+  function filasSucursales(v, activas, rc) { // filas de la distribución por sucursal (compartidas por la tabla y las tarjetas): 5 sucursales + Dep. 90 derivado + Fallados 93
+    var out = [];
     activas.forEach(function (c) {
       var d = v.porSuc[c], r = el('tr'); r.setAttribute('data-cds-var-suc', claveSeguimiento('variante_sucursal', v, c));
       var c1 = el('td', null, nombreSuc(c)), rol = rc && rc.senal && rc.aplicable ? (c === rc.senal.origen ? 'origen' : c === rc.senal.destino ? 'destino' : null) : null;
       if (rol) { r.className = 'cds-var-suc--' + rol; r.setAttribute('data-rol', rol); c1.appendChild(el('small', 'cds-var-sub cds-var-rol', rol === 'origen' ? 'Origen de la señal: stock de la variante' : 'Destino de la señal: ventas de la variante')); }
       r.appendChild(c1); r.appendChild(el('td', 'r', n(d.ventas)));
-      var s = el('td', 'r', n(d.stock)); if (d.stock !== null && d.stock < 0) { s.appendChild(el('small', 'cds-var-sub cds-var-sub--aviso', 'saldo negativo: no disponible')); } r.appendChild(s); b.appendChild(r);
+      var s = el('td', 'r', n(d.stock)); if (d.stock !== null && d.stock < 0) { s.appendChild(el('small', 'cds-var-sub cds-var-sub--aviso', 'saldo negativo: no disponible')); } r.appendChild(s); out.push(r);
     });
     [['Depósito 90 (derivado)', v.dep90, 'combinado 90 + 93 (' + n(v.comb0000) + ') menos fallados (' + n(v.fallados) + ')' + (v.depDif !== null && v.depDif < 0 ? ': el resultado es negativo y se muestra como 0' : '')], ['Fallados 93', v.fallados, 'no es stock disponible']].forEach(function (x) {
-      var r = el('tr', 'cds-var-dep'), c1 = el('td', null, x[0]); c1.appendChild(el('small', 'cds-var-sub', x[2])); r.appendChild(c1); r.appendChild(el('td', 'r', '—')); r.appendChild(el('td', 'r', n(x[1]))); b.appendChild(r);
+      var r = el('tr', 'cds-var-dep'), c1 = el('td', null, x[0]); c1.appendChild(el('small', 'cds-var-sub', x[2])); r.appendChild(c1); r.appendChild(el('td', 'r', '—')); r.appendChild(el('td', 'r', n(x[1]))); out.push(r);
     });
-    t.appendChild(b); td.appendChild(t); tr.appendChild(td); return tr;
+    return out;
+  }
+  function tablaSucursales(v, activas, rc) {
+    var t = el('table', 'cds-mini'); t.appendChild(el('caption', 'cds-sr', 'Distribución por sucursal de la variante talle ' + v.talle + ' color ' + v.color));
+    var h = el('thead'), hr = el('tr'); ['Ubicación', 'Ventas netas', 'Stock'].forEach(function (x, i) { hr.appendChild(el('th', i ? 'r' : '', x, { scope: 'col' })); }); h.appendChild(hr); t.appendChild(h);
+    var b = el('tbody'); filasSucursales(v, activas, rc).forEach(function (r) { b.appendChild(r); }); t.appendChild(b); return t;
+  }
+  function detalleSucursales(v, activas, cols, rc) {
+    var tr = el('tr', 'cds-var-det'), td = el('td', null, null, { colspan: String(cols) }); td.appendChild(tablaSucursales(v, activas, rc)); tr.appendChild(td); return tr;
+  }
+
+  // ---------- móvil (C3): tarjetas por variante en lugar de una tabla comprimida; en tablet y escritorio se mantiene la tabla ----------
+  var MQ = typeof matchMedia === 'function' ? matchMedia('(max-width:700px)') : null;
+  function modoTarjetas() { return !!(MQ && MQ.matches); }
+  if (MQ && MQ.addEventListener) MQ.addEventListener('change', function () { avisar(); });
+  function anunciar(txt) { // región viva dentro del panel (el panel es un diálogo modal: una región fuera de él no se leería); se escribe un instante después de insertarla
+    setTimeout(function () { try { var r = document.querySelector('.cds-var [data-cds-anuncio]'); if (r) r.textContent = txt; } catch (e) { /* sin anuncio */ } }, 60);
+  }
+  var ultimosAnuncios = {};
+  function anunciarUnaVez(clave, txt) { if (ultimosAnuncios[clave] !== txt) { ultimosAnuncios[clave] = txt; anunciar(txt); } } // cada tipo de aviso se anuncia una sola vez aunque el panel se redibuje
+
+  function tarjeta(v, e, vs, repintar, rc, idx) {
+    var li = el('li', 'cds-var-fila cds-var-card'); li.setAttribute('data-cds-var', v.clave); li.setAttribute('data-estado', v.estado); li.setAttribute('data-cds-talle', claveSeguimiento('talle', v)); li.setAttribute('data-cds-color', claveSeguimiento('color', v));
+    var cab = el('div', 'cds-var-card-cab'), id = el('div', 'cds-var-card-id');
+    id.appendChild(el('span', 'cds-var-talle cds-mono', v.talle === '' ? '(sin talle)' : v.talle, { 'data-cds-campo': 'talle' }));
+    var col = el('span', 'cds-var-card-color'); col.appendChild(el('span', 'cds-var-color', v.colorNombre || 'Sin nombre de color')); col.appendChild(el('span', 'cds-mono cds-var-cod', 'color ' + (v.color === '' ? '(sin código)' : v.color), { 'data-cds-campo': 'color' })); id.appendChild(col);
+    cab.appendChild(id); var est = el('span', 'cds-var-est', ESTADOS[v.estado]); est.setAttribute('data-estado', v.estado); cab.appendChild(est); li.appendChild(cab);
+    var m = el('dl', 'cds-var-card-m');
+    [['Ventas netas', v.ventas, 'ventas'], ['Stock suc.', v.stockSucDisp, 'stock'], ['Dep. 90', v.dep90, 'dep90'], ['Fallados 93', v.fallados, 'fallados']].forEach(function (x) { var d = el('div'); d.appendChild(el('dt', null, x[0])); var dd = el('dd', 'cds-var-n', n(x[1])); dd.setAttribute('data-cds-campo', x[2]); d.appendChild(dd); m.appendChild(d); });
+    li.appendChild(m);
+    var neg = v.stockSucRaw !== null && v.stockSucRaw < 0 || v.flags.indexOf('saldo_negativo') >= 0; if (neg) li.appendChild(el('p', 'cds-var-sub cds-var-sub--aviso', 'Saldo negativo aparte: no cuenta como disponible'));
+    var fl = el('div', 'cds-var-l2'); pildorasFlags(v, fl); if (fl.childNodes.length) li.appendChild(fl);
+    var l3 = rc ? lineaRotacion(v, rc) : null; if (l3) li.appendChild(l3);
+    var abierta = vs.abiertas.has(v.clave), idDet = 'cdsVarDet_' + idx;
+    li.appendChild(boton((abierta ? '▾ ' : '▸ ') + 'Sucursales', function () { if (vs.abiertas.has(v.clave)) vs.abiertas.delete(v.clave); else vs.abiertas.add(v.clave); repintar(); var again = [].filter.call(document.querySelectorAll('[data-cds-var="' + v.clave.replace(/"/g, '') + '"] .cds-var-exp'), function (z) { return z.offsetParent !== null; })[0]; if (again) again.focus({ preventScroll: true }); },
+      'cds-var-exp cds-var-exp--txt', { 'aria-expanded': abierta ? 'true' : 'false', 'aria-controls': idDet, 'aria-label': (abierta ? 'Ocultar' : 'Ver') + ' la distribución por sucursal de talle ' + v.talle + ' color ' + v.color }));
+    if (abierta) { var d = el('div', 'cds-var-det', null, { id: idDet }); d.appendChild(tablaSucursales(v, e.sucursales, rc)); li.appendChild(d); }
+    return li;
+  }
+  function tarjetas(filas, e, vs, repintar, rc) {
+    var ul = el('ul', 'cds-var-lista', null, { 'aria-label': 'Variantes con actividad en el período' }); filas.forEach(function (v) { ul.appendChild(tarjeta(v, e, vs, repintar, rc, e.filas.indexOf(v))); }); return ul;
   }
 
   function panel(f, resp) {
-    var ctx = parametros(f, resp), est = estadoDe(ctx), raiz = el('div', 'cds-var'); raiz.setAttribute('data-cds-prod', claveSeguimiento('producto', { cod: ctx.codigo }));
+    var ctx = parametros(f, resp), est = estadoDe(ctx), raiz = el('div', 'cds-var'), movil = modoTarjetas(); raiz.setAttribute('data-cds-prod', claveSeguimiento('producto', { cod: ctx.codigo })); if (movil) raiz.setAttribute('data-modo', 'tarjetas');
+    raiz.appendChild(el('div', 'cds-sr', null, { 'data-cds-anuncio': '1', role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' }));
     var cab = el('div', 'cds-var-cab');
     cab.appendChild(el('h3', 'cds-var-titulo', 'Variantes con actividad en el período'));
     cab.appendChild(el('p', 'cds-var-ctx', 'Período ' + fechaCorta(ctx.desde) + ' al ' + fechaCorta(ctx.hasta) + ' · Sucursales: ' + ctx.sucursales.map(function (c) { return SUCURSAL[c] || c; }).join(', ')));
     if (typeof rtAplicarFiltroYVerTallesColores === 'function') cab.appendChild(boton('Ver en Talles y colores', function () { rtAplicarFiltroYVerTallesColores({ codigo: ctx.codigo }); }, 'cds-btn cds-var-ir', { 'data-fk': 'var_ir_tc' })); // acceso existente a la vista independiente
-    raiz.appendChild(cab);
-    raiz.appendChild(el('p', 'cds-var-nota', 'Se listan solo las variantes con stock o ventas en el período. Que un talle o color no aparezca no significa que no exista: desde acá no se puede afirmar que la curva esté completa. El stock de las sucursales se actualiza una vez por día.'));
+    var nota = el('details', 'cds-var-nota'); nota.appendChild(el('summary', null, 'Solo se listan variantes con stock o ventas en el período: desde acá no se puede afirmar que la curva esté completa.'));
+    nota.appendChild(el('p', null, 'Que un talle o color no aparezca no significa que no exista. El stock de las sucursales se actualiza una vez por día y esta consulta no informa a qué hora.'));
     var senal = senalRotacion(f), aplicable = senalAplicable(senal, ctx.sucursales);
-    if (senal) raiz.appendChild(cajaSenal(senal, aplicable, ctx, f));
-    var cajaSug = cajaSugerencias(ctx); if (cajaSug) raiz.appendChild(cajaSug);
+    var nSenal = senal ? cajaSenal(senal, aplicable, ctx, f) : null, nSug = cajaSugerencias(ctx);
+    var previo = movil ? [cab, nSenal, nSug, nota] : [cab, nota, nSenal, nSug]; previo.forEach(function (x) { if (x) raiz.appendChild(x); });
+    var cola = []; // en móvil la barra «Datos de… / Actualizar» va al final de la lista
+    function cerrarPanel() { cola.forEach(function (x) { raiz.appendChild(x); }); return raiz; }
     if (est.fase === 'inicial') { iniciar(ctx); est = estadoDe(ctx); }
     if (est.fase === 'cargando') {
-      var c = el('div', 'cds-skel', null, { role: 'status', 'aria-live': 'polite' }); c.appendChild(el('span', 'cds-var-cargando', 'Cargando variantes…' + (est.progreso ? ' ' + nf.format(est.progreso) + (est.total ? ' de ' + nf.format(est.total) : '') + ' cargadas' : '')));
+      var c = el('div', 'cds-skel', null, { role: 'status', 'aria-live': 'polite', 'aria-busy': 'true' }); c.appendChild(el('span', 'cds-var-cargando', 'Cargando variantes…' + (est.progreso ? ' ' + nf.format(est.progreso) + (est.total ? ' de ' + nf.format(est.total) : '') + ' cargadas' : '')));
       for (var i = 0; i < 3; i++) c.appendChild(el('i'));
       raiz.appendChild(c); return raiz;
     }
@@ -369,10 +412,11 @@
       a.appendChild(boton('Reintentar', function () { reintentar(ctx); avisar(); }, 'cds-btn', { 'data-fk': 'var_reintentar' })); raiz.appendChild(a); return raiz;
     }
     var e = est.entrada, vs = vistaDe(est.key), td = totalesDisponibles(e);
+    anunciarUnaVez('var', 'Variantes cargadas: ' + nf.format(e.filas.length) + (e.total != null && !e.completa ? ' de ' + nf.format(e.total) + ' (resultados parciales)' : '') + '.');
     var barra = el('div', 'cds-var-barra');
     barra.appendChild(el('span', 'cds-var-hora', 'Datos de las ' + hora(e.recibido) + ' · se conservan 5 minutos' + (e.completa ? '' : ' · parciales')));
     barra.appendChild(boton('Actualizar', function () { reintentar(ctx); avisar(); }, 'cds-btn', { 'aria-label': 'Actualizar las variantes de ' + ctx.codigo, 'data-fk': 'var_actualizar' }));
-    raiz.appendChild(barra);
+    if (movil) cola.push(barra); else raiz.appendChild(barra);
     if (!e.completa) {
       var p = el('div', 'cds-aviso cds-var-parcial', null, { role: 'status' });
       p.appendChild(el('b', null, 'Resultados parciales: '));
@@ -381,21 +425,22 @@
     }
     if (e.duplicadas || e.ajenas) raiz.appendChild(el('p', 'cds-aviso cds-var-inconsistente', 'La API devolvió ' + (e.duplicadas ? nf.format(e.duplicadas) + ' variante(s) repetida(s)' : '') + (e.duplicadas && e.ajenas ? ' y ' : '') + (e.ajenas ? nf.format(e.ajenas) + ' fila(s) de otro producto' : '') + ': se descartaron y no se calculan totales.', { role: 'status' }));
     if (!e.filas.length) {
-      raiz.appendChild(el('p', 'cds-var-vacio', e.completa ? 'Sin variantes con actividad en el período seleccionado.' : 'Todavía no hay variantes cargadas.', { role: 'status' })); return raiz;
+      raiz.appendChild(el('p', 'cds-var-vacio', e.completa ? 'Sin variantes con actividad en el período seleccionado.' : 'Todavía no hay variantes cargadas.', { role: 'status' })); return cerrarPanel();
     }
-    raiz.appendChild(resumen(e, td));
-    if (td.ok) { var cc = conciliar(f, e, ctx); raiz.appendChild(bloqueConciliacion(cc)); }
+    raiz.appendChild(resumen(e, td, td.ok ? conciliar(f, e, ctx) : null, movil));
     var cuerpo = el('div', 'cds-var-cuerpo'), rs = esAdmin() ? rotEstado(ctx) : { fase: 'inicial' };
     var rc = { senal: senal, aplicable: aplicable, rev: aplicable ? mapaRevision(e.filas, senal) : null, sug: null };
     if (rs.fase === 'listo') { rc.sug = new Map(); rs.entrada.items.forEach(function (it) { var k = claveItem(it); if (!rc.sug.has(k)) rc.sug.set(k, []); rc.sug.get(k).push(it); }); }
-    if (e.filas.length > CFG.minParaFiltrar || rc.rev || rc.sug) cuerpo.appendChild(controles(e, vs, function () { pintar(); }, rc));
-    var zona = el('div', 'cds-var-zona', null, { tabindex: '-1' }); cuerpo.appendChild(zona); raiz.appendChild(cuerpo);
+    var zona = el('div', 'cds-var-zona', null, { tabindex: '-1' }), primera = true;
+    if (e.filas.length > CFG.minParaFiltrar || rc.rev || rc.sug || movil) cuerpo.appendChild(controles(e, vs, function () { pintar(); }, rc, movil));
+    cuerpo.appendChild(zona); raiz.appendChild(cuerpo);
     function pintar() {
       zona.replaceChildren();
       var lista = ordenar(filtrar(e.filas, vs, rc.rev, rc.sug), vs.campo, vs.dir, rc.rev), vis = lista.slice(0, vs.mostrar);
-      zona.appendChild(el('p', 'cds-var-cuenta', lista.length === e.filas.length ? 'Mostrando ' + nf.format(vis.length) + ' de ' + nf.format(lista.length) + ' variantes' : 'Mostrando ' + nf.format(vis.length) + ' de ' + nf.format(lista.length) + ' variantes que cumplen el filtro (' + nf.format(e.filas.length) + ' en total)', { role: 'status', 'aria-live': 'polite' }));
+      var cuenta = lista.length === e.filas.length ? 'Mostrando ' + nf.format(vis.length) + ' de ' + nf.format(lista.length) + ' variantes' : 'Mostrando ' + nf.format(vis.length) + ' de ' + nf.format(lista.length) + ' variantes que cumplen el filtro (' + nf.format(e.filas.length) + ' en total)';
+      zona.appendChild(el('p', 'cds-var-cuenta', cuenta)); if (!primera) anunciar(cuenta + '.'); primera = false;
       if (!lista.length) { zona.appendChild(el('p', 'cds-var-vacio', 'Ninguna variante cumple el filtro.')); return; }
-      zona.appendChild(tabla(vis, e, vs, pintar, rc));
+      zona.appendChild(movil ? tarjetas(vis, e, vs, pintar, rc) : tabla(vis, e, vs, pintar, rc));
       if (lista.length > vis.length) zona.appendChild(boton('Mostrar ' + nf.format(Math.min(CFG.tanda, lista.length - vis.length)) + ' más (' + nf.format(lista.length - vis.length) + ' restantes)', function () {
         var desde = vs.mostrar; vs.mostrar += CFG.tanda; pintar(); // el foco sigue al teclado: primera fila nueva (si el botón desaparece, no se pierde en el documento)
         var nueva = zona.querySelectorAll('.cds-var-fila')[desde], f = nueva && nueva.querySelector('.cds-var-exp'), m = zona.querySelector('[data-fk="var_mas"]');
@@ -403,10 +448,10 @@
       }, 'cds-btn cds-var-mas', { 'data-fk': 'var_mas' }));
     }
     pintar();
-    return raiz;
+    return cerrarPanel();
   }
 
-  function resumen(e, td) {
+  function resumen(e, td, conc, movil) { // totales (solo con todas las páginas) y conciliación; en móvil se pliegan, con las cifras clave en el resumen
     var box = el('div', 'cds-var-resumen');
     if (!td.ok) { box.appendChild(el('p', 'cds-aviso', 'Totales no disponibles: ' + td.motivo + '.')); return box; }
     var t = totales(e.filas), d = el('dl', 'cds-m4 cds-var-totales');
@@ -414,7 +459,10 @@
     m('Variantes', t.variantes, nf.format(t.conStock) + ' con stock · ' + nf.format(t.soloDeposito) + ' solo depósito · ' + nf.format(t.sinStock) + ' sin stock');
     m('Ventas netas', t.ventas, 'suma de las variantes'); m('Stock suc. disponible', t.stockSucDisp, t.conSaldoNegativo ? nf.format(t.conSaldoNegativo) + ' con saldo negativo (no cuenta)' : 'sin saldos negativos');
     m('Dep. 90', t.dep90, 'Fallados 93: ' + n(t.fallados));
-    box.appendChild(d); return box;
+    var det = el('details', 'cds-var-tot'); if (!movil) det.setAttribute('open', '');
+    det.appendChild(el('summary', null, 'Totales · ' + nf.format(t.variantes) + ' variantes · ventas ' + n(t.ventas) + ' · stock suc. ' + n(t.stockSucDisp) + ' · Dep. 90 ' + n(t.dep90) + ' · Fallados 93 ' + n(t.fallados)));
+    det.appendChild(d); if (conc) det.appendChild(bloqueConciliacion(conc));
+    box.appendChild(det); return box;
   }
   function bloqueConciliacion(c) {
     var d = el('details', 'cds-var-conc'); d.appendChild(el('summary', null, 'Conciliación con el producto'));
@@ -422,57 +470,82 @@
     var ul = el('ul'); c.items.forEach(function (i) { ul.appendChild(el('li', i.coincide ? 'cds-var-ok' : 'cds-var-dif', i.etiqueta + ': ' + n(i.variantes) + ' en las variantes · ' + n(i.producto) + ' en el producto · ' + (i.coincide ? 'coincide' : 'difiere en ' + nf.format(i.variantes - i.producto)))); });
     d.appendChild(ul); d.appendChild(el('p', 'cds-var-conc-no', 'Mismo período y mismas sucursales. Se compara con la fila del producto de Oportunidades; no se corrige ninguna cifra.')); return d;
   }
-  function controles(e, vs, repintar, rc) {
-    var c = el('div', 'cds-var-ctl'), campo = el('input', 'cds-var-buscar', null, { type: 'search', placeholder: 'Buscar talle, color o código', 'aria-label': 'Buscar por talle, color o código de color', 'data-fk': 'var_q', autocomplete: 'off' }); campo.value = vs.q;
+  var METRICAS = [['ventas', 'Ventas netas'], ['stock', 'Stock suc.'], ['dep90', 'Dep. 90'], ['fallados', 'Fallados 93']];
+  function opcionesOrden(rc) { // para el selector accesible (tarjetas): color y talle, talle, cada columna en ambos sentidos y, con señal, stock en origen / ventas en destino
+    var o = [['color|1', 'Color y talle'], ['talle|1', 'Talle']];
+    METRICAS.forEach(function (m) { o.push([m[0] + '|-1', m[1] + ' (mayor a menor)']); o.push([m[0] + '|1', m[1] + ' (menor a mayor)']); });
+    if (rc && rc.rev) [['stockOrigen', 'Stock en origen'], ['ventasDestino', 'Ventas en destino']].forEach(function (m) { o.push([m[0] + '|-1', m[1] + ' (mayor a menor)']); o.push([m[0] + '|1', m[1] + ' (menor a mayor)']); });
+    return o;
+  }
+  function controles(e, vs, repintar, rc, movil) {
+    var c = el('div', 'cds-var-ctl'), etq = el('label', 'cds-var-buscar-l', null, { for: 'cdsVarBuscar' }); etq.appendChild(el('span', 'cds-sr', 'Buscar por talle, color o código de color'));
+    var campo = el('input', 'cds-var-buscar', null, { id: 'cdsVarBuscar', type: 'search', placeholder: 'Buscar talle, color o código', 'aria-label': 'Buscar por talle, color o código de color', 'data-fk': 'var_q', autocomplete: 'off', enterkeyhint: 'search' }); campo.value = vs.q;
     campo.addEventListener('input', function () { vs.q = campo.value; vs.mostrar = CFG.tanda; repintar(); }); c.appendChild(campo);
+    var activo = vs.chip !== 'todas' || (vs.campo !== 'color' || vs.dir !== 1);
+    var fd = el('details', 'cds-var-filtros'); if (vs.filtrosAbierto === undefined) vs.filtrosAbierto = !movil || activo; if (vs.filtrosAbierto) fd.setAttribute('open', '');
+    fd.addEventListener('toggle', function () { vs.filtrosAbierto = fd.open; });
+    fd.appendChild(el('summary', null, 'Filtros y orden' + (activo ? ' (activos)' : '')));
     var g = el('div', 'cds-var-chips', null, { role: 'group', 'aria-label': 'Filtrar variantes' });
     CHIPS.concat(rc && rc.rev ? CHIPS_ROT : [], rc && rc.sug ? [CHIP_SUG] : []).forEach(function (ch) {
       var cnt = e.filas.filter(function (v) { return ch[2](v, rc && rc.rev && rc.rev.get(v.clave), rc && rc.sug); }).length; if (!cnt && ch[0] !== 'todas' && vs.chip !== ch[0]) return;
       var b = boton(ch[1] + ' (' + nf.format(cnt) + ')', function () { vs.chip = ch[0]; vs.mostrar = CFG.tanda; [].forEach.call(g.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-chip') === vs.chip ? 'true' : 'false'); }); repintar(); }, 'cds-var-chip', { 'aria-pressed': vs.chip === ch[0] ? 'true' : 'false', 'data-chip': ch[0] });
       g.appendChild(b);
     });
-    c.appendChild(g);
-    if (rc && rc.rev) { // C2: ordenar para revisar la señal de rotación
+    fd.appendChild(g);
+    if (rc && rc.rev) { // C2: ordenar para revisar la señal de rotación (escritorio; en tarjetas se usa el selector)
       var o = el('div', 'cds-var-chips cds-var-ordenar', null, { role: 'group', 'aria-label': 'Ordenar para revisar la señal de rotación' });
       [['stockOrigen', 'Stock en origen'], ['ventasDestino', 'Ventas en destino']].forEach(function (k) {
         var b = boton(k[1], function () { if (vs.campo === k[0]) vs.dir = -vs.dir; else { vs.campo = k[0]; vs.dir = -1; } [].forEach.call(o.querySelectorAll('button'), function (x) { var act = x.getAttribute('data-orden-rot') === vs.campo; x.setAttribute('aria-pressed', act ? 'true' : 'false'); if (act) x.setAttribute('data-dir', vs.dir > 0 ? 'asc' : 'desc'); else x.removeAttribute('data-dir'); }); repintar(); },
           'cds-var-chip cds-var-ord-rot', { 'aria-pressed': vs.campo === k[0] ? 'true' : 'false', 'data-orden-rot': k[0], 'aria-label': 'Ordenar por ' + k[1].toLowerCase() + (vs.campo === k[0] ? (vs.dir > 0 ? ', de menor a mayor' : ', de mayor a menor') : ', de mayor a menor') });
         if (vs.campo === k[0]) b.setAttribute('data-dir', vs.dir > 0 ? 'asc' : 'desc'); o.appendChild(b);
       });
-      c.appendChild(o);
+      fd.appendChild(o);
     }
-    return c;
+    if (movil) { // tarjetas: no hay encabezados de columna para ordenar, así que se ofrece un selector nativo (accesible con teclado y lector de pantalla)
+      var w = el('div', 'cds-var-orden-sel'), l = el('label', null, 'Ordenar por', { for: 'cdsVarOrden' }), s = el('select', 'cds-var-orden', null, { id: 'cdsVarOrden', 'data-fk': 'var_orden' });
+      opcionesOrden(rc).forEach(function (op) { var x = el('option', null, op[1], { value: op[0] }); if (op[0] === vs.campo + '|' + vs.dir) x.selected = true; s.appendChild(x); });
+      s.addEventListener('change', function () { var p = s.value.split('|'); vs.campo = p[0]; vs.dir = Number(p[1]); vs.mostrar = CFG.tanda; repintar(); });
+      w.appendChild(l); w.appendChild(s); fd.appendChild(w);
+    }
+    c.appendChild(fd); return c;
   }
   function nombreCorto(c) { return SUCURSAL[c] || c; }
-  function cajaSenal(s, aplicable, ctx, f) { // C2: aviso de posible rotación POR PRODUCTO; nunca presenta la cantidad como lista para transferir
+  function alternar(texto, region, guardar, abierto) { // botón de despliegue en línea (aria-expanded + aria-controls); la región plegada usa hidden
+    var b = el('button', 'cds-btn cds-var-alt', texto, { type: 'button', 'aria-expanded': abierto ? 'true' : 'false', 'aria-controls': region.id });
+    b.addEventListener('click', function (ev) { ev.stopPropagation(); var a = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', a ? 'true' : 'false'); if (a) region.removeAttribute('hidden'); else region.setAttribute('hidden', ''); guardar(a); }); return b;
+  }
+  function cajaSenal(s, aplicable, ctx, f) { // C2/C3: aviso de posible rotación POR PRODUCTO (resumen siempre visible + explicación plegable); nunca presenta la cantidad como lista para transferir
     var b = el('section', 'cds-var-senal', null, { 'aria-label': 'Señal de posible rotación' }); b.setAttribute('data-cds-senal', s.principal ? 'principal' : 'secundaria');
     b.appendChild(el('h4', 'cds-var-senal-t', 'Señal de posible rotación · ' + (s.principal ? 'acción principal' : 'acción secundaria del producto')));
-    var d = el('dl', 'cds-kv cds-var-senal-kv');
-    [['Sucursal de origen', nombreSuc(s.origen)], ['Sucursal de destino', nombreSuc(s.destino)],
-      ['Cantidad orientativa', s.cantidad !== null ? nf.format(s.cantidad) + ' u. — estimación del producto, no es una cantidad para transferir' : 'Sin cantidad orientativa']].forEach(function (p) { d.appendChild(el('dt', null, p[0])); d.appendChild(el('dd', null, p[1])); });
-    b.appendChild(d);
-    b.appendChild(el('p', 'cds-var-senal-p', 'La sugerencia es por producto y requiere validación por variante: antes de mover stock hay que confirmar talle, color y stock real de cada variante en Rotaciones. Acá no se crean envíos ni se confirman cantidades.'));
-    if (s.stockProducto !== null || s.ventasProducto !== null) b.appendChild(el('p', 'cds-var-senal-p cds-var-senal-ref', 'Según Oportunidades (producto): ' + (s.stockProducto !== null ? nf.format(s.stockProducto) + ' u. de stock en el origen' : '') + (s.stockProducto !== null && s.ventasProducto !== null ? ' · ' : '') + (s.ventasProducto !== null ? nf.format(s.ventasProducto) + ' ventas en el destino' : '') + (s.otrosPares ? ' · ' + nf.format(s.otrosPares) + ' par(es) candidato(s) más en Rotaciones' : '') + '.'));
+    b.appendChild(el('p', 'cds-var-senal-res', 'Origen: ' + nombreSuc(s.origen) + ' → Destino: ' + nombreSuc(s.destino) + ' · Cantidad orientativa: ' + (s.cantidad !== null ? nf.format(s.cantidad) + ' u. (no es una cantidad para transferir)' : 'sin cantidad orientativa')));
+    b.appendChild(el('p', 'cds-var-senal-p', 'La sugerencia es por producto y requiere validación por variante. Acá no se crean envíos.'));
     if (!aplicable) b.appendChild(el('p', 'cds-aviso cds-var-senal-no', 'El origen o el destino de la señal no está entre las sucursales consideradas en esta consulta (' + ctx.sucursales.map(nombreCorto).join(', ') + '): no se puede analizar por variante.', { role: 'status' }));
-    else b.appendChild(el('p', 'cds-var-senal-p cds-var-senal-ref', '«Para revisar» solo indica stock positivo de la variante en el origen y ventas en el destino. El depósito 90 y los fallados 93 no cuentan como stock de origen. No es una transferencia.'));
     var ac = el('div', 'cds-var-senal-ac');
     if (typeof rrIrARotaciones === 'function') ac.appendChild(boton('Ver este producto en Rotaciones', function () { rrIrARotaciones(f.Codigo_producto); }, 'cds-btn', { 'data-fk': 'var_ir_rot' }));
-    b.appendChild(ac);
-    b.appendChild(el('p', 'cds-var-senal-ref', 'Rotaciones no permite filtrar por talle y color: allí buscá cada variante por su talle y color dentro de la lista del producto.'));
+    var d = el('div', 'cds-var-senal-det', null, { id: 'cdsVarSenalDet' }); if (!plegables.senal) d.setAttribute('hidden', '');
+    ac.appendChild(alternar('Cómo leer esta señal', d, function (a) { plegables.senal = a; }, plegables.senal)); b.appendChild(ac);
+    if (s.stockProducto !== null || s.ventasProducto !== null) d.appendChild(el('p', 'cds-var-senal-ref', 'Según Oportunidades (producto): ' + (s.stockProducto !== null ? nf.format(s.stockProducto) + ' u. de stock en el origen' : '') + (s.stockProducto !== null && s.ventasProducto !== null ? ' · ' : '') + (s.ventasProducto !== null ? nf.format(s.ventasProducto) + ' ventas en el destino' : '') + (s.otrosPares ? ' · ' + nf.format(s.otrosPares) + ' par(es) candidato(s) más en Rotaciones' : '') + '.'));
+    d.appendChild(el('p', 'cds-var-senal-ref', 'La cantidad orientativa es una estimación del producto; no se confirman cantidades desde acá.'));
+    if (aplicable) d.appendChild(el('p', 'cds-var-senal-ref', '«Para revisar» solo indica stock positivo de la variante en el origen y ventas en el destino. El depósito 90 y los fallados 93 no cuentan como stock de origen. No es una transferencia.'));
+d.appendChild(el('p', 'cds-var-senal-ref', 'Antes de mover stock hay que confirmar talle, color y stock real de cada variante en Rotaciones. Rotaciones no permite filtrar por talle y color: allí buscá cada variante por su talle y color dentro de la lista del producto.'));
+    b.appendChild(d);
     return b;
   }
   function cajaSugerencias(ctx) { // C2: consulta manual de las sugerencias de Rotaciones (solo administradores); jamás se dispara sola
     if (!esAdmin()) return null;
     var st = rotEstado(ctx), b = el('section', 'cds-var-sug', null, { 'aria-label': 'Sugerencias de Rotaciones', tabindex: '-1', 'data-fk': 'var_rot' }); b.setAttribute('data-fase', st.fase);
-    b.appendChild(el('h4', 'cds-var-senal-t', 'Sugerencias de Rotaciones (consulta manual, solo administradores)'));
+    b.appendChild(el('h4', 'cds-var-senal-t', 'Sugerencias de Rotaciones (solo administradores)'));
     var consulta = function (txt) { return boton(txt, function () { rotIniciar(ctx); avisar(); }, 'cds-btn', { 'data-fk': 'var_rot' }); };
     if (st.fase === 'inicial') {
-      b.appendChild(el('p', 'cds-var-senal-p', 'Trae las sugerencias que el motor de Rotaciones calculó para este producto en el período. Calcula el plan global del período, así que puede tardar y no se ejecuta sola. Son propuestas sin confirmar: no se generan envíos desde acá.'));
-      b.appendChild(consulta('Consultar sugerencias de Rotaciones')); return b;
+      b.appendChild(el('p', 'cds-var-senal-p', 'Consulta manual: puede tardar y no se ejecuta sola.'));
+      var fila = el('div', 'cds-var-senal-ac'), d0 = el('div', 'cds-var-senal-det', null, { id: 'cdsVarSugDet' }); if (!plegables.sug) d0.setAttribute('hidden', '');
+      d0.appendChild(el('p', 'cds-var-senal-ref', 'Son propuestas del motor de Rotaciones, sin confirmar. Trae las sugerencias que el motor de Rotaciones calculó para este producto en el período. Calcula el plan global del período, así que puede tardar. No se generan envíos desde acá: confirmar o descartar se hace solo en Rotaciones.'));
+      fila.appendChild(consulta('Consultar sugerencias de Rotaciones')); fila.appendChild(alternar('Qué hace esta consulta', d0, function (a) { plegables.sug = a; }, plegables.sug)); b.appendChild(fila); b.appendChild(d0); return b;
     }
     if (st.fase === 'cargando') { b.appendChild(el('p', 'cds-var-cargando', 'Consultando Rotaciones…', { role: 'status', 'aria-live': 'polite' })); return b; }
-    if (st.fase === 'error') { var a = el('div', 'cds-aviso', null, { role: 'alert' }); a.appendChild(el('b', null, 'No se pudieron consultar las sugerencias. ')); a.appendChild(document.createTextNode(st.error.mensaje)); a.appendChild(consulta('Reintentar')); b.appendChild(a); return b; }
+    if (st.fase === 'error') { var a = el('div', 'cds-aviso', null, { role: 'alert' }); a.appendChild(el('b', null, 'No se pudieron consultar las sugerencias. ')); a.appendChild(document.createTextNode(st.error.mensaje)); a.appendChild(consulta('Reintentar')); b.appendChild(a); anunciarUnaVez('rot', 'No se pudieron consultar las sugerencias de Rotaciones.'); return b; }
     var en = st.entrada;
+    anunciarUnaVez('rot', 'Sugerencias de Rotaciones: ' + nf.format(en.items.length) + '.');
     if (!en.items.length) b.appendChild(el('p', 'cds-var-vacio', 'Rotaciones no sugiere mover variantes de este producto en el período' + (en.fuera ? ' (' + nf.format(en.fuera) + ' sugerencia(s) quedan fuera de las sucursales consideradas)' : '') + '.', { role: 'status' }));
     else {
       var ul = el('ul', 'cds-var-sug-l'); en.items.forEach(function (it) {
@@ -480,7 +553,7 @@
       });
       b.appendChild(ul);
       if (en.fuera) b.appendChild(el('p', 'cds-var-senal-ref', nf.format(en.fuera) + ' sugerencia(s) fuera de las sucursales consideradas no se muestran.'));
-      b.appendChild(el('p', 'cds-var-senal-ref', 'Se marcan en la tabla con «Sugerida por Rotaciones». Confirmar o descartar se hace solo en Rotaciones.'));
+      b.appendChild(el('p', 'cds-var-senal-ref', 'Se marcan en la lista con «Sugerida por Rotaciones». Confirmar o descartar se hace solo en Rotaciones.'));
     }
     b.appendChild(el('p', 'cds-var-senal-ref', 'Datos de las ' + hora(en.recibido) + ' · se conservan 5 minutos')); b.appendChild(consulta('Volver a consultar'));
     return b;
@@ -491,9 +564,7 @@
     var h = el('thead'), hr = el('tr');
     COLS.forEach(function (c, i) {
       var th = el('th', i ? 'r' : '', null, { scope: 'col', 'aria-sort': vs.campo === c[0] || (c[0] === 'color' && vs.campo === 'talle') ? (vs.dir > 0 ? 'ascending' : 'descending') : 'none' });
-      var ord = function (campo) { var bt = boton(campo[1], function () { if (vs.campo === campo[0]) vs.dir = -vs.dir; else { vs.campo = campo[0]; vs.dir = (campo[0] === 'ventas' || campo[0] === 'stock' || campo[0] === 'dep90' || campo[0] === 'fallados') ? -1 : 1; } repintar(); }, 'cds-var-ord', { 'data-orden': campo[0], 'aria-label': 'Ordenar por ' + campo[1].toLowerCase() }); if (vs.campo === campo[0]) bt.setAttribute('data-dir', vs.dir > 0 ? 'asc' : 'desc');
-        var corto = { ventas: 'Ventas', stock: 'Stock', dep90: 'Dep. 90', fallados: 'Fall. 93' }[campo[0]]; // en pantallas chicas se muestra el título corto; el nombre accesible sigue completo
-        if (corto) { bt.textContent = ''; bt.appendChild(el('span', 'cds-var-lg', campo[1])); bt.appendChild(el('span', 'cds-var-sh', corto)); } return bt; };
+      var ord = function (campo) { var bt = boton(campo[1], function () { if (vs.campo === campo[0]) vs.dir = -vs.dir; else { vs.campo = campo[0]; vs.dir = (campo[0] === 'ventas' || campo[0] === 'stock' || campo[0] === 'dep90' || campo[0] === 'fallados') ? -1 : 1; } repintar(); }, 'cds-var-ord', { 'data-orden': campo[0], 'aria-label': 'Ordenar por ' + campo[1].toLowerCase() }); if (vs.campo === campo[0]) bt.setAttribute('data-dir', vs.dir > 0 ? 'asc' : 'desc'); return bt; };
       if (i === 0) { th.appendChild(ord(['talle', 'Talle'])); th.appendChild(document.createTextNode(' · ')); th.appendChild(ord(['color', 'Color'])); } else th.appendChild(ord(c));
       hr.appendChild(th);
     });
@@ -515,7 +586,7 @@
   var api = {
     CFG: CFG, panel: panel, cancelar: cancelar, invalidar: invalidar, reintentar: reintentar, estadoDe: estadoDe, iniciar: iniciar, parametros: parametros, alCambiar: null,
     normalizar: normalizar, totales: totales, totalesDisponibles: totalesDisponibles, conciliar: conciliar, ordenar: ordenar, filtrar: filtrar, compararTalle: compararTalle, claveSeguimiento: claveSeguimiento, CHIPS: CHIPS,
-    senalRotacion: senalRotacion, senalAplicable: senalAplicable, revisionRotacion: revisionRotacion, rotEstado: rotEstado, rotIniciar: rotIniciar, claveItem: claveItem, esAdmin: esAdmin, CHIPS_ROT: CHIPS_ROT,
+    senalRotacion: senalRotacion, senalAplicable: senalAplicable, revisionRotacion: revisionRotacion, rotEstado: rotEstado, rotIniciar: rotIniciar, claveItem: claveItem, esAdmin: esAdmin, CHIPS_ROT: CHIPS_ROT, opcionesOrden: opcionesOrden,
     _estado: function () { return { cache: cache.size, vuelo: !!vuelo, errores: errores.size, rotCache: rotCache.size, rotVuelo: !!rotVuelo, rotErrores: rotErrores.size }; },
   };
   window.CDS_VARIANTES = api;

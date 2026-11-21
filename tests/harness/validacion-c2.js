@@ -37,7 +37,7 @@ const ctlR = async qs => (await fetch(BASE + '/__h/rotaciones?' + qs)).json();
   const quitarSenal = (p, cod) => p.evaluate(cod => { const f = RT_OPORTUNIDADES.data.find(x => x.Codigo_producto === cod); f.acciones = (f.acciones || []).filter(a => a.estado_origen !== 'posible_rotacion'); f.diagnostico_rotacion = null; if (f.estados_secundarios) f.estados_secundarios = f.estados_secundarios.filter(e => e !== 'posible_rotacion'); }, cod);
   const abrirDet = async (p, c) => { await p.evaluate(c => { [...document.querySelectorAll('[data-detalle-codigo="' + c + '"]')].find(x => x.offsetParent).click(); }, c); await sleep(700); };
   const cerrarDet = async p => { await p.keyboard.press('Escape'); await sleep(400); };
-  const esperaVar = async (p, ms = 15000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await p.evaluate(() => !!document.querySelector('.cds-var-t, .cds-var-error, .cds-var-vacio, .cds-var-parcial'))) { await sleep(150); return true; } await sleep(80); } return false; };
+  const esperaVar = async (p, ms = 15000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await p.evaluate(() => !!document.querySelector('.cds-var-t, .cds-var-lista, .cds-var-error, .cds-var-vacio, .cds-var-parcial'))) { await sleep(150); return true; } await sleep(80); } return false; };
   const abrirTab = async p => { await p.click('#cdsTab_variantes'); return esperaVar(p); };
   const filas = p => p.evaluate(() => [...document.querySelectorAll('.cds-var-fila')].map(tr => { const num = k => { const td = tr.querySelector('td[data-cds-campo=' + k + ']'); return td ? td.firstChild.textContent : null; };
     return { key: tr.dataset.cdsVar, talle: tr.querySelector('[data-cds-campo=talle]').textContent, stock: num('stock'), dep: num('dep90'), fall: num('fallados'), flags: [...tr.querySelectorAll('.cds-var-flag')].map(x => x.dataset.flag || x.textContent),
@@ -60,14 +60,15 @@ const ctlR = async qs => (await fetch(BASE + '/__h/rotaciones?' + qs)).json();
   const c1 = cods.find(c => c !== sinSenal);
   await inyectar(P, c1, { origen: '0001', destino: '0005', cantidad: 6, principal: true }); await abrirDet(P, c1);
   const nSv = on.sv.length; await abrirTab(P); const tp = await texto(P);
-  ok('Señal', 'Señal principal: aviso con sucursal de origen (Paseo 0001), de destino (Centenario 0005) y cantidad orientativa 6', (await P.$('.cds-var-senal[data-cds-senal=principal]')) && /Sucursal de origen\s*Paseo \(0001\)/.test(tp) && /Sucursal de destino\s*Centenario \(0005\)/.test(tp) && /Cantidad orientativa\s*6 u\./.test(tp) && /acción principal/.test(tp), tp.slice(tp.indexOf('Señal'), tp.indexOf('Señal') + 160).replace(/\n/g, ' | '));
+  ok('Señal', 'Señal principal: aviso con sucursal de origen (Paseo 0001), de destino (Centenario 0005) y cantidad orientativa 6', (await P.$('.cds-var-senal[data-cds-senal=principal]')) && /Origen: Paseo \(0001\) → Destino: Centenario \(0005\)/.test(tp) && /Cantidad orientativa: 6 u\./.test(tp) && /acción principal/.test(tp), tp.slice(tp.indexOf('Señal'), tp.indexOf('Señal') + 160).replace(/\n/g, ' | '));
   ok('Señal', 'Aclara que es por producto, requiere validación por variante y que la cantidad NO es para transferir ni se crean envíos', /por producto y requiere validación por variante/.test(tp) && /no es una cantidad para transferir/.test(tp) && /no se crean envíos/.test(tp));
-  ok('Señal', 'Dep. 90 y fallados 93 se aclaran como no-stock de origen, y «Para revisar» se define sin recomendar transferir', /depósito 90 y los fallados 93 no cuentan como stock de origen/.test(tp) && /No es una transferencia/.test(tp));
+  await P.click('.cds-var-senal .cds-var-alt'); await sleep(150); const tp2 = await texto(P);
+  ok('Señal', 'Dep. 90 y fallados 93 se aclaran como no-stock de origen, y «Para revisar» se define sin recomendar transferir', /depósito 90 y los fallados 93 no cuentan como stock de origen/.test(tp2) && /No es una transferencia/.test(tp2) && (await P.getAttribute('.cds-var-senal .cds-var-alt', 'aria-expanded')) === 'true');
   ok('Consultas', 'Abrir la pestaña con señal hace UNA consulta a stock-ventas y NINGUNA a Rotaciones', on.sv.length === nSv + 1 && on.rot.length === 0, on.sv.length - nSv + ' sv, ' + on.rot.length + ' rot');
   await cerrarDet(P);
 
   await inyectar(P, c1, { origen: '0001', destino: '0005', cantidad: null, principal: false }); await P.evaluate(() => CDS_VARIANTES.invalidar()); await abrirDet(P, c1); await abrirTab(P); const t2 = await texto(P);
-  ok('Señal', 'Señal secundaria sin cantidad: «acción secundaria» y «Sin cantidad orientativa»', !!(await P.$('.cds-var-senal[data-cds-senal=secundaria]')) && /acción secundaria/.test(t2) && /Sin cantidad orientativa/.test(t2));
+  ok('Señal', 'Señal secundaria sin cantidad: «acción secundaria» y «Sin cantidad orientativa»', !!(await P.$('.cds-var-senal[data-cds-senal=secundaria]')) && /acción secundaria/.test(t2) && /sin cantidad orientativa/i.test(t2));
   await cerrarDet(P);
 
   // ============================ B) ANALISIS POR VARIANTE (8 casos) ============================
@@ -101,7 +102,7 @@ const ctlR = async qs => (await fetch(BASE + '/__h/rotaciones?' + qs)).json();
   await P.click('.cds-var-chip[data-chip=para_revisar]'); await sleep(250); const fr = await filas(P);
   ok('Filtros', '«Para revisar» muestra solo las 3 con stock positivo en origen y ventas en destino, conservando su identidad', fr.length === 3 && fr.every(f => f.rot === 'revisar' && /^V:[^:]+:[^:]+:[^:]+$/.test(f.key)));
   await P.click('.cds-var-chip[data-chip=todas]'); await sleep(200);
-  ok('Navegación', 'Se conservan «Ver este producto en Rotaciones» y «Ver en Talles y colores»', !!(await P.$('.cds-var-senal-ac button')) && /Ver este producto en Rotaciones/.test(await P.innerText('.cds-var-senal-ac')) && /Ver en Talles y colores/.test(await P.innerText('.cds-var-cab')) && /Rotaciones no permite filtrar por talle y color/.test(await texto(P)));
+  ok('Navegación', 'Se conservan «Ver este producto en Rotaciones» y «Ver en Talles y colores»', !!(await P.$('.cds-var-senal-ac button')) && /Ver este producto en Rotaciones/.test(await P.innerText('.cds-var-senal-ac')) && /Ver en Talles y colores/.test(await P.innerText('.cds-var-cab')) && (await P.evaluate(() => { const b = document.querySelector('.cds-var-senal .cds-var-alt'); if (b.getAttribute('aria-expanded') !== 'true') b.click(); }), await sleep(150), /Rotaciones no permite filtrar por talle y color/.test(await texto(P))));
 
   // ============================ D) DATOS FALTANTES ============================
   await cerrarDet(P); await ctl('alterar=faltante'); await abrirDet(P, c1); await abrirTab(P); const ff = await filas(P);
@@ -114,7 +115,7 @@ const ctlR = async qs => (await fetch(BASE + '/__h/rotaciones?' + qs)).json();
     await P.evaluate(s => rtSucursalesAplicar(s), sel); await sleep(3500); await ctl('reset=1&modo=rotacion'); on.sv.length = 0;
     const cx = (await codigos(P))[0]; await inyectar(P, cx, { origen: '0001', destino: '0005', cantidad: 6 }); await abrirDet(P, cx); await abrirTab(P); const tx = await texto(P);
     ok('Excluidas', 'Consulta ' + motivo + ': se manda exactamente esa selección y la señal avisa que no se puede analizar por variante', on.sv.length === 1 && on.sv[0].get('sucursales') === sel.join(',') && /no está entre las sucursales consideradas/.test(tx) && (await P.$$('.cds-var-rot-l')).length === 0 && (await P.$$('.cds-var-ord-rot')).length === 0, on.sv[0] && on.sv[0].get('sucursales'));
-    ok('Excluidas', 'Siguen visibles el aviso (origen/destino/cantidad) y las variantes sin análisis de rotación, sin chips de revisión', /Sucursal de origen/.test(tx) && (await P.$$('.cds-var-fila')).length === 8 && !(await P.evaluate(() => [...document.querySelectorAll('.cds-var-chip')].some(c => /Para revisar/.test(c.textContent)))));
+    ok('Excluidas', 'Siguen visibles el aviso (origen/destino/cantidad) y las variantes sin análisis de rotación, sin chips de revisión', /Origen: Paseo/.test(tx) && (await P.$$('.cds-var-fila')).length === 8 && !(await P.evaluate(() => [...document.querySelectorAll('.cds-var-chip')].some(c => /Para revisar/.test(c.textContent)))));
     await cerrarDet(P);
   }
   await P.evaluate(() => rtSucursalesAplicar(['0001', '0005', '0010', '0012', '0014'])); await sleep(3500); await ctl('reset=1&modo=rotacion');
