@@ -128,7 +128,7 @@ const ctl = async qs => { const r = await (await fetch(BASE + '/__h/variantes?' 
   const un = await filas(P);
   ok('Talle único', 'Talles 99, TU y U se muestran como cualquier variante; 99 y TU llevan la marca «Talle único» y U no (no se asume que sean los únicos)', un.length === 3 && un.map(f => f.talle).sort().join() === '99,TU,U' && un.find(f => f.talle === '99').flags.includes('talle_unico') && un.find(f => f.talle === 'TU').flags.includes('talle_unico') && !un.find(f => f.talle === 'U').flags.includes('talle_unico'), JSON.stringify(un.map(f => [f.talle, f.codColor, f.flags.join('/')])));
   ok('Talle único', 'El color «00» (sin mapear) de talle único conserva su código y advierte', un.find(f => f.talle === 'U').codColor === 'color 00' && un.find(f => f.talle === 'U').flags.includes('color_sin_nombre'));
-  ok('Estados', 'Con 3 variantes no aparecen búsqueda ni filtros (solo con más de 12)', !(await P.$('.cds-var-buscar')));
+  ok('Estados', 'Con 3 variantes no aparecen búsqueda ni filtros (solo con más de 12, o desde C2 si el producto tiene señal de rotación)', !(await P.$('.cds-var-buscar')) || !!(await P.$('.cds-var-senal')));
   await cerrarDet(P);
   await ctl('reset=1&n=0'); await abrirDet(P, cods[4]); await abrirTab(P); const vacio = await texto(P);
   ok('Estados', 'Sin variantes: «Sin variantes con actividad en el período seleccionado.» (y sigue la nota de alcance)', /Sin variantes con actividad en el período seleccionado/.test(vacio) && /Variantes con actividad en el período/.test(vacio));

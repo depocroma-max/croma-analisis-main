@@ -49,6 +49,16 @@ function conciliar(codigo, excl, producto) {
   return filas;
 }
 
+// C2: 8 variantes con la señal de rotación origen → destino (sucursales pedidas por el test). Cada caso: [stock en origen, ventas en destino, combinado 0000, fallados].
+function rotacion(codigo, excl, o, d) {
+  const casos = [[5, 4, 6, 1], [0, 3, 0, 0], [-2, 2, 0, 0], [3, 0, 0, 0], [2, -1, 0, 0], [1, 1, 9, 2], [0, 0, 4, 0], [4, 6, 0, 0]];
+  return casos.map((c, i) => {
+    const r = base(i, codigo, excl); CENTROS.forEach(k => { r['ventas_' + k] = null; r['stock_' + k] = null; });
+    if (!excl.includes(o)) r['stock_' + o] = c[0]; if (!excl.includes(d)) r['ventas_' + d] = c[1]; r.stock_ctro_0000 = c[2]; r.stock_fallados = c[3];
+    return r;
+  });
+}
+
 function exclusiones(texto) { // "AND centro NOT IN ('0009', ...)": los centros que el router saco de la consulta
   const out = new Set(); const re = /NOT IN \(([^)]*)\)/g; let m;
   while ((m = re.exec(texto))) (m[1].match(/\d{4}/g) || []).forEach(c => out.add(c));
@@ -59,10 +69,21 @@ function consultar(texto, inputs, estado, productos) {
   const codigo = String(inputs.codigo || ''), excl = exclusiones(texto);
   let todas;
   if (estado.modo === 'unicos') todas = ['99', 'TU', 'U'].map((t, k) => ({ ...base(k, codigo, excl), codigo_talle: t, codigo_color: k === 2 ? '00' : COLORES[k] }));
+  else if (estado.modo === 'rotacion') todas = rotacion(codigo, excl, estado.origen || '0001', estado.destino || '0005');
   else if (estado.modo === 'conciliar' && productos.find(p => p.Codigo_producto === codigo)) todas = conciliar(codigo, excl, productos.find(p => p.Codigo_producto === codigo));
   else todas = Array.from({ length: estado.n }, (_, i) => base(i, codigo, excl));
   const pagina = todas.slice(inputs.offset, inputs.offset + inputs.limit);
   return pagina.map(r => ({ ...r, total_sin_paginar: todas.length }));
 }
 
-module.exports = { consultar, exclusiones, TALLES, COLORES, ESPECIALES };
+// C2: respuesta SINTETICA de GET /analisis/rotaciones (forma del contrato real: pares[{origen,destino,items[]}]) para las variantes del escenario «rotacion».
+function respuestaRotaciones(q, estado) {
+  const codigo = String(q.codigo || ''), o = estado.origen || '0001', d = estado.destino || '0005';
+  const item = (i, talle, color, origen, destino, cant, stockO) => ({ rotacion_id: `${codigo}_${talle}_${color}_${origen}_${destino}`, Codigo_producto: codigo, Codigo_talle: talle, Codigo_color: color, Nombre_color: color === 'ZZ' ? 'COLOR NO MAPEADO' : 'NEGRO', color_no_mapeado: color === 'ZZ',
+    Nombre_producto: 'REMERA DE PRUEBA', origen, destino, cantidad_sugerida: cant, stock_origen: stockO, stock_origen_sysneo: stockO, pendiente_salida_origen: 0, confianza: 'manual', motivo: 'sin_validacion_de_curva' });
+  const items = codigo ? [item(0, '040', '02', o, d, 3, 5), item(1, 'S', '02', o, d, 2, 0), item(5, '38', '02', o, d, 1, 1), item(9, 'NOEXISTE', '02', o, d, 2, 4), item(7, '99', '02', o, '0014', 2, 4)] : [];
+  const pares = []; items.forEach(it => { let p = pares.find(x => x.origen === it.origen && x.destino === it.destino); if (!p) pares.push(p = { origen: it.origen, destino: it.destino, items: [] }); p.items.push(it); });
+  return { ok: true, version_rotaciones: 'harness', desde: q.desde, hasta: q.hasta, stock_consultado: null, filtros_aplicados: { codigo: codigo || null }, total_pares_global: pares.length, total_variantes_global: items.length, total_unidades_global: 0, total_pares: pares.length, total_variantes: items.length, total_unidades: 0, pares };
+}
+
+module.exports = { consultar, exclusiones, rotacion, respuestaRotaciones, TALLES, COLORES, ESPECIALES };

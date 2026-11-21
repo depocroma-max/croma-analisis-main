@@ -27,7 +27,8 @@ const IR = require('./ingresos-fixture');
 const estadoIR = { escenario: 'alineado', vacio: false, error: false, retrasoMs: 0 };
 const REND = require('./rendimiento-fixture');
 const VF = require('./variantes-fixture'); // Etapa C1: /analisis/stock-ventas
-const estadoV = { n: 20, modo: 'normal', retrasoMs: 0, error: null, alterar: null, llamadas: 0, log: [] };
+const estadoV = { n: 20, modo: 'normal', retrasoMs: 0, error: null, alterar: null, llamadas: 0, log: [], origen: '0001', destino: '0005' };
+const estadoR = { modo: 'real', retrasoMs: 0, llamadas: 0, log: [], origen: '0001', destino: '0005' }; // Etapa C2: GET /analisis/rotaciones SIMULADO (no corre el motor de Rotaciones)
 const productosActuales = () => {
   const todos = argv.rendimiento ? [...REND.productosCasos(U.CENTROS, U.OPERATIVAS), ...U.universo()] : U.universo();
   if (estado.universo === 'vacio') return [];
@@ -111,10 +112,27 @@ app.use('/analisis/ingresos-recientes', irRouter);
 // Control de /analisis/stock-ventas: /__h/variantes?n=20&modo=normal|unicos|conciliar&retraso=ms&error=500|pagina2|0&alterar=eco|periodo|duplicados|ajena|total|0&reset=1 (sin parametros: devuelve el estado)
 app.get('/__h/variantes', (q, s) => {
   const x = q.query;
-  if (x.reset) { Object.assign(estadoV, { n: 20, modo: 'normal', retrasoMs: 0, error: null, alterar: null, llamadas: 0, log: [] }); }
+  if (x.reset) { Object.assign(estadoV, { n: 20, modo: 'normal', retrasoMs: 0, error: null, alterar: null, llamadas: 0, log: [], origen: '0001', destino: '0005' }); }
+  if (x.origen) estadoV.origen = x.origen; if (x.destino) estadoV.destino = x.destino;
   if (x.n !== undefined) estadoV.n = Number(x.n); if (x.modo) estadoV.modo = x.modo; if (x.retraso !== undefined) estadoV.retrasoMs = Number(x.retraso) || 0;
   if (x.error !== undefined) estadoV.error = x.error === '0' ? null : x.error; if (x.alterar !== undefined) estadoV.alterar = x.alterar === '0' ? null : x.alterar;
   s.json(estadoV);
+});
+// Control y simulacion de /analisis/rotaciones (C2): /__h/rotaciones?modo=normal|vacio|error|403|real&retraso=ms&origen=0001&destino=0005&reset=1 (sin parametros: estado)
+app.get('/__h/rotaciones', (q, s) => {
+  const x = q.query; if (x.reset) Object.assign(estadoR, { modo: 'real', retrasoMs: 0, llamadas: 0, log: [], origen: '0001', destino: '0005' });
+  if (x.modo) estadoR.modo = x.modo; if (x.retraso !== undefined) estadoR.retrasoMs = Number(x.retraso) || 0; if (x.origen) estadoR.origen = x.origen; if (x.destino) estadoR.destino = x.destino;
+  s.json(estadoR);
+});
+app.get('/analisis/rotaciones', async (req, res, next) => {
+  if (estadoR.modo === 'real') return next();
+  estadoR.llamadas++; estadoR.log.push({ ...req.query, autorizacion: !!req.headers.authorization });
+  if (estadoR.retrasoMs) await new Promise(r => setTimeout(r, estadoR.retrasoMs));
+  if (estadoR.modo === '403') return res.status(403).json({ ok: false, error: 'Acceso denegado' });
+  if (estadoR.modo === 'error') return res.status(500).json({ ok: false, error: 'Error al calcular rotaciones' });
+  const r = VF.respuestaRotaciones(req.query, estadoR);
+  if (estadoR.modo === 'vacio') { r.pares = []; r.total_pares = r.total_variantes = 0; }
+  res.json(r);
 });
 app.use('/analisis/stock-ventas', (req, res, next) => { // alteraciones de la RESPUESTA para probar la validacion del cliente (eco, periodo, repetidas, ajenas, total que cambia)
   if (!estadoV.alterar) return next();
@@ -126,6 +144,7 @@ app.use('/analisis/stock-ventas', (req, res, next) => { // alteraciones de la RE
       if (estadoV.alterar === 'duplicados' && b.data.length) b.data.push({ ...b.data[0] });
       if (estadoV.alterar === 'ajena' && b.data.length) b.data.push({ ...b.data[0], Codigo_producto: 'OTRO' });
       if (estadoV.alterar === 'total' && b.paginacion.offset > 0) b.paginacion.total += 7;
+      if (estadoV.alterar === 'faltante' && b.data.length > 1) { Object.keys(b.data[0]).filter(k => /^Stock_ctro_\d{4}$/.test(k) && k !== 'Stock_ctro_0000').forEach(k => delete b.data[0][k]); Object.keys(b.data[1]).filter(k => /^Ventas_ctro_/.test(k)).forEach(k => delete b.data[1][k]); }
     }
     return original(b);
   };
