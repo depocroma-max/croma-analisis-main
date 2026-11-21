@@ -2,13 +2,13 @@
    Reemplaza el detalle desplegable de la fila. No consulta ni calcula nada nuevo: reutiliza los mismos bloques y funciones que ya construyen el detalle
    actual (explicacion, ingresos, rendimiento desde el ingreso, demanda reciente, tendencia, desbalance, rotacion). El estado abierto sigue siendo
    RT_OPORTUNIDADES_EXPANDIDO, asi que abrir, cerrar, cambiar de pagina o de filtro funcionan igual que antes. La incorporacion de variantes (talle y
-   color) es de la Etapa C: aqui solo queda el acceso existente «Ver en Talles y colores». */
+   color) es la Etapa C1: la pestaña «Talle y color» (cds/variantes.js) consulta /analisis/stock-ventas solo al abrirla; se conserva el acceso «Ver en Talles y colores». */
 (function () {
   'use strict';
   if (!document.documentElement.classList.contains('cds-v3')) return;
 
   var nf = new Intl.NumberFormat('es-AR'), nf1 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
-  var TABS = [['resumen', 'Resumen', ''], ['motivos', 'Motivos', ''], ['ingreso', 'Ingreso', ' y rendimiento'], ['sucursales', 'Sucursales', '']]; // el 3.er texto se oculta en pantallas chicas (sigue en el DOM y en el nombre accesible)
+  var TABS = [['resumen', 'Resumen', ''], ['motivos', 'Motivos', ''], ['ingreso', 'Ingreso', ' y rendimiento'], ['sucursales', 'Sucursales', ''], ['variantes', 'Talle y color', '']]; // el 3.er texto se oculta en pantallas chicas (sigue en el DOM y en el nombre accesible)
   var tab = 'resumen', ultimoCodigo = null, scrollGuardado = 0, focoGuardado = null, pendientesTabs = null;
 
   function el(tag, cls, texto, attrs) {
@@ -155,6 +155,14 @@
     return c;
   }
 
+  // ---------- Talle y color (Etapa C1): la consulta a /analisis/stock-ventas ocurre SOLO al abrir esta pestaña ----------
+  function pestanaVariantes(f, resp) {
+    var V = window.CDS_VARIANTES; if (!V) return sec('Talle y color', 'El módulo de variantes no está disponible.');
+    V.alCambiar = function () { if (tab === 'variantes' && ultimoCodigo && RT_OPORTUNIDADES_EXPANDIDO === ultimoCodigo) rtRenderVistaActual(); };
+    return V.panel(f, resp);
+  }
+  function cancelarVariantes() { if (window.CDS_VARIANTES) window.CDS_VARIANTES.cancelar(); } // salir de la pestaña, cambiar de producto o cerrar descarta la consulta en curso
+
   // ---------- armado ----------
   function trampaFoco(aside, e) {
     if (e.key !== 'Tab') return;
@@ -164,8 +172,9 @@
   }
   function dibujar(host) {
     var cod = RT_OPORTUNIDADES_EXPANDIDO, lista = RT_OPORTUNIDADES, f = cod && lista && lista.data ? lista.data.filter(function (x) { return x.Codigo_producto === cod; })[0] : null;
-    if (!f) { ultimoCodigo = null; return; }
+    if (!f) { ultimoCodigo = null; cancelarVariantes(); return; }
     var nuevo = ultimoCodigo !== cod; if (nuevo) { tab = 'resumen'; scrollGuardado = 0; focoGuardado = null; } ultimoCodigo = cod;
+    if (tab !== 'variantes') cancelarVariantes();
     var cerrar = function () { // cierra y devuelve el foco al boton de la fila (aunque el click haya dejado el foco en otro contenedor)
       rtOportunidadesToggleDetalle(cod);
       var b = [].filter.call(document.querySelectorAll('[data-detalle-codigo="' + String(cod).replace(/"/g, '') + '"]'), function (x) { return x.offsetParent !== null; })[0];
@@ -177,7 +186,7 @@
     a.appendChild(cabecera(f, cerrar));
     var cuerpo = el('div', 'cds-dr-cuerpo', null, { id: 'cdsDrCuerpo', role: 'tabpanel', 'aria-labelledby': 'cdsTab_' + tab, tabindex: '0' });
     var resp = lista;
-    cuerpo.appendChild(tab === 'motivos' ? pestanaMotivos(f, resp) : tab === 'ingreso' ? pestanaIngreso(f, resp) : tab === 'sucursales' ? pestanaSucursales(f) : pestanaResumen(f, resp));
+    cuerpo.appendChild(tab === 'motivos' ? pestanaMotivos(f, resp) : tab === 'ingreso' ? pestanaIngreso(f, resp) : tab === 'sucursales' ? pestanaSucursales(f) : tab === 'variantes' ? pestanaVariantes(f, resp) : pestanaResumen(f, resp));
     a.appendChild(cuerpo);
     a.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.stopPropagation(); cerrar(); } else trampaFoco(a, e); });
     a.addEventListener('focusin', function (e) { var k = e.target.closest && e.target.closest('[data-fk]'); focoGuardado = k ? k.getAttribute('data-fk') : null; });
@@ -190,7 +199,7 @@
     if (sel && pendientesTabs.scrollWidth > pendientesTabs.clientWidth) pendientesTabs.scrollLeft = Math.max(0, sel.offsetLeft - (pendientesTabs.clientWidth - sel.offsetWidth) / 2);
   }
   // Salir de Oportunidades cierra el detalle y no se reabre al volver (index.html lo llama desde rtCambiarVista).
-  function cerrar() { RT_OPORTUNIDADES_EXPANDIDO = null; ultimoCodigo = null; scrollGuardado = 0; focoGuardado = null; try { OV_FOCO = null; } catch (e) { /* sin foco pendiente */ } }
+  function cerrar() { cancelarVariantes(); RT_OPORTUNIDADES_EXPANDIDO = null; ultimoCodigo = null; scrollGuardado = 0; focoGuardado = null; try { OV_FOCO = null; } catch (e) { /* sin foco pendiente */ } }
 
   window.CDS_DETALLE = { dibujar: dibujar, cerrar: cerrar, pestana: function () { return tab; }, fijarPestana: function (t) { tab = t; } };
 })();

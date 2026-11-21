@@ -108,7 +108,7 @@ const nf = new Intl.NumberFormat('es-AR');
   await P.keyboard.press('Shift+Tab'); ok('Teclado', 'Shift+Tab también se queda dentro', await P.evaluate(() => !!document.activeElement.closest('.cds-dr')));
   await P.focus('#cdsTab_resumen'); await P.keyboard.press('ArrowRight'); await sleep(500);
   ok('Teclado', 'Flecha derecha cambia de pestaña (Motivos) y el foco acompaña a la pestaña', (await P.evaluate(() => [document.querySelector('.cds-tab[aria-selected=true]').id, document.activeElement.id])).join() === 'cdsTab_motivos,cdsTab_motivos');
-  await P.keyboard.press('End'); await sleep(400); ok('Teclado', 'Fin lleva a la última pestaña (Sucursales)', (await P.evaluate(() => document.querySelector('.cds-tab[aria-selected=true]').id)) === 'cdsTab_sucursales');
+  await P.keyboard.press('End'); await sleep(400); ok('Teclado', 'Fin lleva a la última pestaña (Talle y color, agregada en C1)', (await P.evaluate(() => document.querySelector('.cds-tab[aria-selected=true]').id)) === 'cdsTab_variantes');
   await P.keyboard.press('Escape'); await sleep(700);
   ok('Teclado', 'Escape cierra y el foco vuelve al botón «Ver detalle» del mismo producto', (await P.evaluate(() => document.activeElement.getAttribute('data-detalle-codigo'))) === primer && (await P.$$('.cds-dr')).length === 0, 'foco en ' + primer);
   const ring = await P.evaluate(() => { const b = document.querySelector('.cds-fila .cds-ver'); b.focus(); const cs = getComputedStyle(b); return cs.outlineStyle + ' ' + cs.outlineWidth; });

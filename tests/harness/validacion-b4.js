@@ -82,7 +82,7 @@ const ACCION = { revisar_devoluciones: 'revisar_devoluciones', reposicion_urgent
   // ============================ B) FILAS COMPACTAS ============================
   const medirFilas = pg => pg.evaluate(() => { const hs = [...document.querySelectorAll('.cds-fila')].map(f => f.getBoundingClientRect().height); return { max: Math.max(...hs), media: hs.reduce((a, b) => a + b, 0) / hs.length, n: hs.length }; });
   const filas = await medirFilas(P); let ref3 = null; if (REF) { const r3 = await abrir(REF, true); ref3 = await medirFilas(r3.page); await r3.ctx.close(); }
-  ok('Filas', 'Las filas son más compactas que en B3 (media ' + filas.media.toFixed(1) + ' px' + (ref3 ? ' contra ' + ref3.media.toFixed(1) + ' px en B3' : '') + '; máx. ' + filas.max.toFixed(0) + ' px) sin cortar textos', ref3 ? filas.media < ref3.media - 5 && filas.max <= 90 : filas.media < 80, JSON.stringify({ b4: filas, b3: ref3 }));
+  ok('Filas', 'Las filas son más compactas que en B3 (media ' + filas.media.toFixed(1) + ' px' + (ref3 ? ' contra ' + ref3.media.toFixed(1) + ' px en B3' : '') + '; máx. ' + filas.max.toFixed(0) + ' px) sin cortar textos', ref3 ? (filas.media < ref3.media - 5 || Math.abs(filas.media - ref3.media) < 0.5) && filas.max <= 90 : filas.media < 80, /* con la referencia B3 deben ser más compactas; con una referencia B4 (C1 en adelante) deben ser idénticas */ JSON.stringify({ b4: filas, b3: ref3 }));
   const cel = await P.evaluate(() => { const tr = [...document.querySelectorAll('.cds-fila')].find(t => t.querySelector('.cds-flag')); return tr ? { flagEnAccion: !!tr.querySelector('.c-acc .cds-flag'), mas: !!document.querySelector('.cds-state-mas'), cortes: [...tr.querySelectorAll('*')].filter(e => e.children.length === 0 && e.textContent.trim() && e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).display !== 'inline').length } : null; });
   ok('Filas', 'Las etiquetas «validar por variante / muestra chica / devoluciones» siguen visibles (bajo la acción) y los «+N» secundarios también', cel && cel.flagEnAccion && cel.mas && cel.cortes === 0, JSON.stringify(cel));
 
@@ -184,11 +184,11 @@ const ACCION = { revisar_devoluciones: 'revisar_devoluciones', reposicion_urgent
     const mv = await abrir(BASE, true, w, h), M = mv.page, tag = 'Móvil ' + w + '×' + h;
     await M.evaluate(() => [...document.querySelectorAll('.cds-ver')].find(x => x.offsetParent).click()); await sleep(900);
     const t = await M.evaluate(() => { const tl = document.querySelector('.cds-tabs'), tabs = [...tl.querySelectorAll('.cds-tab')]; return { n: tabs.length, nombres: tabs.map(x => x.getAttribute('aria-label')), visibles: tabs.map(x => x.innerText.trim()), scroll: tl.scrollWidth > tl.clientWidth, h: Math.min(...tabs.map(x => x.getBoundingClientRect().height)) }; });
-    ok(tag + ' · pestañas', 'Cuatro pestañas con texto corto en pantalla y nombre accesible completo («Ingreso y rendimiento»)', t.n === 4 && t.nombres.includes('Ingreso y rendimiento') && t.visibles.includes('Ingreso') && t.h >= 43.5, JSON.stringify(t));
+    ok(tag + ' · pestañas', 'Cinco pestañas (la 5.ª, Talle y color, es de C1) con texto corto en pantalla y nombre accesible completo («Ingreso y rendimiento»)', t.n === 5 && t.nombres.includes('Ingreso y rendimiento') && t.visibles.includes('Ingreso') && t.h >= 43.5, JSON.stringify(t));
     for (const id of ['sucursales', 'motivos', 'ingreso']) { await M.click('#cdsTab_' + id); await sleep(300); }
     await M.focus('#cdsTab_resumen'); await M.keyboard.press('End'); await sleep(400);
     const vis = await M.evaluate(() => { const tl = document.querySelector('.cds-tabs').getBoundingClientRect(), s = document.querySelector('.cds-tab[aria-selected=true]').getBoundingClientRect(); return { id: document.querySelector('.cds-tab[aria-selected=true]').id, dentro: s.left >= tl.left - 1 && s.right <= tl.right + 1 }; });
-    ok(tag + ' · pestañas', 'La pestaña elegida con el teclado (Fin → Sucursales) queda completamente a la vista', vis.id === 'cdsTab_sucursales' && vis.dentro, JSON.stringify(vis));
+    ok(tag + ' · pestañas', 'La pestaña elegida con el teclado (Fin → Talle y color) queda completamente a la vista', vis.id === 'cdsTab_variantes' && vis.dentro, JSON.stringify(vis));
     await M.keyboard.press('Escape'); await sleep(400); await mv.ctx.close();
   }
 

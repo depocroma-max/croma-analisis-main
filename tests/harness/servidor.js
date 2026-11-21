@@ -26,6 +26,8 @@ const estado = { retrasoMs: 0, universo: 'normal' };
 const IR = require('./ingresos-fixture');
 const estadoIR = { escenario: 'alineado', vacio: false, error: false, retrasoMs: 0 };
 const REND = require('./rendimiento-fixture');
+const VF = require('./variantes-fixture'); // Etapa C1: /analisis/stock-ventas
+const estadoV = { n: 20, modo: 'normal', retrasoMs: 0, error: null, alterar: null, llamadas: 0, log: [] };
 const productosActuales = () => {
   const todos = argv.rendimiento ? [...REND.productosCasos(U.CENTROS, U.OPERATIVAS), ...U.universo()] : U.universo();
   if (estado.universo === 'vacio') return [];
@@ -56,6 +58,12 @@ const fakePool = {
           if (estadoIR.error) throw new Error('error simulado del harness (Ingresos recientes)');
           const recordsets = IR.consultar(texto, inputs, estadoIR);
           return { recordsets, recordset: recordsets[0] };
+        }
+        if (texto.includes('total_sin_paginar') && texto.includes('#universo')) { // GET /analisis/stock-ventas (Etapa C1): variantes sinteticas con la forma del SQL real (ver variantes-fixture.js)
+          estadoV.llamadas++; estadoV.log.push({ codigo: inputs.codigo, offset: inputs.offset, limit: inputs.limit, excluidas: VF.exclusiones(texto) });
+          if (estadoV.retrasoMs) await new Promise(res => setTimeout(res, estadoV.retrasoMs));
+          if (estadoV.error === '500' || (estadoV.error === 'pagina2' && inputs.offset > 0)) throw new Error('error simulado del harness (stock-ventas)');
+          return { recordset: VF.consultar(texto, inputs, estadoV, U.universo()) };
         }
         if (estado.retrasoMs) await new Promise(res => setTimeout(res, estado.retrasoMs));
         if (texto.includes('SELECT DISTINCT RTRIM(p.Descripcion_Marca) marca')) return { recordset: CATALOGO_FILAS };
@@ -100,6 +108,29 @@ app.get('/__h/ir', (q, s) => {
   s.json(estadoIR);
 });
 app.use('/analisis/ingresos-recientes', irRouter);
+// Control de /analisis/stock-ventas: /__h/variantes?n=20&modo=normal|unicos|conciliar&retraso=ms&error=500|pagina2|0&alterar=eco|periodo|duplicados|ajena|total|0&reset=1 (sin parametros: devuelve el estado)
+app.get('/__h/variantes', (q, s) => {
+  const x = q.query;
+  if (x.reset) { Object.assign(estadoV, { n: 20, modo: 'normal', retrasoMs: 0, error: null, alterar: null, llamadas: 0, log: [] }); }
+  if (x.n !== undefined) estadoV.n = Number(x.n); if (x.modo) estadoV.modo = x.modo; if (x.retraso !== undefined) estadoV.retrasoMs = Number(x.retraso) || 0;
+  if (x.error !== undefined) estadoV.error = x.error === '0' ? null : x.error; if (x.alterar !== undefined) estadoV.alterar = x.alterar === '0' ? null : x.alterar;
+  s.json(estadoV);
+});
+app.use('/analisis/stock-ventas', (req, res, next) => { // alteraciones de la RESPUESTA para probar la validacion del cliente (eco, periodo, repetidas, ajenas, total que cambia)
+  if (!estadoV.alterar) return next();
+  const original = res.json.bind(res);
+  res.json = b => {
+    if (b && b.ok) {
+      if (estadoV.alterar === 'eco') b.sucursales = ['0001'];
+      if (estadoV.alterar === 'periodo') b.periodo = { desde: '2000-01-01', hasta: '2000-01-02' };
+      if (estadoV.alterar === 'duplicados' && b.data.length) b.data.push({ ...b.data[0] });
+      if (estadoV.alterar === 'ajena' && b.data.length) b.data.push({ ...b.data[0], Codigo_producto: 'OTRO' });
+      if (estadoV.alterar === 'total' && b.paginacion.offset > 0) b.paginacion.total += 7;
+    }
+    return original(b);
+  };
+  next();
+});
 const rend = REND.instalar({ app, API, argv }); // antes de /analisis: intercepta Oportunidades en el escenario "publicada"
 app.use('/analisis/oportunidades/perfiles', require(API + '/routes/oportunidades-perfiles'));
 app.use('/analisis/oportunidades/simulaciones', require(API + '/routes/oportunidades-simulaciones'));

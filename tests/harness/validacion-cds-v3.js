@@ -49,7 +49,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     ok('Bandera encendida', 'Clase cds-v3, barra lateral de 216 px, 8 secciones, pestañas viejas ocultas y barra inferior oculta', info.clase && info.side !== 'none' && Math.round(info.ancho) === 216 && info.n === 8 && info.tabs === 'none' && info.tabbar === 'none', JSON.stringify(info));
     ok('Bandera encendida', 'Encabezado claro de 56 px y --ov-sticky-top = 56 px (las tablas fijas se pegan debajo)', info.h === 56 && info.sticky === '56px' && !/13, 13, 13/.test(info.topbar), info.h + ' ' + info.sticky + ' ' + info.topbar);
     ok('Bandera encendida', 'La interfaz nueva usa Geist (con respaldo del sistema)', /Geist/.test(info.fuente), info.fuente);
-    ok('Bandera encendida', 'Se descargan exactamente los 11 archivos de cds/ (seis hojas y cinco scripts)', pedidos.filter(p => /\/cds\//.test(p)).length === 11, pedidos.filter(p => /cds/.test(p)).join(','));
+    ok('Bandera encendida', 'Se descargan exactamente los 13 archivos de cds/ (siete hojas y seis scripts; variantes.css y variantes.js son de C1)', pedidos.filter(p => /\/cds\//.test(p)).length === 13, pedidos.filter(p => /cds/.test(p)).join(','));
     // espía de rtCambiarVista
     await page.evaluate(() => { window.__cv = 0; const o = window.rtCambiarVista; window.rtCambiarVista = function (v) { window.__cv++; return o.apply(this, arguments); }; });
     for (const v of VISTAS) {
