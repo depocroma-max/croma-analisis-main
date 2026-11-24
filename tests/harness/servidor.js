@@ -151,6 +151,7 @@ app.use('/analisis/stock-ventas', (req, res, next) => { // alteraciones de la RE
   next();
 });
 const rend = REND.instalar({ app, API, argv }); // antes de /analisis: intercepta Oportunidades en el escenario "publicada"
+const seg = require('./seguimientos-harness').instalar({ app, API, argv, tmp }); // D1B: /seguimientos real sobre una base temporal (solo con --seguimientos)
 app.use('/analisis/oportunidades/perfiles', require(API + '/routes/oportunidades-perfiles'));
 app.use('/analisis/oportunidades/simulaciones', require(API + '/routes/oportunidades-simulaciones'));
 app.use('/analisis/oportunidades/activaciones', require(API + '/routes/oportunidades-activaciones'));
@@ -165,7 +166,7 @@ app.get(['/', '/index.html'], (req, res) => {
   if (!req.query.sinsesion) {
     const rol = req.query.rol || 'admin';
     const exp = Math.floor(Date.now() / 1000) + (req.query.expirado ? -60 : 8 * 3600);
-    const token = jwt.sign({ id: 1, usuario: 'tester', rol, exp }, process.env.JWT_SECRET, { algorithm: 'HS256' });
+    const token = jwt.sign({ id: Number(req.query.id || 1), usuario: String(req.query.usuario || 'tester'), rol, exp }, process.env.JWT_SECRET, { algorithm: 'HS256' }); // ?id= / ?usuario= solo para probar cuentas distintas (D1B)
     inyeccion = `<script>sessionStorage.setItem('croma_token', ${JSON.stringify(token)});</script>`;
   } else inyeccion = '<script>sessionStorage.removeItem("croma_token");localStorage.removeItem("croma_token");</script>';
   // Aviso fijo SOLO del harness: identifica que los datos de Ingresos recientes son simulados y en que escenario esta.
@@ -173,6 +174,7 @@ app.get(['/', '/index.html'], (req, res) => {
   res.type('html').send(html.replace('<head>', '<head>' + inyeccion + aviso));
 });
 app.use(express.static(FRONT));
+if (argv.seguimientos) app.use(require(API + '/middlewares/errores').manejadorErrores); // el mismo manejador global que monta croma-api/index.js (JSON invalido -> 400)
 process.on('exit', () => { if (rend) rend.cerrar(); try { rotDb.close(); } catch (e) { /* ya cerrada */ } try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) { /* en uso: queda en tmpdir */ } });
 process.on('SIGINT', () => process.exit(0)); process.on('SIGTERM', () => process.exit(0));
 // Solo se relaja connect-src EN LA COPIA QUE SIRVE ESTE HARNESS (el index.html del repo y la CSP de produccion no se tocan).

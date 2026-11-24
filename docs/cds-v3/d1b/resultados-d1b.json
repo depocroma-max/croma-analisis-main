@@ -1,0 +1,684 @@
+{
+ "total": 113,
+ "fallos": 0,
+ "resultados": [
+  {
+   "grupo": "apagado",
+   "nombre": "bandera cds-v3 apagada: no se pide NINGUN archivo ni endpoint de seguimientos",
+   "ok": true,
+   "detalle": "0 pedidos"
+  },
+  {
+   "grupo": "apagado",
+   "nombre": "bandera apagada: la pestaña «Mis seguimientos» no existe y la barra superior tiene las 8 pestañas de siempre",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "apagado",
+   "nombre": "servidor con seguimientos APAGADO (404 global): ni pestaña ni estrellas, y la pantalla funciona sin errores",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "apagado",
+   "nombre": "apagado: solo se hizo el sondeo (una solicitud), sin consultas de claves",
+   "ok": true,
+   "detalle": "[\"/seguimientos/\"]"
+  },
+  {
+   "grupo": "permisos",
+   "nombre": "usuario admin NO habilitado (403): sin pestaña ni estrellas, sin errores en pantalla",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "permisos",
+   "nombre": "rol no administrador: la aplicacion ya bloquea el acceso (sin pestaña ni estrellas)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "estrellas",
+   "nombre": "las filas de la tabla tienen su estrella «Seguir» (una por producto)",
+   "ok": true,
+   "detalle": "50 estrellas"
+  },
+  {
+   "grupo": "estrellas",
+   "nombre": "el estado de todas las estrellas se pide POR LOTE (una solicitud), no una por producto",
+   "ok": true,
+   "detalle": "1 solicitudes para 50 estrellas"
+  },
+  {
+   "grupo": "estrellas",
+   "nombre": "sin seguimientos todavia: ninguna estrella marcada y cada una tiene nombre accesible",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "estrellas",
+   "nombre": "sin localStorage comercial: la unica clave de almacenamiento es la preferencia de interfaz cds-v3",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "dialogo",
+   "nombre": "el dialogo muestra los 5 niveles; desde una fila solo «Producto completo» esta disponible y los demas explican por que no",
+   "ok": true,
+   "detalle": "[\"producto✓\",\"color✗\",\"talle✗\",\"variante✗\",\"variante_sucursal✗\"]"
+  },
+  {
+   "grupo": "dialogo",
+   "nombre": "el dialogo dice con claridad que se va a seguir (producto completo + codigo + nombre)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "dialogo",
+   "nombre": "accesibilidad: rol dialog, modal, titulo asociado y foco dentro",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "dialogo",
+   "nombre": "Escape cierra el dialogo y el foco vuelve a la estrella",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "doble-clic",
+   "nombre": "doble clic en «Seguir»: se crea UN solo seguimiento",
+   "ok": true,
+   "detalle": "total 1"
+  },
+  {
+   "grupo": "doble-clic",
+   "nombre": "hubo un solo POST al servidor (el segundo clic no hace nada)",
+   "ok": true,
+   "detalle": "1 POST"
+  },
+  {
+   "grupo": "estrellas",
+   "nombre": "la estrella pasa a «marcada» y el aviso de confirmacion se anuncia",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "referencia",
+   "nombre": "producto creado desde Oportunidades: la referencia queda CAPTURADA por el servidor desde su cache (fuente, periodo, sucursales, alcance)",
+   "ok": true,
+   "detalle": "{\"fuente\":\"oportunidades_cache\",\"capturado_en\":\"2026-11-24T14:32:36.306Z\",\"valores\":{\"ventas_netas_periodo\":5,\"ventas_30d_brutas\":0,\"stock_sucursales\":10,\"stock_deposito_90\":0,\"stock_fallados\":2,\"alcance\":\"producto_compl"
+  },
+  {
+   "grupo": "referencia",
+   "nombre": "el nombre del producto lo pone el servidor (desde su cache), no el navegador",
+   "ok": true,
+   "detalle": "Producto 1003"
+  },
+  {
+   "grupo": "duplicados",
+   "nombre": "sobre un producto ya seguido el dialogo AVISA y bloquea «Seguir» (ofrece ver el existente)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "estrellas",
+   "nombre": "el detalle de un producto tiene su estrella en la cabecera",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "estrellas",
+   "nombre": "creado desde el detalle (producto 2); el foco vuelve a la estrella",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "estrellas",
+   "nombre": "cada variante (fila/tarjeta) tiene su estrella",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "dialogo",
+   "nombre": "desde una variante estan disponibles producto, color, talle y variante; «variante por sucursal» no (explica que se elige en la distribucion)",
+   "ok": true,
+   "detalle": "[\"producto✓\",\"color✓\",\"talle✓\",\"variante✓\",\"variante_sucursal✗\"]"
+  },
+  {
+   "grupo": "niveles",
+   "nombre": "quedaron creados los niveles producto, color, talle y variante",
+   "ok": true,
+   "detalle": "color,producto,producto,talle,variante"
+  },
+  {
+   "grupo": "ceros",
+   "nombre": "la variante conserva talle y color como TEXTO (ceros iniciales intactos): clave canonica V:cod:talle:color",
+   "ok": true,
+   "detalle": "V:1008:38:03 · color \"03\""
+  },
+  {
+   "grupo": "referencia",
+   "nombre": "a nivel variante/color/talle la referencia NO se deriva: no_disponible con motivo «alcance_no_cubierto» y el nombre del producto se conserva",
+   "ok": true,
+   "detalle": "[[\"talle\",\"alcance_no_cubierto\",\"Producto 1008\"],[\"color\",\"alcance_no_cubierto\",\"Producto 1008\"],[\"variante\",\"alcance_no_cubierto\",\"Producto 1008\"]]"
+  },
+  {
+   "grupo": "duplicados",
+   "nombre": "al elegir un nivel que ya se sigue el dialogo lo dice; el boton queda bloqueado",
+   "ok": true,
+   "detalle": "Ya seguís esto con un seguimiento activo. No se crea otro.\nVer seguimiento"
+  },
+  {
+   "grupo": "estrellas",
+   "nombre": "la distribucion por sucursal tiene una estrella por cada sucursal operativa (5), sin Cipo (0009)",
+   "ok": true,
+   "detalle": "5"
+  },
+  {
+   "grupo": "dialogo",
+   "nombre": "desde una sucursal estan disponibles los 5 niveles y el preseleccionado es «variante por sucursal»",
+   "ok": true,
+   "detalle": "[\"producto\",\"color\",\"talle\",\"variante\",\"variante_sucursal●\"]"
+  },
+  {
+   "grupo": "niveles",
+   "nombre": "quedo creado el quinto nivel: variante por sucursal (centro operativo)",
+   "ok": true,
+   "detalle": "VS:1008:39:03:0005"
+  },
+  {
+   "grupo": "seguridad",
+   "nombre": "Cipo (0009) rechazada por el servidor para seguimientos nuevos (400)",
+   "ok": true,
+   "detalle": "CENTRO_NO_SEGUIBLE"
+  },
+  {
+   "grupo": "seguridad",
+   "nombre": "valores comerciales enviados por el navegador: rechazados (400, CAMPO_DEL_SERVIDOR)",
+   "ok": true,
+   "detalle": "CAMPO_DEL_SERVIDOR"
+  },
+  {
+   "grupo": "seguridad",
+   "nombre": "propietario enviado por el navegador: rechazado (400)",
+   "ok": true,
+   "detalle": "PROPIETARIO_NO_PERMITIDO"
+  },
+  {
+   "grupo": "mis-seguimientos",
+   "nombre": "la seccion existe en la navegacion lateral y muestra el resumen de activos y finalizados",
+   "ok": true,
+   "detalle": "6 Activos | 0 Finalizados"
+  },
+  {
+   "grupo": "mis-seguimientos",
+   "nombre": "lista con 6 seguimientos (tabla) con inicio, motivo, estado y referencia",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "mis-seguimientos",
+   "nombre": "sin graficos historicos ni novedades ficticias (canvas/svg de datos/«evolucion»)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "filtros",
+   "nombre": "buscar por codigo filtra la lista",
+   "ok": true,
+   "detalle": "1 filas"
+  },
+  {
+   "grupo": "filtros",
+   "nombre": "buscar por nombre encuentra el producto",
+   "ok": true,
+   "detalle": "Producto"
+  },
+  {
+   "grupo": "filtros",
+   "nombre": "filtrar por nivel «Variante exacta»",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "filtros",
+   "nombre": "filtrar por sucursal",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "filtros",
+   "nombre": "sin coincidencias: estado vacio explicado (no una tabla en blanco)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "detalle",
+   "nombre": "el detalle muestra informacion inicial, motivo, referencia al iniciar (valores, fuente, periodo), notas e historial",
+   "ok": true,
+   "detalle": "Producto 1003  1003 · NIKE · REMERAS · MANGA CORTA  Activo Producto Información inicial Qué se sigue Producto completo 1"
+  },
+  {
+   "grupo": "notas",
+   "nombre": "una nota con doble clic se guarda UNA sola vez y aparece en el historial",
+   "ok": true,
+   "detalle": "1 notas;  | ades (datos ya calculados y vigentes) Capturado 24/11/2026, 11:32 a. m. Agregar una nota Agregar nota Historial de acciones Nota  Primera nota de prueba  tester · 24/11/2026, 11:32 a. m. Seguimiento creado tester · 24/11/2026, 11:32 a. m. Finalizar seguimiento"
+  },
+  {
+   "grupo": "motivo",
+   "nombre": "editar el motivo funciona, sube la version y queda en el historial",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "412",
+   "nombre": "version desactualizada: el servidor responde 412 y la pantalla lo explica y recarga la version vigente (sin pisar el cambio ajeno)",
+   "ok": true,
+   "detalle": "Este seguimiento cambió en otra pestaña o sesión. Se cargó la versión actual: re"
+  },
+  {
+   "grupo": "errores",
+   "nombre": "428 sin If-Match",
+   "ok": true,
+   "detalle": "VERSION_REQUERIDA"
+  },
+  {
+   "grupo": "errores",
+   "nombre": "412 con version vieja (API)",
+   "ok": true,
+   "detalle": "VERSION_DESACTUALIZADA"
+  },
+  {
+   "grupo": "finalizar",
+   "nombre": "finalizar pide confirmacion con motivo de cierre opcional",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "finalizar",
+   "nombre": "finalizado: estado, quien/cuando y motivo de cierre; el historial lo registra",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "finalizar",
+   "nombre": "en pantalla: pildora «Finalizado» y boton «Reabrir» (ya no «Finalizar»)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "reabrir",
+   "nombre": "reabrir devuelve el seguimiento a activo y lo registra en el historial",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "accesibilidad",
+   "nombre": "Escape cierra el detalle y el foco vuelve al boton «Ver» de la fila",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "mis-seguimientos",
+   "nombre": "el resumen se actualiza al finalizar (5 activos / 1 finalizado)",
+   "ok": true,
+   "detalle": "5 Activos | 1 Finalizados"
+  },
+  {
+   "grupo": "filtros",
+   "nombre": "el recuadro «Finalizados» filtra la lista",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "usuarios",
+   "nombre": "otra persona ve SOLO lo suyo (lista vacia) y sus estrellas no heredan las marcas de tester",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "usuarios",
+   "nombre": "la estrella del producto que tester sigue NO aparece marcada para otra persona",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "usuarios",
+   "nombre": "otra persona puede seguir el MISMO producto que tester (seguimientos personales, sin choque)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "usuarios",
+   "nombre": "quedo un seguimiento propio de la otra persona",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "admin-lee",
+   "nombre": "el administrador puede listar seguimientos ajenos (modo «todos») con aviso de solo lectura",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "admin-lee",
+   "nombre": "detalle ajeno: SOLO lectura (sin editar motivo, sin notas, sin finalizar/reabrir) y avisa que la consulta queda registrada",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "admin-lee",
+   "nombre": "la lectura de un seguimiento ajeno quedo REGISTRADA en el servidor (seg_acceso_admin)",
+   "ok": true,
+   "detalle": "1 registros"
+  },
+  {
+   "grupo": "idor",
+   "nombre": "IDOR: modificar el seguimiento de otra persona -> 403 SOLO_LECTURA_AJENO",
+   "ok": true,
+   "detalle": "403 SOLO_LECTURA_AJENO"
+  },
+  {
+   "grupo": "idor",
+   "nombre": "IDOR POST notas sobre un seguimiento ajeno -> 403",
+   "ok": true,
+   "detalle": "403"
+  },
+  {
+   "grupo": "idor",
+   "nombre": "IDOR POST finalizar sobre un seguimiento ajeno -> 403",
+   "ok": true,
+   "detalle": "403"
+  },
+  {
+   "grupo": "idor",
+   "nombre": "IDOR POST reabrir sobre un seguimiento ajeno -> 403",
+   "ok": true,
+   "detalle": "403"
+  },
+  {
+   "grupo": "errores",
+   "nombre": "404 seguimiento inexistente",
+   "ok": true,
+   "detalle": "NO_ENCONTRADO"
+  },
+  {
+   "grupo": "errores",
+   "nombre": "404 en pantalla: «No se encontró el seguimiento» (sin tecnicismos)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "errores",
+   "nombre": "401 sin token",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "errores",
+   "nombre": "401 token vencido",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "errores",
+   "nombre": "403 usuario admin no habilitado (USUARIO_NO_HABILITADO)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "errores",
+   "nombre": "403 rol no administrador",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "errores",
+   "nombre": "400 JSON mal formado (JSON_INVALIDO), sin detalles internos",
+   "ok": true,
+   "detalle": "400 {\"ok\":false,\"code\":\"JSON_INVALIDO\",\"error\":\"El cuerpo de la solicitud no es un JSON valido\"}"
+  },
+  {
+   "grupo": "errores",
+   "nombre": "400 nivel inexistente",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "errores",
+   "nombre": "409 duplicado (YA_SEGUIDO) con el id existente",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "errores",
+   "nombre": "409 en pantalla: el dialogo avisa que ya existe, ofrece «Ver seguimiento» y no se pierde la ventana",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "errores",
+   "nombre": "429 con Retry-After y codigo LIMITE_ESCRITURAS",
+   "ok": true,
+   "detalle": "1"
+  },
+  {
+   "grupo": "errores",
+   "nombre": "el limitador de escrituras corta el exceso (429) por usuario",
+   "ok": true,
+   "detalle": "12 rechazos"
+  },
+  {
+   "grupo": "errores",
+   "nombre": "429 en pantalla: mensaje claro de espera y el texto de la nota NO se pierde",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "errores",
+   "nombre": "401 TOKEN_REVOCADO tras revocar la sesion (en el servidor, sin esperar al vencimiento)",
+   "ok": true,
+   "detalle": "401 TOKEN_REVOCADO"
+  },
+  {
+   "grupo": "errores",
+   "nombre": "401 en pantalla: mensaje «sesión revocada» sin errores de consola no controlados",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "503",
+   "nombre": "503 (base no disponible): la seccion muestra un estado de error explicado con «Reintentar» (no una pantalla en blanco)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "503",
+   "nombre": "al volver la base, «Reintentar» recupera la seccion",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "copias",
+   "nombre": "sin copia externa verificada (compuerta de produccion): crear devuelve 503 SIN_COPIA_EXTERNA_VERIFICADA y la pantalla lo explica; no se crea nada",
+   "ok": true,
+   "detalle": "Las escrituras están en pausa hasta que haya una copia de seguridad externa verificada. Podés consul"
+  },
+  {
+   "grupo": "copias",
+   "nombre": "con la compuerta cerrada las LECTURAS siguen funcionando",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "referencia",
+   "nombre": "si la cache de Oportunidades no tiene esos datos el seguimiento se guarda igual con referencia no_disponible y el motivo (sin consultas pesadas)",
+   "ok": true,
+   "detalle": "cache_no_disponible"
+  },
+  {
+   "grupo": "referencia",
+   "nombre": "sin contexto de periodo/sucursales: no_disponible (contexto_incompleto)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "referencia",
+   "nombre": "el detalle explica en lenguaje claro por que no hay referencia",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "consola",
+   "nombre": "escritorio: sin errores de JavaScript en toda la sesion",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-tablet",
+   "nombre": "tablet: sin scroll horizontal en Oportunidades con estrellas",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-tablet",
+   "nombre": "tablet: estrellas tactiles de al menos 44 px",
+   "ok": true,
+   "detalle": "min 44"
+  },
+  {
+   "grupo": "responsive-tablet",
+   "nombre": "tablet: el dialogo cabe en pantalla (sin scroll horizontal) y los niveles son tocables",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-tablet",
+   "nombre": "tablet: «Mis seguimientos» sin scroll horizontal",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-tablet",
+   "nombre": "tablet: la lista sigue siendo tabla legible",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-tablet",
+   "nombre": "tablet: el detalle ocupa la pantalla sin desbordar",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "accesibilidad-tablet",
+   "nombre": "tablet: el foco queda atrapado dentro del detalle (Tab ciclico)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "consola",
+   "nombre": "tablet: sin errores de JavaScript",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-movil",
+   "nombre": "movil: sin scroll horizontal en Oportunidades con estrellas",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-movil",
+   "nombre": "movil: estrellas tactiles de al menos 44 px",
+   "ok": true,
+   "detalle": "min 44"
+  },
+  {
+   "grupo": "responsive-movil",
+   "nombre": "movil: el dialogo cabe en pantalla (sin scroll horizontal) y los niveles son tocables",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-movil",
+   "nombre": "movil: «Mis seguimientos» sin scroll horizontal",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-movil",
+   "nombre": "movil: la lista se muestra como TARJETAS (la tabla se oculta)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "responsive-movil",
+   "nombre": "movil: el detalle ocupa la pantalla sin desbordar",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "accesibilidad-movil",
+   "nombre": "movil: el foco queda atrapado dentro del detalle (Tab ciclico)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "consola",
+   "nombre": "movil: sin errores de JavaScript",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "accesibilidad",
+   "nombre": "Mis seguimientos: controles con etiqueta, botones con nombre, tablas con caption y scope, seccion con titulo",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "accesibilidad",
+   "nombre": "contraste WCAG AA (≥ 4.5:1) del texto de Mis seguimientos",
+   "ok": true,
+   "detalle": "min 5.83 · "
+  },
+  {
+   "grupo": "reinicio",
+   "nombre": "instancia independiente del backend (base temporal propia) levantada",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "reinicio",
+   "nombre": "backend reiniciado: el seguimiento, su version, la nota y el historial siguen ahi",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "reinicio",
+   "nombre": "tras el reinicio la interfaz vuelve a listar el seguimiento (el navegador no guardaba nada)",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "grupo": "copias",
+   "nombre": "copia verificada con copia externa re-verificada (script del backend), codigo de salida 0",
+   "ok": true,
+   "detalle": "{   \"plan\": {     \"base\": \"C:\\\\Users\\\\Sentey\\\\AppData\\\\Local\\\\Temp\\\\croma-d1b-reinicio-7UgOUV\\\\seguimientos.db\",     \"copias\": \"C:\\\\Users\\\\Sentey\\\\AppData\\\\Loca"
+  },
+  {
+   "grupo": "copias",
+   "nombre": "restauracion desde la copia EXTERNA a un archivo NUEVO: los datos coinciden (seguimiento y nota)",
+   "ok": true,
+   "detalle": "{   \"origen\": \"C:\\\\Users\\\\Sentey\\\\AppData\\\\Local\\\\Temp\\\\croma-d1b-reinicio-7UgOUV\\\\copias-externas\\\\seguimientos-20261124T143453Z.db\",   \"de"
+  },
+  {
+   "grupo": "copias",
+   "nombre": "restaurar NUNCA pisa un archivo existente",
+   "ok": true,
+   "detalle": ""
+  }
+ ]
+}

@@ -28,3 +28,13 @@ Las seis decisiones funcionales aprobadas (búsqueda por nombre, Aplicar/Limpiar
 
 ## Pruebas
 `node --test tests/*.test.js` (incluye `tests/cds-v3.test.js`: bandera y guardas estáticas) y, con el harness levantado (`node tests/harness/servidor.js --puerto=8797`), `node tests/harness/validacion-cds-v3.js` (72 comprobaciones) y `node tests/harness/capturas-cds-v3.js` (capturas y huella del DOM).
+
+## Etapa D1B · «Mis seguimientos» (interfaz)
+Solo con la bandera `cds-v3`. Archivos: `seguimientos-api.js` (lógica y cliente HTTP, sin DOM, probado en Node), `seguimientos.js` (interfaz) y `seguimientos.css`.
+- **Se activa solo si el servidor lo habilita para la persona**: al cargar hace un sondeo (`GET /seguimientos/?limit=1`). Con el interruptor del servidor apagado (404), sin permiso (401/403) o sin sesión, **no agrega nada** (ni pestaña ni estrellas). Con 503 muestra la sección con un estado de error y «Reintentar».
+- **Estrella «Seguir»** (`.cds-seg-estrella`) en filas, tarjetas y cabecera del detalle de Oportunidades, variantes por talle y color y distribución por sucursal. Se engancha a los atributos `data-cds-*` de C3 con un `MutationObserver`: no modifica esas vistas. El estado de todas las estrellas visibles se pide **por lote** (`GET /seguimientos/claves`, máximo 100 claves por solicitud).
+- **Diálogo** de alta: 5 niveles (los no disponibles desde ese contexto explican por qué), motivo opcional, aviso de seguimiento ya existente (bloquea) o de nivel superior (no bloquea), protección de doble clic (botón deshabilitado + clave de idempotencia que cambia solo si cambia el pedido), errores del servidor traducidos.
+- **Sección «Mis seguimientos»** (grupo Decisiones): resumen de activos/finalizados, búsqueda por código y nombre, filtros por nivel, sucursal y propietario («todos» = solo lectura), tabla en escritorio y tarjetas en móvil, paginación. Sin gráficos ni novedades: la evolución real es D2.
+- **Detalle**: información inicial, referencia al iniciar (o el motivo por el que no está disponible), notas, historial, editar motivo, finalizar (con confirmación) y reabrir. Respeta versiones (`If-Match`, 412 recarga la versión vigente sin perder el texto escrito) e idempotencia. En seguimientos ajenos es solo lectura.
+- **No usa `localStorage`** para nada comercial. Los permisos y la sesión los valida el servidor.
+- Pruebas: `node --test tests/cds-seguimientos-d1b.test.js` (unitarias) y, con el harness `--seguimientos` contra el backend real de la rama `seguimientos-d1a`, `node tests/harness/validacion-d1b.js` (E2E, 113 comprobaciones). Ver `docs/cds-v3/d1b/`.

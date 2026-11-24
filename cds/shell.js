@@ -10,16 +10,16 @@
   var VISTAS = {
     'dashboard': { t: 'Dashboard', g: 'Análisis', i: 'grid' }, 'marcas': { t: 'Marcas', g: 'Análisis', i: 'tag' }, 'productos': { t: 'Productos', g: 'Análisis', i: 'box' },
     'talles-colores': { t: 'Talles y colores', g: 'Análisis', i: 'ruler' }, 'stock-ventas': { t: 'Stock Ventas', g: 'Análisis', i: 'chart' },
-    'oportunidades': { t: 'Oportunidades', g: 'Decisiones', i: 'target' }, 'reglas': { t: 'Reglas', g: 'Decisiones', i: 'scale' }, 'rotaciones': { t: 'Rotaciones', g: 'Decisiones', i: 'swap' },
+    'oportunidades': { t: 'Oportunidades', g: 'Decisiones', i: 'target' }, 'seguimientos': { t: 'Mis seguimientos', g: 'Decisiones', i: 'star' }, 'reglas': { t: 'Reglas', g: 'Decisiones', i: 'scale' }, 'rotaciones': { t: 'Rotaciones', g: 'Decisiones', i: 'swap' },
   };
-  var ORDEN = ['dashboard', 'marcas', 'productos', 'talles-colores', 'stock-ventas', 'oportunidades', 'reglas', 'rotaciones'];
+  var ORDEN = ['dashboard', 'marcas', 'productos', 'talles-colores', 'stock-ventas', 'oportunidades', 'seguimientos', 'reglas', 'rotaciones']; // 'seguimientos' (D1B) solo aparece si la pestaña existe (el servidor lo habilita)
   var INFERIOR = ['dashboard', 'productos', 'oportunidades', 'rotaciones']; // + «Más» con el resto
   var ICONOS = {
     grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
     tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.2"/>', box: '<path d="M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7M12 11v10"/>',
     ruler: '<path d="M3 17L17 3l4 4L7 21z"/><path d="M8 12l2 2M11 9l2 2M14 6l2 2"/>', chart: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
     target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>', scale: '<path d="M12 3v18M6 21h12M5 8h14M5 8l-3 7a3 3 0 0 0 6 0zM19 8l-3 7a3 3 0 0 0 6 0z"/>',
-    swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>', more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    swap: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>', star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>', more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>',
   };
   function icono(n) { var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('class', 'cds-i'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); s.setAttribute('focusable', 'false'); s.innerHTML = ICONOS[n]; return s; } // innerHTML: constante propia, nunca datos
   function el(tag, props) {
