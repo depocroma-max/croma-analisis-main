@@ -25,6 +25,13 @@
   --cds-side-muted:#8A92A6;         /* 5.9:1 */
   --cds-side-on:#F6F7FB;
   --cds-side-warn:#F2C46B;          /* aviso sobre fondo oscuro (11:1) */
+  --cds-side-risk:#FF9E96;          /* alerta sobre fondo oscuro (8.3:1 sobre --cds-side-2) */
+  /* ---- Navegacion superior oscura: encabezado = --cds-side (#12151C); barra de secciones y barra inferior movil = --cds-nav-bg ---- */
+  --cds-nav-bg:#232832;             /* barra de secciones: texto --cds-side-ink 6.8:1, iconos --cds-side-muted 4.7:1 */
+  --cds-nav-hover:#2D3340;          /* seccion bajo el puntero */
+  --cds-nav-active:#555D6B;         /* seccion activa: texto --cds-side-on 6.2:1 */
+  --cds-nav-rule:#313745;           /* bordes discretos entre encabezado, barra y controles */
+  --cds-nav-rule-strong:#4A5260;    /* borde de controles y separadores sobre fondo oscuro */
 
   /* ---- Estado comercial (cada uno: punto/gráfico, texto, fondo tenue) ---- */
   --cds-st-reposicion:#D6281C;   --cds-st-reposicion-ink:var(--cds-red-ink);   --cds-st-reposicion-bg:var(--cds-red-tint);

@@ -1,7 +1,9 @@
 /* CROMA DESIGN SYSTEM 2.0 · estructura de la aplicacion. Se carga SOLO con la bandera cds-v3 encendida.
    Todo va bajo html.cds-v3: sin la bandera este archivo no se descarga y, aunque se descargara, no cambiaria nada.
    Navegacion HORIZONTAL SUPERIOR (sin barra lateral): dos niveles. Arriba el encabezado existente (.topbar: marca, estado de actualizacion,
-   sucursales, Actualizar, sesion y Hub) que se desplaza con la pagina; debajo la barra de secciones (#cdsTopNav) que queda fija. En movil
+   sucursales, Actualizar, sesion y Hub) que se desplaza con la pagina; debajo la barra de secciones (#cdsTopNav) que queda fija.
+   Tema OSCURO de la navegacion: encabezado --cds-side (#12151C), barra de secciones y barra inferior movil --cds-nav-bg (#232832), seccion activa
+   --cds-nav-active (#555D6B); el contenido y las tarjetas siguen claros. En movil
    (≤ 760 px) vuelve la barra inferior y el encabezado fijo. La barra de secciones es DOM NUEVO (cds/shell.js) que delega en las pestañas
    existentes (#rtTabs); las vistas (#rtPanelHost) no se tocan. */
 
@@ -11,25 +13,31 @@ html.cds-v3 #rtTabs{display:none} /* las pestañas viejas siguen existiendo y fu
 html.cds-v3 #rtPanelHost:focus{outline:none}
 
 /* ---- Marca ---- */
-.cds-brand{display:flex;align-items:center;gap:var(--cds-s-3);color:var(--cds-ink);font-weight:var(--cds-fw-bold);font-size:var(--cds-fs-lg);line-height:1.1;white-space:nowrap}
+.cds-brand{display:flex;align-items:center;gap:var(--cds-s-3);color:var(--cds-side-on);font-weight:var(--cds-fw-bold);font-size:var(--cds-fs-lg);line-height:1.1;white-space:nowrap}
 .cds-brand img{width:24px;height:24px;object-fit:contain}
-.cds-brand small{display:block;font-weight:var(--cds-fw-regular);font-size:var(--cds-fs-xs);color:var(--cds-muted)}
+.cds-brand small{display:block;font-weight:var(--cds-fw-regular);font-size:var(--cds-fs-xs);color:var(--cds-side-muted)}
 
 /* ---- Encabezado: la barra superior existente con piel nueva ---- */
-html.cds-v3 .topbar{height:var(--cds-head-h);padding:0 var(--cds-s-6);gap:var(--cds-s-3);background:var(--cds-paper);backdrop-filter:none;box-shadow:none;border-bottom:1px solid var(--cds-rule);color:var(--cds-ink)}
+html.cds-v3 .topbar{height:var(--cds-head-h);padding:0 var(--cds-s-6);gap:var(--cds-s-3);background:var(--cds-side);backdrop-filter:none;box-shadow:none;border-bottom:1px solid var(--cds-nav-rule);color:var(--cds-side-on)}
 html.cds-v3 .topbar .brand{display:none}
-html.cds-v3 .cds-crumb{color:var(--cds-muted);font-size:var(--cds-fs-sm);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
-html.cds-v3 .cds-crumb b{color:var(--cds-ink);font-weight:var(--cds-fw-semi)}
-html.cds-v3 .topbar .sesion-chip{background:var(--cds-canvas);border:1px solid var(--cds-rule);border-radius:var(--cds-r-pill)}
-html.cds-v3 .topbar .sesion-nombre{color:var(--cds-ink)}
-html.cds-v3 .topbar .sesion-logout{background:var(--cds-paper);border-color:var(--cds-rule-strong);color:var(--cds-ink-2)}
-html.cds-v3 .topbar .sesion-logout:hover{background:var(--cds-red-600);border-color:var(--cds-red-600);color:var(--cds-paper)}
-html.cds-v3 .topbar .topbar-icon-btn{border-color:var(--cds-rule-strong);background:var(--cds-paper);color:var(--cds-ink-2);transform:none}
-html.cds-v3 .topbar .topbar-icon-btn:hover{background:var(--cds-canvas);color:var(--cds-ink);border-color:var(--cds-ink);transform:none}
-html.cds-v3 .rt-top-acc .rt-status .fname{color:var(--cds-muted)}
-html.cds-v3 .rt-top-acc .rt-btn-actualizar{background:var(--cds-paper);border-color:var(--cds-rule-strong);color:var(--cds-ink)}
-html.cds-v3 .rt-top-acc .rt-btn-actualizar:hover{background:var(--cds-canvas);border-color:var(--cds-ink)}
-html.cds-v3 .topbar :where(a,button,input,select):focus-visible{outline:2px solid var(--cds-focus);outline-offset:2px}
+html.cds-v3 .cds-crumb{color:var(--cds-side-muted);font-size:var(--cds-fs-sm);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+html.cds-v3 .cds-crumb b{color:var(--cds-side-on);font-weight:var(--cds-fw-semi)}
+html.cds-v3 .topbar .sesion-chip{background:var(--cds-side-2);border:1px solid var(--cds-nav-rule);border-radius:var(--cds-r-pill)}
+html.cds-v3 .topbar .sesion-nombre{color:var(--cds-side-on)}
+html.cds-v3 .topbar .sesion-logout{background:transparent;border-color:var(--cds-nav-rule-strong);color:var(--cds-side-ink)}
+html.cds-v3 .topbar .sesion-logout:hover{background:var(--cds-red-600);border-color:var(--cds-red-600);color:var(--cds-side-on)}
+html.cds-v3 .topbar .topbar-icon-btn{border-color:var(--cds-nav-rule-strong);background:transparent;color:var(--cds-side-ink);transform:none}
+html.cds-v3 .topbar .topbar-icon-btn:hover{background:var(--cds-nav-hover);color:var(--cds-side-on);border-color:var(--cds-side-muted);transform:none}
+html.cds-v3 .rt-top-acc .rt-status .fname{color:var(--cds-side-muted)}
+html.cds-v3 .topbar .rt-status-dot{box-shadow:0 0 0 3px var(--cds-side-2)}
+html.cds-v3 .rt-top-acc .rt-btn-actualizar{background:var(--cds-side-2);border-color:var(--cds-nav-rule-strong);color:var(--cds-side-on)}
+html.cds-v3 .rt-top-acc .rt-btn-actualizar:hover{background:var(--cds-nav-hover);border-color:var(--cds-side-muted)}
+/* Sucursales en el encabezado oscuro: neutro; ambar si la seleccion es parcial y rojo claro si hay una alerta (igual que en la version clara) */
+html.cds-v3 .topbar .rt-btn-sucursales{background:var(--cds-side-2);border-color:var(--cds-nav-rule-strong);color:var(--cds-side-on)}
+html.cds-v3 .topbar .rt-btn-sucursales:hover{background:var(--cds-nav-hover);border-color:var(--cds-side-muted)}
+html.cds-v3 .topbar .rt-btn-sucursales.rt-suc-parcial{background:var(--cds-side-2);border-color:var(--cds-side-warn);color:var(--cds-side-warn)}
+html.cds-v3 .topbar .rt-btn-sucursales.rt-suc-alerta{background:var(--cds-side-2);border-color:var(--cds-side-risk);color:var(--cds-side-risk)}
+html.cds-v3 .topbar :where(a,button,input,select):focus-visible{outline:2px solid var(--cds-focus-on-dark);outline-offset:2px}
 
 /* ---- Barra de secciones (escritorio y tablet) ---- */
 .cds-topnav{display:none}
@@ -39,19 +47,19 @@ html.cds-v3 .topbar :where(a,button,input,select):focus-visible{outline:2px soli
   html.cds-v3{--cds-sticky-off:var(--cds-nav-h);--ov-sticky-top:var(--cds-nav-h)} /* las tablas con encabezado fijo se pegan debajo de la barra de secciones */
   html.cds-v3 .topbar{position:relative;top:auto;z-index:35} /* se desplaza con la pagina; por encima de la barra de secciones para que sus paneles (Sucursales) la tapen */
   html.cds-v3 .cds-crumb{display:none}
-  .cds-topnav{display:block;position:sticky;top:0;z-index:var(--cds-z-head);height:var(--cds-nav-h);background:var(--cds-paper);border-bottom:1px solid var(--cds-rule);padding:0 var(--cds-s-6)}
+  .cds-topnav{display:block;position:sticky;top:0;z-index:var(--cds-z-head);height:var(--cds-nav-h);background:var(--cds-nav-bg);border-bottom:1px solid var(--cds-nav-rule);padding:0 var(--cds-s-6)}
   .cds-topnav-lista{display:flex;align-items:center;gap:var(--cds-s-1);height:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior-x:contain;scroll-behavior:auto;padding-block:var(--cds-s-1)}
   .cds-topnav-lista::-webkit-scrollbar{display:none}
   .cds-topnav-item{flex:0 0 auto}
   .cds-topnav-item[hidden],.cds-topnav-sep[hidden]{display:none}
-  .cds-topnav-sep{flex:0 0 1px;align-self:center;height:20px;background:var(--cds-rule-strong);margin:0 var(--cds-s-2);opacity:.6}
-  .cds-nav{display:flex;align-items:center;gap:var(--cds-s-2);height:var(--cds-ctl);padding:0 var(--cds-s-3);border:1px solid transparent;border-radius:var(--cds-r-md);background:transparent;color:var(--cds-ink-2);font-weight:var(--cds-fw-medium);font-size:var(--cds-fs-md);white-space:nowrap;cursor:pointer}
-  .cds-nav .cds-i{width:16px;height:16px;flex:0 0 16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--cds-muted)}
-  @media (hover:hover){.cds-nav:hover{background:var(--cds-canvas-2);color:var(--cds-ink)}}
-  .cds-nav:active{background:var(--cds-canvas-2)}
-  .cds-nav[aria-current=page]{background:var(--cds-ink);color:var(--cds-paper);font-weight:var(--cds-fw-semi)}
-  .cds-nav[aria-current=page] .cds-i{color:var(--cds-paper)}
-  .cds-nav:focus-visible{outline:2px solid var(--cds-focus);outline-offset:2px}
+  .cds-topnav-sep{flex:0 0 1px;align-self:center;height:20px;background:var(--cds-nav-rule-strong);margin:0 var(--cds-s-2)}
+  .cds-nav{display:flex;align-items:center;gap:var(--cds-s-2);height:var(--cds-ctl);padding:0 var(--cds-s-3);border:1px solid transparent;border-radius:var(--cds-r-md);background:transparent;color:var(--cds-side-ink);font-weight:var(--cds-fw-medium);font-size:var(--cds-fs-md);white-space:nowrap;cursor:pointer}
+  .cds-nav .cds-i{width:16px;height:16px;flex:0 0 16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--cds-side-muted)}
+  @media (hover:hover){.cds-nav:hover{background:var(--cds-nav-hover);color:var(--cds-side-on)}}
+  .cds-nav:active{background:var(--cds-nav-hover)}
+  .cds-nav[aria-current=page]{background:var(--cds-nav-active);color:var(--cds-side-on);font-weight:var(--cds-fw-semi)}
+  .cds-nav[aria-current=page] .cds-i{color:var(--cds-side-on)}
+  .cds-nav:focus-visible{outline:2px solid var(--cds-focus-on-dark);outline-offset:2px}
   .cds-nav[hidden]{display:none}
 }
 
@@ -83,9 +91,10 @@ html.cds-v3[data-cds-vista="stock-ventas"] .wrap{max-width:none;margin-inline:0}
   html.cds-v3 .cds-crumb-g{display:none}
   html.cds-v3 .cds-crumb{font-size:var(--cds-fs-lg)}
   html.cds-v3 .wrap{padding:var(--cds-s-3) var(--cds-s-3) calc(var(--cds-tabbar-h) + var(--cds-s-6))}
-  .cds-tabbar{display:flex;gap:var(--cds-s-1);position:fixed;left:0;right:0;bottom:0;height:var(--cds-tabbar-h);background:var(--cds-side);z-index:95;padding:var(--cds-s-1) var(--cds-s-2) calc(var(--cds-s-1) + env(safe-area-inset-bottom))}
+  .cds-tabbar{display:flex;gap:var(--cds-s-1);position:fixed;left:0;right:0;bottom:0;height:var(--cds-tabbar-h);background:var(--cds-nav-bg);border-top:1px solid var(--cds-nav-rule);z-index:95;padding:var(--cds-s-1) var(--cds-s-2) calc(var(--cds-s-1) + env(safe-area-inset-bottom))}
   .cds-tabbar button{flex:1;min-width:0;border:0;background:transparent;color:var(--cds-side-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--cds-s-0);font-size:var(--cds-fs-xs);font-weight:var(--cds-fw-medium);min-height:var(--cds-hit);border-radius:var(--cds-r-md);padding:var(--cds-s-1) 0}
-  .cds-tabbar button[aria-current=page]{flex:2.2;color:var(--cds-side-on);background:var(--cds-side-2)}
+  .cds-tabbar button[aria-current=page]{flex:2.2;color:var(--cds-side-on);background:var(--cds-nav-active)}
+  .cds-tabbar button:focus-visible{outline:2px solid var(--cds-focus-on-dark);outline-offset:-2px}
   .cds-tabbar .cds-tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 }
 @media (max-width:420px){.cds-tabbar button:not([aria-current=page]) .cds-tl{display:none}}

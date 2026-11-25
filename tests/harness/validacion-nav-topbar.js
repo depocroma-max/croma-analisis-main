@@ -49,7 +49,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     ok('Barra superior', T('Sin barra lateral: el área de trabajo ocupa todo el ancho (padding lateral 0) y la barra de secciones mide 48 px de alto y todo el ancho'), i.sinLateral && i.appPad === 0 && i.navAlto === 48 && i.navAncho === i.vw, JSON.stringify({ pad: i.appPad, alto: i.navAlto, ancho: i.navAncho }));
     ok('Barra superior', T('Muestra las 8 secciones (Dashboard, Marcas, Productos, Talles y colores, Stock Ventas, Oportunidades, Reglas, Rotaciones) y «Mis seguimientos» queda oculto mientras el servidor no lo habilita'), i.items.length === 8 && JSON.stringify(i.items) === JSON.stringify(['Dashboard', 'Marcas', 'Productos', 'Talles y colores', 'Stock Ventas', 'Oportunidades', 'Reglas', 'Rotaciones']) && i.seg.every(Boolean), i.items.join(',') + ' seg-oculto:' + i.seg.join());
     ok('Barra superior', T('La lista de secciones entra completa sin desplazarse' + (w < 1100 ? ' (o, si no entra, se desplaza dentro de la barra)' : '')), !i.desbordaLista || w < 1100, 'desborda=' + i.desbordaLista);
-    ok('Barra superior', T('La sección activa se destaca (fondo oscuro, texto claro, aria-current) y queda visible dentro de la barra'), i.activo === 'Oportunidades' && /20, 23, 31/.test(i.activoBg) && /253, 253, 254/.test(i.activoColor) && i.activoDentro, JSON.stringify({ a: i.activo, bg: i.activoBg, c: i.activoColor, v: i.activoDentro }));
+    ok('Barra superior', T('La sección activa se destaca (fondo gris #555D6B, texto claro, aria-current) y queda visible dentro de la barra'), i.activo === 'Oportunidades' && /85, 93, 107/.test(i.activoBg) && /246, 247, 251/.test(i.activoColor) && i.activoDentro, JSON.stringify({ a: i.activo, bg: i.activoBg, c: i.activoColor, v: i.activoDentro }));
     ok('Encabezado', T('Marca, estado de actualización (en el encabezado y visible cuando tiene texto), sucursales, Actualizar, usuario, cerrar sesión y Hub están visibles y dentro de la ventana'), i.marca && i.estado && i.sucursales && i.actualizar && i.usuario && i.salir && i.hub, JSON.stringify({ m: i.marca, e: i.estado, s: i.sucursales, a: i.actualizar, u: i.usuario, x: i.salir, h: i.hub }));
     ok('Responsive', T('Sin desborde horizontal de la página en Oportunidades'), i.desbordePagina <= 1, i.desbordePagina);
     // contraste del estado activo (texto sobre fondo): claro sobre oscuro
@@ -67,6 +67,60 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     ok('Navegación', T('Las 8 secciones se abren desde la barra, marcan solo la activa, la dejan visible y no desbordan la página'), malas.length === 0, malas.join(' ; '));
     ok('Consola', T('Sin errores de consola'), errores.length === 0, errores.join(' | ')); await ctx.close();
   }
+
+  // ===================== 1b) TEMA OSCURO: colores exactos y contraste (WCAG 2.2) =====================
+  { const { ctx, page, errores } = await abrir(1440, 900, true);
+    await irNuevo(page, 'oportunidades');
+    const medir = () => {
+      const pr = c => { const m = c.match(/rgba?\(([^)]+)\)/); const v = m[1].split(',').map(x => parseFloat(x)); return { r: v[0], g: v[1], b: v[2], a: v.length > 3 ? v[3] : 1 }; };
+      const lum = c => { const f = x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+      const ratio = (a, b) => { const l1 = lum(a), l2 = lum(b); return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05); };
+      const efectivo = el => { let e = el; while (e) { const c = pr(getComputedStyle(e).backgroundColor); if (c.a > 0.99) return c; e = e.parentElement; } return { r: 255, g: 255, b: 255, a: 1 }; };
+      const par = (sel, tipo) => { const e = document.querySelector(sel); if (!e) return { sel, falta: true }; const cs = getComputedStyle(e); const fg = pr(tipo === 'borde' ? cs.borderTopColor : cs.color); const bg = efectivo(e); return { sel, ratio: Math.round(ratio(fg, bg) * 100) / 100, fg: cs.color, bg: `rgb(${bg.r}, ${bg.g}, ${bg.b})` }; };
+      const nav = document.getElementById('cdsTopNav'), hd = document.querySelector('header.topbar'), act = nav.querySelector('[aria-current=page]'), ina = [...nav.querySelectorAll('button[data-cds-view]')].find(b => !b.hidden && b !== act);
+      const bgs = e => getComputedStyle(e).backgroundColor;
+      return { hdBg: bgs(hd), navBg: bgs(nav), actBg: bgs(act), bodyBg: bgs(document.body), tarjetaBg: bgs(document.getElementById('rtBar')),
+        pares: [par('#cdsBrand span', 'texto'), par('#cdsBrand small', 'texto'), par('#hUser', 'texto'), par('#btnSalir', 'texto'), par('#btnHub', 'texto'), par('#rtBtnActualizar', 'texto'), par('#rtBtnSucursales', 'texto'),
+          (() => { const e = ina, cs = getComputedStyle(e), fg = pr(cs.color), bg = efectivo(e); return { sel: 'seccion inactiva (texto)', ratio: Math.round(ratio(fg, bg) * 100) / 100 }; })(),
+          (() => { const i = ina.querySelector('svg'), fg = pr(getComputedStyle(i).color), bg = efectivo(ina); return { sel: 'seccion inactiva (icono)', ratio: Math.round(ratio(fg, bg) * 100) / 100, min: 3 }; })(),
+          (() => { const fg = pr(getComputedStyle(act).color), bg = pr(getComputedStyle(act).backgroundColor); return { sel: 'seccion activa (texto)', ratio: Math.round(ratio(fg, bg) * 100) / 100 }; })(),
+          (() => { const fg = pr(getComputedStyle(act.querySelector('svg')).color), bg = pr(getComputedStyle(act).backgroundColor); return { sel: 'seccion activa (icono)', ratio: Math.round(ratio(fg, bg) * 100) / 100, min: 3 }; })(),
+          (() => { const fg = pr(getComputedStyle(act).backgroundColor), bg = pr(getComputedStyle(nav).backgroundColor); return { sel: 'activa frente a la barra (distinguible)', ratio: Math.round(ratio(fg, bg) * 100) / 100, min: 1.5 }; })(),
+          (() => { const sep = nav.querySelector('.cds-topnav-sep'), fg = pr(getComputedStyle(sep).backgroundColor), bg = pr(getComputedStyle(nav).backgroundColor); return { sel: 'separador de grupo', ratio: Math.round(ratio(fg, bg) * 100) / 100, min: 1.3 }; })(),
+          (() => { const fg = pr(getComputedStyle(nav).borderBottomColor), bg = pr(getComputedStyle(nav).backgroundColor); return { sel: 'borde de la barra (discreto)', ratio: Math.round(ratio(fg, bg) * 100) / 100, max: 1.5 }; })()] };
+    };
+    const m = await page.evaluate(`(${medir.toString()})()`);
+    ok('Tema oscuro', 'Encabezado #12151C, barra de secciones #232832, sección activa #555D6B', m.hdBg === 'rgb(18, 21, 28)' && m.navBg === 'rgb(35, 40, 50)' && m.actBg === 'rgb(85, 93, 107)', JSON.stringify({ hd: m.hdBg, nav: m.navBg, act: m.actBg }));
+    ok('Tema oscuro', 'El contenido principal y las tarjetas siguen claros (fondo de página #F3F4F7, tarjeta de periodo clara)', m.bodyBg === 'rgb(243, 244, 247)' && /^rgb\((25[0-5]|24\d), (25[0-5]|24\d), (25[0-5]|24\d)\)$/.test(m.tarjetaBg), JSON.stringify({ body: m.bodyBg, tarjeta: m.tarjetaBg }));
+    const mal = m.pares.filter(x => x.falta || (x.max ? x.ratio > x.max : x.ratio < (x.min || 4.5)));
+    ok('Contraste', `Textos ≥ 4,5:1, iconos ≥ 3:1, activa distinguible (≥ 1,5:1), separador visible (≥ 1,3:1) y bordes discretos (≤ 1,5:1) sobre el fondo oscuro (${m.pares.length} pares)`, mal.length === 0, mal.length ? JSON.stringify(mal) : m.pares.map(x => (x.sel.length > 24 ? x.sel.slice(0, 24) : x.sel) + '=' + x.ratio).join(' | '));
+    // foco por teclado sobre el fondo oscuro
+    await page.keyboard.press('Tab'); for (let k = 0; k < 14 && !(await page.evaluate(() => !!document.activeElement.closest('#cdsTopNav'))); k++) await page.keyboard.press('Tab');
+    const foco = await page.evaluate(() => { const e = document.activeElement, cs = getComputedStyle(e); const f = x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }; const v = c => c.match(/[\d.]+/g).slice(0, 3).map(Number); const L = c => { const [r, g, b] = v(c); return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); }; const a = L(cs.outlineColor), b = L(getComputedStyle(document.getElementById('cdsTopNav')).backgroundColor); return { ancho: parseFloat(cs.outlineWidth), color: cs.outlineColor, ratio: Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100 }; });
+    ok('Contraste', 'El anillo de foco de la barra (2 px) contrasta ≥ 3:1 con el fondo oscuro', foco.ancho >= 2 && foco.ratio >= 3, JSON.stringify(foco));
+    // hover
+    const hov = await page.evaluate(async () => { const b = [...document.querySelectorAll('#cdsTopNav button[data-cds-view]')].find(x => !x.hidden && x.getAttribute('aria-current') !== 'page'); return b.dataset.cdsView; });
+    await page.hover('#cdsTopNav button[data-cds-view="' + hov + '"]'); await sleep(200);
+    const hv = await page.evaluate(h => getComputedStyle(document.querySelector('#cdsTopNav button[data-cds-view="' + h + '"]')).backgroundColor, hov);
+    ok('Tema oscuro', 'Una sección bajo el puntero se aclara (#2D3340) sin confundirse con la activa', hv === 'rgb(45, 51, 64)', hv);
+    // sucursales: estado parcial (5/6) en ambar sobre el fondo oscuro
+    const suc = await page.evaluate(() => { const b = document.querySelector('header.topbar #rtBtnSucursales'), cs = getComputedStyle(b); return { clase: b.className, color: cs.color, borde: cs.borderTopColor, bg: cs.backgroundColor }; });
+    ok('Tema oscuro', 'El botón «Sucursales» (selección parcial 5/6) usa fondo oscuro con texto y borde ámbar', /rt-suc-parcial/.test(suc.clase) ? (suc.bg === 'rgb(27, 31, 41)' && suc.color === 'rgb(242, 196, 107)' && suc.borde === 'rgb(242, 196, 107)') : suc.bg === 'rgb(27, 31, 41)', JSON.stringify(suc));
+    ok('Consola', 'Sin errores de consola', errores.length === 0, errores.join('|')); await ctx.close(); }
+
+  // ===================== 1c) TEMA OSCURO en móvil (encabezado y barra inferior) =====================
+  { const { ctx, page, errores } = await abrir(375, 812, true);
+    await irNuevo(page, 'oportunidades');
+    const t = await page.evaluate(() => { const f = x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }; const v = c => c.match(/[\d.]+/g).slice(0, 3).map(Number); const L = c => { const [r, g, b] = v(c); return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); }; const cr = (a, b) => { const x = L(a), y = L(b); return Math.round(((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)) * 100) / 100; }; const tb = document.getElementById('cdsTabbar'), act = tb.querySelector('[aria-current=page]'), ina = [...tb.querySelectorAll('button')].find(b => b !== act && b.id !== 'cdsMas'); const hd = document.querySelector('header.topbar'); const crumb = document.getElementById('cdsCrumb'); return { tbBg: getComputedStyle(tb).backgroundColor, actBg: getComputedStyle(act).backgroundColor, hdBg: getComputedStyle(hd).backgroundColor, inaTexto: cr(getComputedStyle(ina).color, getComputedStyle(tb).backgroundColor), actTexto: cr(getComputedStyle(act).color, getComputedStyle(act).backgroundColor), tituloEncabezado: cr(getComputedStyle(crumb.querySelector('b')).color, getComputedStyle(hd).backgroundColor), usuario: cr(getComputedStyle(document.getElementById('hUser')).color, getComputedStyle(document.querySelector('.sesion-chip')).backgroundColor) }; });
+    ok('Tema oscuro móvil', 'Encabezado #12151C; barra inferior #232832 con la sección activa #555D6B', t.hdBg === 'rgb(18, 21, 28)' && t.tbBg === 'rgb(35, 40, 50)' && t.actBg === 'rgb(85, 93, 107)', JSON.stringify(t));
+    ok('Contraste', 'En móvil: texto inactivo y activo de la barra inferior, título y usuario del encabezado ≥ 4,5:1', t.inaTexto >= 4.5 && t.actTexto >= 4.5 && t.tituloEncabezado >= 4.5 && t.usuario >= 4.5, JSON.stringify({ ina: t.inaTexto, act: t.actTexto, titulo: t.tituloEncabezado, usuario: t.usuario }));
+    ok('Consola', 'Sin errores de consola', errores.length === 0, errores.join('|')); await ctx.close(); }
+
+  // ===================== 1d) DISEÑO ANTERIOR INTACTO con la bandera apagada =====================
+  { const { ctx, page, errores } = await abrir(1440, 900, false); const pedidos = await page.evaluate(() => performance.getEntriesByType('resource').map(r => r.name).filter(n => /\/cds\//.test(n)).length);
+    const o = await page.evaluate(() => ({ cds: document.documentElement.classList.contains('cds-v3'), nav: !!document.getElementById('cdsTopNav'), tabs: getComputedStyle(document.getElementById('rtTabs')).display !== 'none', header: getComputedStyle(document.querySelector('header.topbar')).backgroundColor, altura: Math.round(document.querySelector('header.topbar').getBoundingClientRect().height), brand: getComputedStyle(document.querySelector('header.topbar .brand')).display }));
+    ok('Bandera apagada', 'Sin bandera: sin archivos de cds/, sin barra nueva, pestañas de siempre visibles y encabezado original oscuro de 64 px', pedidos === 0 && !o.cds && !o.nav && o.tabs && /13, 13, 13/.test(o.header) && o.altura === 64 && o.brand !== 'none', JSON.stringify({ pedidos, ...o }));
+    ok('Consola', 'Sin errores de consola', errores.length === 0, errores.join('|')); await ctx.close(); }
 
   // ===================== 2) TECLADO =====================
   { const { ctx, page, errores } = await abrir(1440, 900, true);
