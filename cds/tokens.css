@@ -59,6 +59,8 @@
   --cds-shadow-pop:0 8px 24px rgba(20,23,31,.14),0 1px 2px rgba(20,23,31,.08);
   --cds-shadow-drawer:-12px 0 32px rgba(20,23,31,.16);
   --cds-shadow-seg:0 1px 2px rgba(20,23,31,.12);
+  --cds-shadow-sticky:6px 0 6px -5px rgba(20,23,31,.28); /* separacion de columnas fijas al desplazar una tabla */
+  --cds-mask-on:#000; /* mascara de difuminado de bordes (solo canal alfa) */
   --cds-scrim:rgba(20,23,31,.4);
 
   /* ---- Movimiento ---- */

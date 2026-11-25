@@ -1,0 +1,24 @@
+/* CROMA DESIGN SYSTEM 2.0 · Stock Ventas con todo el ancho. Solo con la bandera cds-v3 (todo cuelga de html.cds-v3).
+   La tabla conserva el ancho natural de sus columnas (nada se angosta) y se desplaza en horizontal dentro de su contenedor; las columnas
+   que identifican la fila (COD y Producto, marcadas por cds/stock-ventas.js) quedan fijas al desplazar. */
+html.cds-v3 .rt-stockventas-tabla{width:100%;min-width:max-content}
+
+/* columnas fijas: fondo opaco para tapar lo que pasa por debajo; la sombra solo aparece cuando la tabla esta desplazada */
+html.cds-v3 .rt-stockventas-tabla .cds-sv-fijo{position:sticky;z-index:3;background:var(--white)}
+html.cds-v3 .rt-stockventas-tabla thead th.cds-sv-fijo{background:var(--gray-50);z-index:4}
+html.cds-v3 .rt-stockventas-tabla .rt-stockventas-total td.cds-sv-fijo{background:var(--gray-50)}
+html.cds-v3 .rt-stockventas-tabla .cds-sv-fijo-1{left:0}
+html.cds-v3 .rt-stockventas-tabla .cds-sv-fijo-2{left:var(--cds-sv-w1,0px);max-width:230px;overflow:hidden;text-overflow:ellipsis}
+html.cds-v3 .rt-table-wrap.cds-sv-desplazada .cds-sv-fijo-2{box-shadow:var(--cds-shadow-sticky)}
+html.cds-v3 .rt-table-wrap.cds-sv-desplazada .rt-stockventas-tabla[data-cds-sv="una"] .cds-sv-fijo-2{box-shadow:var(--cds-shadow-sticky)}
+
+/* solo una columna fija entre 761 y 1023 px; ninguna en movil */
+@media (max-width:1023px){
+  html.cds-v3 .rt-stockventas-tabla .cds-sv-fijo-1{position:static;z-index:auto;box-shadow:none}
+  html.cds-v3 .rt-stockventas-tabla .cds-sv-fijo-2{left:0}
+}
+@media (max-width:760px){
+  html.cds-v3 .rt-stockventas-tabla .cds-sv-fijo{position:static;z-index:auto;box-shadow:none}
+}
+/* las filas sin stock se ven atenuadas (opacity de la fila): la celda fija sigue tapando lo de abajo porque el fondo es opaco */
+@media (prefers-reduced-motion:no-preference){html.cds-v3 .rt-table-wrap{scroll-behavior:auto}}

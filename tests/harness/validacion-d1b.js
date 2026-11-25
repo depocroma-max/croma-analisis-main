@@ -156,7 +156,7 @@ const api = async (base, metodo, ruta, { token = tokenDe(), body, crudo, headers
   // =================== 2) Mis seguimientos ===================
   await irMis(P);
   const resumen = await P.evaluate(() => [...document.querySelectorAll('.cds-seg-tile')].map(t => t.innerText.replace(/\s+/g, ' ')));
-  ok('mis-seguimientos', 'la seccion existe en la navegacion lateral y muestra el resumen de activos y finalizados', await P.evaluate(() => !!document.querySelector('#cdsSide [data-cds-view="seguimientos"]')) && /^6 Activos/.test(resumen[0]) && /^0 Finalizados/.test(resumen[1]), resumen.join(' | '));
+  ok('mis-seguimientos', 'la seccion existe en la navegacion superior (visible entre Oportunidades y Reglas) y muestra el resumen de activos y finalizados', await P.evaluate(() => { const b = document.querySelector('#cdsTopNav [data-cds-view="seguimientos"]'); return !!b && !b.hidden && b.offsetParent !== null; }) && /^6 Activos/.test(resumen[0]) && /^0 Finalizados/.test(resumen[1]), resumen.join(' | '));
   ok('mis-seguimientos', 'lista con 6 seguimientos (tabla) con inicio, motivo, estado y referencia', await visibles(P, '.cds-seg-tabla tbody tr') === 6 && await P.evaluate(() => { const t = document.querySelector('.cds-seg-tabla tbody').innerText; return /Activo/.test(t) && /Referencia no disponible/.test(t) && /\d{2}\/\d{2}\/\d{4}/.test(t) && /Producto de prueba D1B/.test(t); }));
   ok('mis-seguimientos', 'sin graficos historicos ni novedades ficticias (canvas/svg de datos/«evolucion»)', await P.evaluate(() => !document.querySelector('#cdsSegZona canvas, #cdsSegZona .cds-chart, #cdsSegZona .cds-spark') && !/novedad|variaci[oó]n|evoluci[oó]n:/i.test(document.getElementById('cdsSegZona').innerText)));
   await foto(P, 'd1b-05-mis-seguimientos-1280');

@@ -1,28 +1,19 @@
-/* CROMA DESIGN SYSTEM 2.0 · estructura de la aplicacion (Etapa A: base visual). Se carga SOLO con la bandera cds-v3 encendida.
+/* CROMA DESIGN SYSTEM 2.0 · estructura de la aplicacion. Se carga SOLO con la bandera cds-v3 encendida.
    Todo va bajo html.cds-v3: sin la bandera este archivo no se descarga y, aunque se descargara, no cambiaria nada.
-   Estrategia: la barra lateral y la barra inferior son DOM NUEVO (cds/shell.js) que delega en las pestañas existentes (#rtTabs);
-   el encabezado es la barra superior existente (.topbar) con otra piel. Las vistas (#rtPanelHost) no se tocan en esta etapa. */
+   Navegacion HORIZONTAL SUPERIOR (sin barra lateral): dos niveles. Arriba el encabezado existente (.topbar: marca, estado de actualizacion,
+   sucursales, Actualizar, sesion y Hub) que se desplaza con la pagina; debajo la barra de secciones (#cdsTopNav) que queda fija. En movil
+   (≤ 760 px) vuelve la barra inferior y el encabezado fijo. La barra de secciones es DOM NUEVO (cds/shell.js) que delega en las pestañas
+   existentes (#rtTabs); las vistas (#rtPanelHost) no se tocan. */
 
-html.cds-v3{--ov-sticky-top:var(--cds-head-h)} /* las tablas con encabezado fijo (Oportunidades, Ingresos recientes) se pegan debajo del encabezado nuevo */
+html.cds-v3{--cds-nav-h:48px;--cds-sticky-off:var(--cds-head-h);--ov-sticky-top:var(--cds-head-h)} /* movil: el encabezado es el que queda fijo */
 html.cds-v3 body{background:var(--cds-canvas)}
-
-/* ---- Estructura: barra lateral fija + area de trabajo ---- */
-html.cds-v3 #app{padding-inline-start:var(--cds-side-w)}
 html.cds-v3 #rtTabs{display:none} /* las pestañas viejas siguen existiendo y funcionando (la navegacion nueva las acciona), pero no se ven */
 html.cds-v3 #rtPanelHost:focus{outline:none}
 
-.cds-side{position:fixed;inset:0 auto 0 0;width:var(--cds-side-w);background:var(--cds-side);color:var(--cds-side-ink);display:flex;flex-direction:column;gap:var(--cds-s-1);padding:var(--cds-s-4) var(--cds-s-3);z-index:90;overflow-y:auto}
-.cds-brand{display:flex;align-items:center;gap:var(--cds-s-3);padding:var(--cds-s-1) var(--cds-s-2) var(--cds-s-4);color:var(--cds-side-on);font-weight:var(--cds-fw-bold);font-size:var(--cds-fs-lg)}
+/* ---- Marca ---- */
+.cds-brand{display:flex;align-items:center;gap:var(--cds-s-3);color:var(--cds-ink);font-weight:var(--cds-fw-bold);font-size:var(--cds-fs-lg);line-height:1.1;white-space:nowrap}
 .cds-brand img{width:24px;height:24px;object-fit:contain}
-.cds-brand small{display:block;font-weight:var(--cds-fw-regular);font-size:var(--cds-fs-xs);color:var(--cds-side-muted)}
-.cds-nav-group{margin:0;padding:var(--cds-s-4) var(--cds-s-3) var(--cds-s-1);font-size:var(--cds-fs-xs);color:var(--cds-side-muted)}
-.cds-nav{display:flex;align-items:center;gap:var(--cds-s-3);height:var(--cds-ctl);padding:0 var(--cds-s-3);border:0;border-radius:var(--cds-r-md);background:transparent;color:var(--cds-side-ink);width:100%;text-align:left;font-weight:var(--cds-fw-medium);font-size:var(--cds-fs-md);position:relative}
-@media (hover:hover){.cds-nav:hover{background:var(--cds-side-2);color:var(--cds-side-on)}}
-.cds-nav:active{background:var(--cds-side-2)}
-.cds-nav[aria-current=page]{background:var(--cds-side-2);color:var(--cds-side-on)}
-.cds-nav[aria-current=page]::before{content:"";position:absolute;left:calc(var(--cds-s-3) * -1);top:var(--cds-s-2);bottom:var(--cds-s-2);width:3px;border-radius:0 3px 3px 0;background:var(--cds-brand-red)}
-.cds-nav[hidden]{display:none}
-.cds-side .cds-grow{flex:1}
+.cds-brand small{display:block;font-weight:var(--cds-fw-regular);font-size:var(--cds-fs-xs);color:var(--cds-muted)}
 
 /* ---- Encabezado: la barra superior existente con piel nueva ---- */
 html.cds-v3 .topbar{height:var(--cds-head-h);padding:0 var(--cds-s-6);gap:var(--cds-s-3);background:var(--cds-paper);backdrop-filter:none;box-shadow:none;border-bottom:1px solid var(--cds-rule);color:var(--cds-ink)}
@@ -40,27 +31,52 @@ html.cds-v3 .rt-top-acc .rt-btn-actualizar{background:var(--cds-paper);border-co
 html.cds-v3 .rt-top-acc .rt-btn-actualizar:hover{background:var(--cds-canvas);border-color:var(--cds-ink)}
 html.cds-v3 .topbar :where(a,button,input,select):focus-visible{outline:2px solid var(--cds-focus);outline-offset:2px}
 
+/* ---- Barra de secciones (escritorio y tablet) ---- */
+.cds-topnav{display:none}
+.cds-skip{position:absolute;left:var(--cds-s-2);top:-60px;z-index:200;background:var(--cds-paper);color:var(--cds-ink);padding:var(--cds-s-2) var(--cds-s-3);border-radius:var(--cds-r-md);font-weight:var(--cds-fw-semi);font-size:var(--cds-fs-sm);text-decoration:none}
+.cds-skip:focus{top:var(--cds-s-2)}
+@media (min-width:761px){
+  html.cds-v3{--cds-sticky-off:var(--cds-nav-h);--ov-sticky-top:var(--cds-nav-h)} /* las tablas con encabezado fijo se pegan debajo de la barra de secciones */
+  html.cds-v3 .topbar{position:relative;top:auto;z-index:35} /* se desplaza con la pagina; por encima de la barra de secciones para que sus paneles (Sucursales) la tapen */
+  html.cds-v3 .cds-crumb{display:none}
+  .cds-topnav{display:block;position:sticky;top:0;z-index:var(--cds-z-head);height:var(--cds-nav-h);background:var(--cds-paper);border-bottom:1px solid var(--cds-rule);padding:0 var(--cds-s-6)}
+  .cds-topnav-lista{display:flex;align-items:center;gap:var(--cds-s-1);height:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior-x:contain;scroll-behavior:auto;padding-block:var(--cds-s-1)}
+  .cds-topnav-lista::-webkit-scrollbar{display:none}
+  .cds-topnav-item{flex:0 0 auto}
+  .cds-topnav-item[hidden],.cds-topnav-sep[hidden]{display:none}
+  .cds-topnav-sep{flex:0 0 1px;align-self:center;height:20px;background:var(--cds-rule-strong);margin:0 var(--cds-s-2);opacity:.6}
+  .cds-nav{display:flex;align-items:center;gap:var(--cds-s-2);height:var(--cds-ctl);padding:0 var(--cds-s-3);border:1px solid transparent;border-radius:var(--cds-r-md);background:transparent;color:var(--cds-ink-2);font-weight:var(--cds-fw-medium);font-size:var(--cds-fs-md);white-space:nowrap;cursor:pointer}
+  .cds-nav .cds-i{width:16px;height:16px;flex:0 0 16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--cds-muted)}
+  @media (hover:hover){.cds-nav:hover{background:var(--cds-canvas-2);color:var(--cds-ink)}}
+  .cds-nav:active{background:var(--cds-canvas-2)}
+  .cds-nav[aria-current=page]{background:var(--cds-ink);color:var(--cds-paper);font-weight:var(--cds-fw-semi)}
+  .cds-nav[aria-current=page] .cds-i{color:var(--cds-paper)}
+  .cds-nav:focus-visible{outline:2px solid var(--cds-focus);outline-offset:2px}
+  .cds-nav[hidden]{display:none}
+}
+
 /* ---- Contenido ---- */
 html.cds-v3 .wrap{max-width:var(--cds-content-max);padding:var(--cds-s-5) var(--cds-s-6) 80px}
 html.cds-v3 #rtBar{box-shadow:none;border-color:var(--cds-rule);border-radius:var(--cds-r-lg)}
+@media (min-width:1700px){html.cds-v3 .wrap{margin-inline:auto}}
+/* Stock Ventas usa TODO el ancho de la ventana (la tabla tiene decenas de columnas): sin tope de contenido */
+html.cds-v3[data-cds-vista="stock-ventas"] .wrap{max-width:none;margin-inline:0}
 
-/* ---- Navegacion inferior (movil) ---- */
-.cds-tabbar{display:none}
-.cds-skip{position:absolute;left:var(--cds-s-2);top:-60px;z-index:200;background:var(--cds-paper);color:var(--cds-ink);padding:var(--cds-s-2) var(--cds-s-3);border-radius:var(--cds-r-md);font-weight:var(--cds-fw-semi);font-size:var(--cds-fs-sm);text-decoration:none}
-.cds-skip:focus{top:var(--cds-s-2)}
-
-/* ---- Compacto: riel de iconos ---- */
+/* ---- Tablet y compacto ---- */
 @media (max-width:1100px){
-  html.cds-v3{--cds-side-w:var(--cds-side-w-rail)}
-  .cds-brand span,.cds-nav span,.cds-nav-group{display:none}
-  .cds-nav,.cds-brand{justify-content:center;padding-inline:0}
   html.cds-v3 .topbar{padding:0 var(--cds-s-4)}
   html.cds-v3 .wrap{padding:var(--cds-s-4) var(--cds-s-4) 80px}
+  .cds-topnav{padding:0 var(--cds-s-4)}
 }
-/* ---- Movil: barra inferior, sin barra lateral ---- */
+@media (min-width:761px) and (max-width:1023px){
+  /* la lista se desplaza dentro de la barra: los bordes se difuminan para indicar que hay mas secciones */
+  .cds-topnav-lista{-webkit-mask-image:linear-gradient(to right,transparent 0,var(--cds-mask-on) 12px,var(--cds-mask-on) calc(100% - 20px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,var(--cds-mask-on) 12px,var(--cds-mask-on) calc(100% - 20px),transparent 100%);padding-inline:var(--cds-s-1)}
+}
+
+/* ---- Movil: barra inferior, encabezado fijo, sin barra de secciones ---- */
+.cds-tabbar{display:none}
 @media (max-width:760px){
-  html.cds-v3 #app{padding-inline-start:0}
-  .cds-side{display:none}
+  .cds-brand{display:none}
   html.cds-v3 .topbar{padding:0 var(--cds-s-3);gap:var(--cds-s-2)}
   html.cds-v3 .topbar .brand{display:flex;min-width:0}
   html.cds-v3 .topbar .brand-logo,html.cds-v3 .topbar .brand-divider,html.cds-v3 .topbar .brand-section{display:none}
@@ -73,6 +89,5 @@ html.cds-v3 #rtBar{box-shadow:none;border-color:var(--cds-rule);border-radius:va
   .cds-tabbar .cds-tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 }
 @media (max-width:420px){.cds-tabbar button:not([aria-current=page]) .cds-tl{display:none}}
-/* ---- Pantallas muy grandes ---- */
-@media (min-width:1700px){html.cds-v3 .wrap{margin-inline:auto}}
 @media (max-width:380px){html.cds-v3 .cds-crumb{font-size:var(--cds-fs-md)}html.cds-v3 .topbar .sesion-chip{padding-inline:var(--cds-s-2)}}
+@media (prefers-reduced-motion:reduce){.cds-topnav-lista{scroll-behavior:auto}}
